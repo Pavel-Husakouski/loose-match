@@ -50,8 +50,8 @@ function __record<T extends RecordRule<any> = RecordRule<any>>(schemaRule: T): F
  * A rule - the constructor of the value
  * @param ctor The class constructor
  */
-export function ctorIs<T>(ctor: new (...args: any[]) => T): FunctionRule<T> {
-  return function __ctorIs(value: T) {
+export function ctorOf<T>(ctor: new (...args: any[]) => T): FunctionRule<T> {
+  return function __ctorOf(value: T) {
     const instance = new Object(value);
 
     if (value != null && instance.constructor === ctor) {
@@ -64,7 +64,7 @@ export function ctorIs<T>(ctor: new (...args: any[]) => T): FunctionRule<T> {
   };
 }
 
-function __arrayIs<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> {
+function __tupleOf<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> {
   const rules = items.map(__toFunction);
 
   return function __arrayIs(value: unknown) {
@@ -113,16 +113,8 @@ function __arrayOf<T extends SchemaRule<any>>(each: T): FunctionRule<Infer<T>[]>
 /**
  * A rule - a tuple of items
  */
-export function tuple<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
-  return __arrayIs(items);
-}
-
-/**
- * A rule - an exact array of items
- * @param items
- */
-export function arrayIs<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
-  return __arrayIs(items);
+export function tupleOf<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
+  return __tupleOf(items);
 }
 
 /**
@@ -233,7 +225,7 @@ function __noneOf<T extends SchemaRule<any>[]>(items: T): FunctionRule<never> {
 }
 
 /**
- * A combinator rule - a oneOf rule
+ * A combinator rule - a union of rules with exactly one match
  * @param items The rules to be applied
  */
 export function oneOf<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
@@ -269,7 +261,7 @@ function __oneOf<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<Item
 }
 
 /**
- * A combinator rule - a union of rules
+ * A combinator rule - a union of rules with any number of matches except zero
  * @param items The rules to be applied
  */
 export function anyOf<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
@@ -315,11 +307,11 @@ export function instanceOf<T>(ctor: abstract new (...args: any[]) => T): Functio
 }
 
 /**
- * A rule - a special case combinator to validate error objects
+ * A rule - an error object of a specific class and properties
  * @param rule The rule to validate the error properties
  * @param clazz The error class, default to Error
  */
-export function errorIs<T extends RecordRule<any>, E extends Error = Error>(
+export function errorOf<T extends RecordRule<any>, E extends Error = Error>(
   rule: T,
   clazz: abstract new (...args: any[]) => E = Error as any
 ): FunctionRule<Infer<T>> {
@@ -327,11 +319,26 @@ export function errorIs<T extends RecordRule<any>, E extends Error = Error>(
 }
 
 /**
- * Create A rule - an exact value
+ * A rule - the exact equality of a value
  * @param value The value
  * @returns The rule
  */
-export function exact<T extends PrimitiveRule<any>>(value: T): FunctionRule<Infer<T>> {
+export function equals<const T>(value: T): FunctionRule<T> {
+  return function __equals(o: unknown) {
+    if (value === o) {
+      return __valid;
+    }
+
+    return __invalid(`expected strict equals ${__stringify(value)}, got ${__stringify(o)}`);
+  };
+}
+
+/**
+ * Create A rule - an exact primitive value
+ * @param value The value
+ * @returns The rule
+ */
+export function exact<const T extends PrimitiveRule<any>>(value: T): FunctionRule<Infer<T>> {
   if (value instanceof Date) {
     return function __date(x: unknown) {
       if (x instanceof Date && x.getTime() === value.getTime()) {
@@ -351,7 +358,7 @@ export function exact<T extends PrimitiveRule<any>>(value: T): FunctionRule<Infe
     };
   }
 
-  return function __valueIs(x: unknown) {
+  return function __primitiveIs(x: unknown) {
     if (x === value) {
       return __valid;
     }
@@ -371,7 +378,7 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     return exact(schema);
   }
   if (__isArray(schema)) {
-    return __arrayIs(schema);
+    return __tupleOf(schema);
   }
   if (__isError(schema)) {
     const ctor = schema.constructor;
@@ -379,7 +386,7 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     const message = schema.message;
 
     // @ts-ignore spread operator has issues with error properties
-    return errorIs({ /*name, too strict*/ message, ...schema }, ctor as any);
+    return errorOf({ /*name, too strict*/ message, ...schema }, ctor as any);
   }
   if (__isRecord(schema)) {
     return __record(schema);

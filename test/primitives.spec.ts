@@ -1,5 +1,5 @@
 import { describe, it } from 'mocha';
-import { aBigInt, aBoolean, aDate, aNumber, aRegExp, aString, isNull, exact, re, validate } from '../src';
+import { aBigInt, aBoolean, aDate, aNumber, aRegExp, aString, exact, isNull, re, validate } from '../src';
 import { expect } from './@expect';
 
 describe('primitive', () => {

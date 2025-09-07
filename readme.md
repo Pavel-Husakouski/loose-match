@@ -5,7 +5,7 @@ An asymmetric pattern matching library for TypeScript.
 ## Example
 
 ```typescript
-import { match, some, all, re, aString, aNumber, aBigInt, nullable, arrayOf } from '@beeff/loose-match';
+import { match, oneOf, all, re, aString, aNumber, aBigInt, nullable, arrayOf } from '@beeff/loose-match';
 
 it('create user request', async () => {
   const request = awat createUserRequest(context, {username, password});
@@ -16,7 +16,7 @@ it('create user request', async () => {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
-            'Authorization': all(Bearer, some(JWT, Hmac)),
+            'Authorization': allOf(Bearer, oneOf(JWT, Hmac)),
             'Correlation-Id': Guid,
             'Transaction-Id': aBigInt(),
         },
@@ -34,7 +34,7 @@ it('created user', async () => {
   const json = await response.json();
 
   match(response).with({
-    status: some(200, 201), // some env return 200, some 201
+    status: oneOf(200, 201), // some env return 200, some 201
     headers: {
         'Content-Type': 'application/json',
     }
@@ -42,9 +42,9 @@ it('created user', async () => {
   match(json).with({
     id: Guid,
     username,
-    capabilities: arrayOf(some('read', 'write', 'delete', 'login')),
+    capabilities: arrayOf(oneOf('read', 'write', 'delete', 'login')),
     token: anUndefined(), // token must not be returned
-    created: some(aNumber(), DateISO),
+    created: oneOf(aNumber(), DateISO),
     // some env return epoch, some return date in ISO format
   });
 });

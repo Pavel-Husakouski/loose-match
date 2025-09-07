@@ -1,5 +1,5 @@
 import { describe, it } from 'mocha';
-import { anything, arrayOf, exact, length, anyOf, validate } from '../src';
+import { anyOf, anything, arrayOf, exact, length, validate } from '../src';
 import { expect } from './@expect';
 
 describe('array', () => {

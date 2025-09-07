@@ -6,29 +6,29 @@ import {
   aNull,
   aNumber,
   anUndefined,
-  arrayIs,
+  anyOf,
   arrayOf,
   aString,
-  ctorIs,
+  ctorOf,
+  equals,
+  errorOf,
+  exact,
   FunctionRule,
   Infer,
   instanceOf,
   isNull,
+  noneOf,
+  not,
   nullable,
+  oneOf,
   PredicateRule,
-  exact,
   re,
   record,
   RecordRule,
   SchemaRule,
-  anyOf,
-  tuple,
+  tupleOf,
   validate,
   ValidationResult,
-  oneOf,
-  noneOf,
-  not,
-  errorIs,
 } from '../src';
 import { expectType } from './@expect';
 
@@ -140,16 +140,22 @@ describe('type from', () => {
     string | number | string[]
   >();
 
-  it('primitive', () => {
-    const pattern = exact('1' as const);
+  it('equals', () => {
+    const pattern = equals(1);
+
+    expectType<Infer<typeof pattern>>().is<1>();
+  });
+
+  it('exact', () => {
+    const pattern = exact('1');
 
     expectType<Infer<typeof pattern>>().is<'1'>();
   });
 
-  it('primitive', () => {
+  it('exact', () => {
     const pattern = exact('1');
 
-    expectType<Infer<typeof pattern>>().is<string>();
+    expectType<Infer<typeof pattern>>().is<'1'>();
   });
 
   it('arrayOf', () => {
@@ -178,20 +184,20 @@ describe('type from', () => {
     expectType<Infer<typeof pattern>>().is<(1 | 2 | 5 | 's' | boolean)[]>();
   });
 
-  it('tuple', () => {
-    const pattern = tuple(aNumber(), '2', 8, new Date());
+  it('tupleOf', () => {
+    const pattern = tupleOf(aNumber(), '2', 8, new Date());
 
     expectType<typeof pattern>().is<FunctionRule<[number, string, number, Date]>>();
   });
 
-  it('arrayIs', () => {
-    const pattern = arrayIs(1, 2, 3, 5, 's');
+  it('tupleOf', () => {
+    const pattern = tupleOf(1, 2, 3, 5, 's');
 
     expectType<typeof pattern>().is<FunctionRule<(string | number)[]>>();
   });
 
-  it('arrayIs', () => {
-    const pattern = arrayIs(1, 2, 3, 5, 6);
+  it('tupleOf', () => {
+    const pattern = tupleOf(1, 2, 3, 5, 6);
 
     expectType<typeof pattern>().is<FunctionRule<[number, number, number, number, number]>>();
   });
@@ -321,19 +327,19 @@ describe('type from', () => {
     }>();
   });
 
-  it('every', () => {
+  it('allOf', () => {
     const pattern = allOf(aString(), aNumber(), aDate());
 
     expectType<Infer<typeof pattern>>().is<never>();
   });
 
-  it('every', () => {
+  it('allOf', () => {
     const pattern = allOf(aString(), re(/x/));
 
     expectType<Infer<typeof pattern>>().is<string>();
   });
 
-  it('every', () => {
+  it('allOf', () => {
     const obj = {
       id: '1',
       name: '2',
@@ -350,7 +356,7 @@ describe('type from', () => {
     }>();
   });
 
-  it('none', () => {
+  it('noneOf', () => {
     const pattern = noneOf({ id: '1' }, { name: '2' }, { email: '3' });
 
     expectType<Infer<typeof pattern>>().is<never>();
@@ -382,37 +388,37 @@ describe('type from', () => {
     expectType<Infer<typeof pattern>>().is<{ id: '1' } | { email: '3' }>();
   });
 
-  it('some', () => {
+  it('anyOf', () => {
     const pattern = anyOf(aString(), aNumber(), aDate());
 
     expectType<typeof pattern>().is<FunctionRule<string | number | Date>>();
   });
 
-  it('some', () => {
+  it('anyOf', () => {
     const pattern = anyOf({ id: re(/x/) }, { id: re(/y/) }, { id: re(/z/) });
 
     expectType<typeof pattern>().is<FunctionRule<{ id: string }>>();
   });
 
-  it('some', () => {
+  it('anyOf', () => {
     const pattern = anyOf(aString(), { id: re(/x/) }, arrayOf(aString()));
 
     expectType<Infer<typeof pattern>>().is<string | { id: string } | string[]>();
   });
 
-  it('some', () => {
+  it('anyOf', () => {
     const pattern = anyOf('1', '2', '3');
 
     expectType<Infer<typeof pattern>>().is<string>();
   });
 
-  it('some', () => {
+  it('anyOf', () => {
     const pattern = anyOf({ id: '1' }, { name: '2' }, { email: '4' });
 
     expectType<typeof pattern>().is<FunctionRule<{ id: '1' } | { name: '2' } | { email: '4' }>>();
   });
 
-  it('some', () => {
+  it('anyOf', () => {
     const pattern = anyOf({ id: '1' }, { id: '2' }, { id: '4' });
 
     expectType<Infer<typeof pattern>>().is<{
@@ -420,14 +426,14 @@ describe('type from', () => {
     }>();
   });
 
-  it('some', () => {
+  it('anyOf', () => {
     const pattern = anyOf({ id: '1' }, { id: '2' }, { id: '4' });
 
     expectType<Infer<typeof pattern>>().is<{ id: '1' } | { id: '2' } | { id: '4' }>();
   });
 
-  it('ctor', () => {
-    const pattern = ctorIs(Date);
+  it('ctorOf', () => {
+    const pattern = ctorOf(Date);
 
     expectType<Infer<typeof pattern>>().is<Date>();
   });
@@ -438,19 +444,19 @@ describe('type from', () => {
     expectType<Infer<typeof pattern>>().is<Object>();
   });
 
-  it('errorIs', () => {
-    const pattern = errorIs({ message: 'a message' });
+  it('errorOf', () => {
+    const pattern = errorOf({ message: 'a message' });
 
     expectType<Infer<typeof pattern>>().is<{ message: string }>();
   });
 
-  it('errorIs', () => {
-    const pattern = errorIs({ message: 'a message' });
+  it('errorOf', () => {
+    const pattern = errorOf({ message: 'a message' });
 
     expectType<Infer<typeof pattern>>().is<Error>();
   });
 
-  it('errorIs', () => {
+  it('errorOf', () => {
     class MyError extends Error {
       code: number;
 
@@ -459,7 +465,8 @@ describe('type from', () => {
         this.code = code;
       }
     }
-    const pattern = errorIs({ message: 'a message', code: 5 }, MyError);
+
+    const pattern = errorOf({ message: 'a message', code: 5 }, MyError);
 
     expectType<Infer<typeof pattern>>().is<{ message: string; code: number }>();
   });

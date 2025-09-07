@@ -1,4 +1,4 @@
-import { arrayOf, aString, errorIs, exact, nullable, record, validate } from '../src';
+import { arrayOf, aString, errorOf, exact, nullable, record, validate } from '../src';
 import { expect } from './@expect';
 
 describe('record', () => {
@@ -85,7 +85,7 @@ describe('record', () => {
     // @ts-ignore
     error.code = 'SOMETHING';
 
-    const rule = errorIs({ code: 'SOMETHING' });
+    const rule = errorOf({ code: 'SOMETHING' });
 
     const x = validate(rule, error);
 
@@ -98,7 +98,7 @@ describe('record', () => {
     // @ts-ignore
     error.code = 'SOMETHING';
 
-    const rule = errorIs({ code: 'SOMETHING' }, TypeError);
+    const rule = errorOf({ code: 'SOMETHING' }, TypeError);
 
     const x = validate(rule, error);
 
@@ -108,7 +108,7 @@ describe('record', () => {
   it('error, failed 2', () => {
     const error = new Error();
 
-    const rule = errorIs({ code: 'SOMETHING' }, Error);
+    const rule = errorOf({ code: 'SOMETHING' }, Error);
 
     const x = validate(rule, error);
 
@@ -144,7 +144,9 @@ describe('record', () => {
   it('descendant error property, descendant', () => {
     const error = new Error();
     const rule = record({ error });
-    const x = validate(rule, { error: new (class MyError extends Error {})() });
+    const x = validate(rule, {
+      error: new (class MyError extends Error {})(),
+    });
 
     expect(x).to.match([true]);
   });
@@ -152,7 +154,9 @@ describe('record', () => {
   it('descendant error property, failed', () => {
     const error = new Error();
     const rule = record({ error });
-    const x = validate(rule, { error: new (class NotError {})() });
+    const x = validate(rule, {
+      error: new (class NotError {})(),
+    });
 
     expect(x).to.match([false, '[error] expected Error got NotError']);
   });
