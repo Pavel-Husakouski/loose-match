@@ -1,0 +1,9 @@
+{
+  "delay": false,
+  "package": "./package.json",
+  "require": ["ts-node/register", "test/bootstrap"],
+  "ui": "bdd",
+  "spec": "test/**/*.spec.ts",
+  "extension": ["ts"],
+  "node-option": ["experimental-specifier-resolution=node", "loader=ts-node/esm"]
+}

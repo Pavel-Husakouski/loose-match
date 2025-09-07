@@ -1,0 +1,36 @@
+{
+  "name": "@beeff/loose-match",
+  "version": "0.4.5",
+  "description": "An asymmetric matcher library made for the @beeff project",
+  "main": "lib/index.js",
+  "type": "module",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "clean": "rm -rf lib",
+    "build": "npm run clean && npm run compile",
+    "compile": "tsc",
+    "test": "mocha"
+  },
+  "keywords": [],
+  "repository": {
+    "url": "https://github.com/Pavel-Husakouski/loose-match"
+  },
+  "author": "Pauel <phusakouski@gmail.com>",
+  "license": "MIT",
+  "peerDependencies": {
+    "tslib": "^2.6.3"
+  },
+  "files": [
+    "lib/*",
+    "LICENSE",
+    "readme.md"
+  ],
+  "devDependencies": {
+    "@types/mocha": "^10.0.1",
+    "mocha": "^10.5.2",
+    "prettier": "^3.6.2",
+    "ts-node": "^10.9.2",
+    "tslib": "^2.6.3",
+    "typescript": "^5.9.2"
+  }
+}
