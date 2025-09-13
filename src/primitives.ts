@@ -20,7 +20,6 @@ export function aString(): FunctionRule<string> {
   };
 }
 
-
 /**
  * A rule - any number
  */
@@ -46,8 +45,8 @@ export function aBoolean(): FunctionRule<boolean> {
 /**
  * A rule - null or undefined
  */
-export function isNull(): FunctionRule<null> {
-  return function __isNull(value: unknown): ValidationResult<null> {
+export function nullish(): FunctionRule<null> {
+  return function __nullish(value: unknown): ValidationResult<null> {
     return value == null ? __valid : __invalid('expected null or undefined, got ' + __typeOf(value));
   };
 }

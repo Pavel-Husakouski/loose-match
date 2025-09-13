@@ -46,25 +46,7 @@ function __record<T extends RecordRule<any> = RecordRule<any>>(schemaRule: T): F
   };
 }
 
-/**
- * A rule - the constructor of the value
- * @param ctor The class constructor
- */
-export function ctorOf<T>(ctor: new (...args: any[]) => T): FunctionRule<T> {
-  return function __ctorOf(value: T) {
-    const instance = new Object(value);
-
-    if (value != null && instance.constructor === ctor) {
-      return __valid;
-    }
-
-    const ctorOrNull = value == null ? String(value) : instance.constructor.name;
-
-    return __invalid(`expected ${ctor.name} got ${ctorOrNull}`);
-  };
-}
-
-function __tupleOf<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> {
+function __tuple<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> {
   const rules = items.map(__toFunction);
 
   return function __arrayIs(value: unknown) {
@@ -89,7 +71,18 @@ function __tupleOf<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> 
   };
 }
 
-function __arrayOf<T extends SchemaRule<any>>(each: T): FunctionRule<Infer<T>[]> {
+/**
+ * A rule - a tuple of items
+ */
+export function tuple<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
+  return __tuple(items);
+}
+
+/**
+ * A rule - an array of items
+ * @param each The rule for each item
+ */
+export function arrayOf<T extends SchemaRule<any>>(each: T): FunctionRule<Infer<T>[]> {
   const rule = __toFunction(each);
 
   return function __arrayOf(items: unknown) {
@@ -108,21 +101,6 @@ function __arrayOf<T extends SchemaRule<any>>(each: T): FunctionRule<Infer<T>[]>
 
     return __valid;
   };
-}
-
-/**
- * A rule - a tuple of items
- */
-export function tupleOf<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
-  return __tupleOf(items);
-}
-
-/**
- * A rule - an array of items
- * @param each The rule for each item
- */
-export function arrayOf<T extends SchemaRule<any>>(each: T): FunctionRule<Infer<T>[]> {
-  return __arrayOf(each);
 }
 
 /**
@@ -307,11 +285,11 @@ export function instanceOf<T>(ctor: abstract new (...args: any[]) => T): Functio
 }
 
 /**
- * A rule - an error object of a specific class and properties
+ * A rule - an error like object of a specific class and properties
  * @param rule The rule to validate the error properties
  * @param clazz The error class, default to Error
  */
-export function errorOf<T extends RecordRule<any>, E extends Error = Error>(
+export function errorLike<T extends RecordRule<any>, E extends Error = Error>(
   rule: T,
   clazz: abstract new (...args: any[]) => E = Error as any
 ): FunctionRule<Infer<T>> {
@@ -334,11 +312,11 @@ export function equals<const T>(value: T): FunctionRule<T> {
 }
 
 /**
- * Create A rule - an exact primitive value
+ * Create A rule - a primitive primitive value
  * @param value The value
  * @returns The rule
  */
-export function exact<const T extends PrimitiveRule<any>>(value: T): FunctionRule<Infer<T>> {
+export function primitive<const T extends PrimitiveRule<any>>(value: T): FunctionRule<Infer<T>> {
   if (value instanceof Date) {
     return function __date(x: unknown) {
       if (x instanceof Date && x.getTime() === value.getTime()) {
@@ -358,7 +336,7 @@ export function exact<const T extends PrimitiveRule<any>>(value: T): FunctionRul
     };
   }
 
-  return function __primitiveIs(x: unknown) {
+  return function __primitive(x: unknown) {
     if (x === value) {
       return __valid;
     }
@@ -375,10 +353,10 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     return schema as FunctionRule<Infer<T>>;
   }
   if (__isPrimitive(schema)) {
-    return exact(schema);
+    return primitive(schema);
   }
   if (__isArray(schema)) {
-    return __tupleOf(schema);
+    return __tuple(schema);
   }
   if (__isError(schema)) {
     const ctor = schema.constructor;
@@ -386,7 +364,7 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     const message = schema.message;
 
     // @ts-ignore spread operator has issues with error properties
-    return errorOf({ /*name, too strict*/ message, ...schema }, ctor as any);
+    return errorLike({ /*name, too strict*/ message, ...schema }, ctor as any);
   }
   if (__isRecord(schema)) {
     return __record(schema);

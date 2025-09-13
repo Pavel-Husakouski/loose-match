@@ -1,100 +1,100 @@
 import { describe, it } from 'mocha';
-import { aBigInt, aBoolean, aDate, aNumber, aRegExp, aString, exact, isNull, re, validate } from '../src';
+import { aBigInt, aBoolean, aDate, aNumber, aRegExp, aString, nullish, primitive, re, validate } from '../src';
 import { expect } from './@expect';
 
 describe('primitive', () => {
   it('primitive string', () => {
-    const schema = exact('test');
+    const schema = primitive('test');
 
     expect(validate(schema, 'test')).to.match([true]);
   });
 
   it('primitive string, failed', () => {
-    const schema = exact('test');
+    const schema = primitive('test');
 
     expect(validate(schema, 'not a test')).to.be.false('expected String test, got String not a test');
   });
 
   it('primitive string, failed', () => {
-    const schema = exact('test');
+    const schema = primitive('test');
 
     expect(validate(schema, 'not a test')).to.be.false('expected String test, got String not a test');
   });
 
   it('primitive number', () => {
-    const schema = exact(1);
+    const schema = primitive(1);
 
     expect(validate(schema, 1)).to.be.true();
   });
 
   it('primitive number, failed', () => {
-    const schema = exact(1);
+    const schema = primitive(1);
 
     expect(validate(schema, 2)).to.match([false, `expected Number 1, got Number 2`]);
   });
 
   it('primitive boolean', () => {
-    const schema = exact(true);
+    const schema = primitive(true);
 
     expect(validate(schema, true)).to.match([true]);
   });
 
   it('primitive boolean, failed', () => {
-    const schema = exact(true);
+    const schema = primitive(true);
 
     expect(validate(schema, false)).to.match([false, `expected Boolean true, got Boolean false`]);
   });
 
   it('primitive null', () => {
-    const schema = exact(null);
+    const schema = primitive(null);
 
     expect(validate(schema, null)).to.match([true]);
   });
 
   it('primitive null, failed', () => {
-    const schema = exact(null);
+    const schema = primitive(null);
 
     expect(validate(schema, undefined)).to.match([false, `expected null, got undefined`]);
   });
 
   it('primitive undefined', () => {
-    const schema = exact(undefined);
+    const schema = primitive(undefined);
 
     expect(validate(schema, undefined)).to.match([true]);
   });
 
   it('primitive undefined, failed', () => {
-    const schema = exact(undefined);
+    const schema = primitive(undefined);
 
     expect(validate(schema, null)).to.match([false, `expected undefined, got null`]);
   });
 
   it('isNull null', () => {
-    const schema = isNull();
+    const schema = nullish();
 
     expect(validate(schema, null)).to.match([true]);
   });
 
   it('isNull undefined', () => {
-    const schema = isNull();
+    const schema = nullish();
 
     expect(validate(schema, undefined)).to.match([true]);
   });
 
   it('isNull, failed', () => {
-    const schema = isNull();
+    const schema = nullish();
 
     expect(validate(schema, {})).to.match([false, `expected null or undefined, got [object Object]`]);
   });
 
   it('primitive date', () => {
-    const schema = exact(new Date(0));
+    const schema = primitive(new Date(0));
 
     expect(validate(schema, new Date(0))).to.match([true]);
   });
 
   it('primitive date, failed', () => {
-    const schema = exact(new Date(0));
+    const schema = primitive(new Date(0));
 
     expect(validate(schema, new Date(1))).to.match([
       false,
@@ -103,7 +103,7 @@ describe('primitive', () => {
   });
 
   it('primitive regexp', () => {
-    const schema = exact(/test/);
+    const schema = primitive(/test/);
 
     expect(validate(schema, /test/)).to.match([true]);
     expect(validate(schema, /x/)).to.match([false, `expected RegExp /test/, got RegExp /x/`]);

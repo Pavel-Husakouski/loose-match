@@ -1,10 +1,10 @@
-import { arrayOf, aString, errorOf, exact, nullable, record, validate } from '../src';
+import { arrayOf, aString, errorLike, nullable, primitive, record, validate } from '../src';
 import { expect } from './@expect';
 
 describe('record', () => {
   it('record of string valid', () => {
     const schema = record({
-      test: exact('test'),
+      test: primitive('test'),
     });
 
     expect(
@@ -16,7 +16,7 @@ describe('record', () => {
 
   it('record of string invalid', () => {
     const schema = record({
-      test: exact('test'),
+      test: primitive('test'),
     });
 
     expect(
@@ -85,7 +85,7 @@ describe('record', () => {
     // @ts-ignore
     error.code = 'SOMETHING';
 
-    const rule = errorOf({ code: 'SOMETHING' });
+    const rule = errorLike({ code: 'SOMETHING' });
 
     const x = validate(rule, error);
 
@@ -98,7 +98,7 @@ describe('record', () => {
     // @ts-ignore
     error.code = 'SOMETHING';
 
-    const rule = errorOf({ code: 'SOMETHING' }, TypeError);
+    const rule = errorLike({ code: 'SOMETHING' }, TypeError);
 
     const x = validate(rule, error);
 
@@ -108,7 +108,7 @@ describe('record', () => {
   it('error, failed 2', () => {
     const error = new Error();
 
-    const rule = errorOf({ code: 'SOMETHING' }, Error);
+    const rule = errorLike({ code: 'SOMETHING' }, Error);
 
     const x = validate(rule, error);
 

@@ -1,16 +1,16 @@
 import { describe, it } from 'mocha';
-import { anyOf, anything, arrayOf, exact, length, validate } from '../src';
+import { anyOf, anything, arrayOf, length, primitive, validate } from '../src';
 import { expect } from './@expect';
 
 describe('array', () => {
   it('array of string', () => {
-    const schema = arrayOf(exact('test'));
+    const schema = arrayOf(primitive('test'));
 
     expect(validate(schema, ['test'])).to.match([true]);
   });
 
   it('array of string, failed', () => {
-    const schema = arrayOf(exact('test'));
+    const schema = arrayOf(primitive('test'));
 
     expect(validate(schema, [5])).to.match([false, `[0] expected String test, got Number 5`]);
   });

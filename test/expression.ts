@@ -335,7 +335,7 @@ type FnRendered = Built<Fn.FunctionRule<any>>;
 
 const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule<any>> {
   exact<T>(value: T): FnRendered {
-    return Fn.exact(value);
+    return Fn.primitive(value);
   }
 
   aNumber(): FnRendered {
