@@ -1,9 +1,9 @@
-import { arrayOf, aString, nullable, primitive, record, validate } from '../src';
+import { arrayOf, aString, nullable, primitive, recordWith, validate } from '../src';
 import { expect } from './@expect';
 
 describe('record', () => {
   it('record of string valid', () => {
-    const schema = record({
+    const schema = recordWith({
       test: primitive('test'),
     });
 
@@ -15,7 +15,7 @@ describe('record', () => {
   });
 
   it('record of string invalid', () => {
-    const schema = record({
+    const schema = recordWith({
       test: primitive('test'),
     });
 
@@ -27,7 +27,7 @@ describe('record', () => {
   });
 
   it('record of array valid', () => {
-    const schema = record({
+    const schema = recordWith({
       test: ['test', 'another test'],
     });
 
@@ -39,7 +39,7 @@ describe('record', () => {
   });
 
   it('record of tuples invalid', () => {
-    const schema = record({
+    const schema = recordWith({
       test: ['test', 'another test'],
     });
 

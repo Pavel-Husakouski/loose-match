@@ -1,5 +1,5 @@
 import { expect } from './@expect';
-import { errorWith, record, validate } from '../src';
+import { errorWith, recordWith, validate } from '../src';
 
 describe('error', () => {
   it('error', () => {
@@ -44,7 +44,7 @@ describe('error', () => {
     // @ts-ignore
     err.code = 'SOMETHING';
 
-    const rule = record({ err });
+    const rule = recordWith({ err });
 
     const x = validate(rule, { err });
 
@@ -57,7 +57,7 @@ describe('error', () => {
     // @ts-ignore
     err.code = 'SOMETHING';
 
-    const rule = record({ err });
+    const rule = recordWith({ err });
 
     const x = validate(rule, { err: new Error() });
 
@@ -66,7 +66,7 @@ describe('error', () => {
 
   it('descendant error property, descendant', () => {
     const err = new Error();
-    const rule = record({ err });
+    const rule = recordWith({ err });
     const x = validate(rule, {
       err: new (class MyError extends Error {})(),
     });
@@ -76,7 +76,7 @@ describe('error', () => {
 
   it('descendant error property, failed', () => {
     const err = new Error('test');
-    const rule = record({ err });
+    const rule = recordWith({ err });
     const x = validate(rule, {
       err: new (class NotError {
         message = 'test';

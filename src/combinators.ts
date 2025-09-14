@@ -17,13 +17,13 @@ import {
 } from './types.js';
 
 /**
- * A rule - a record or an object schema
+ * A rule - a shape of the object
  */
-export function record<T extends RecordRule<any>>(rule: T): FunctionRule<Infer<T>> {
-  return __record(rule);
+export function recordWith<T extends RecordRule<any>>(rule: T): FunctionRule<Infer<T>> {
+  return __recordWith(rule);
 }
 
-function __record<T extends RecordRule<any> = RecordRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
+function __recordWith<T extends RecordRule<any> = RecordRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
   return function __record(obj: Infer<T>) {
     if (!__isRecord(obj)) {
       return __invalid(`expected object, got ${__typeOf(obj)}`);
@@ -79,11 +79,18 @@ export function tuple<T extends SchemaRule<any>[]>(...items: T): FunctionRule<In
 }
 
 /**
- * A rule - an array of items
- * @param each The rule for each item
+ * A rule - an array with fixed items
  */
-export function arrayOf<T extends SchemaRule<any>>(each: T): FunctionRule<Infer<T>[]> {
-  const rule = __toFunction(each);
+export function arrayWith<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<ItemsOf<T>>[]> {
+  return __tuple(items as any) as any;
+}
+
+/**
+ * A rule - an array of items
+ * @param item The rule for each item
+ */
+export function arrayOf<T extends SchemaRule<any>>(item: T): FunctionRule<Infer<T>[]> {
+  const rule = __toFunction(item);
 
   return function __arrayOf(items: unknown) {
     if (!Array.isArray(items)) {
@@ -293,7 +300,7 @@ export function errorWith<T extends RecordRule<any>, E extends Error = Error>(
   rule: T,
   clazz: abstract new (...args: any[]) => E = Error as any
 ): FunctionRule<Infer<T> & E> {
-  return allOf(record(rule), instanceOf(clazz || Error));
+  return allOf(recordWith(rule), instanceOf(clazz || Error));
 }
 
 /**
@@ -305,7 +312,7 @@ export function errorAs<E extends Error, T extends RecordRule<any> = RecordRule<
   clazz: abstract new (...args: any[]) => E,
   rule?: T
 ): FunctionRule<E & Infer<T>> {
-  return allOf(instanceOf(clazz), record((rule as any) || {}));
+  return allOf(instanceOf(clazz), recordWith((rule as any) || {}));
 }
 
 /**
@@ -379,7 +386,7 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     return errorWith({ /*name, too strict*/ message, ...schema }, ctor as any);
   }
   if (__isRecord(schema)) {
-    return __record(schema);
+    return __recordWith(schema);
   }
 
   throw new Error('hell knows');

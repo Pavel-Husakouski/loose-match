@@ -8,6 +8,7 @@ import {
   anUndefined,
   anyOf,
   arrayOf,
+  arrayWith,
   aString,
   equals,
   errorAs,
@@ -23,8 +24,8 @@ import {
   PredicateRule,
   primitive,
   re,
-  record,
   RecordRule,
+  recordWith,
   SchemaRule,
   tuple,
   validate,
@@ -191,15 +192,21 @@ describe('type from', () => {
   });
 
   it('tupleOf', () => {
-    const pattern = tuple(1, 2, 3, 5, 's');
+    const pattern = tuple(aNumber(), '2', 8, new Date());
 
-    expectType<typeof pattern>().is<FunctionRule<(string | number)[]>>();
+    expectType<typeof pattern>().is<FunctionRule<(number | string | Date)[]>>();
   });
 
   it('tupleOf', () => {
     const pattern = tuple(1, 2, 3, 5, 6);
 
     expectType<typeof pattern>().is<FunctionRule<[number, number, number, number, number]>>();
+  });
+
+  it('arrayWith', () => {
+    const pattern = arrayWith(1, 2, 3, 5, 's');
+
+    expectType<typeof pattern>().is<FunctionRule<(string | number)[]>>();
   });
 
   it('an enumeration', () => {
@@ -247,7 +254,7 @@ describe('type from', () => {
   });
 
   it('record', () => {
-    const pattern = record({
+    const pattern = recordWith({
       a: aString(),
       b: aNumber(),
     });
@@ -275,7 +282,7 @@ describe('type from', () => {
 
   it('nullable record', () => {
     const pattern = nullable(
-      record({
+      recordWith({
         a: aString(),
       })
     );
@@ -345,7 +352,7 @@ describe('type from', () => {
       name: '2',
       email: '3',
     };
-    const pattern = allOf(record({ id: '1' }), record({ name: '2' }), record({ email: aString() }));
+    const pattern = allOf(recordWith({ id: '1' }), recordWith({ name: '2' }), recordWith({ email: aString() }));
 
     pattern(obj);
 

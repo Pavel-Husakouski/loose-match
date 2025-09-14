@@ -379,7 +379,7 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
 
     const record = Object.fromEntries(entries);
 
-    return Fn.record(record);
+    return Fn.recordWith(record);
   }
 })();
 
