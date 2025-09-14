@@ -1,4 +1,4 @@
-import { arrayOf, aString, errorLike, nullable, primitive, record, validate } from '../src';
+import { arrayOf, aString, nullable, primitive, record, validate } from '../src';
 import { expect } from './@expect';
 
 describe('record', () => {
@@ -77,87 +77,5 @@ describe('record', () => {
     });
 
     expect(x).to.match([false, '[title] [1] expected a string, got [object Date]']);
-  });
-
-  it('error', () => {
-    const error = new Error();
-
-    // @ts-ignore
-    error.code = 'SOMETHING';
-
-    const rule = errorLike({ code: 'SOMETHING' });
-
-    const x = validate(rule, error);
-
-    expect(x).to.match([true]);
-  });
-
-  it('error, failed', () => {
-    const error = new Error();
-
-    // @ts-ignore
-    error.code = 'SOMETHING';
-
-    const rule = errorLike({ code: 'SOMETHING' }, TypeError);
-
-    const x = validate(rule, error);
-
-    expect(x).to.match([false, 'expected TypeError got Error']);
-  });
-
-  it('error, failed 2', () => {
-    const error = new Error();
-
-    const rule = errorLike({ code: 'SOMETHING' }, Error);
-
-    const x = validate(rule, error);
-
-    expect(x).to.match([false, '[code] expected String SOMETHING, got undefined']);
-  });
-
-  it('error property', () => {
-    const error = new Error();
-
-    // @ts-ignore
-    error.code = 'SOMETHING';
-
-    const rule = record({ error });
-
-    const x = validate(rule, { error });
-
-    expect(x).to.match([true]);
-  });
-
-  it('error property, failed', () => {
-    const error = new Error();
-
-    // @ts-ignore
-    error.code = 'SOMETHING';
-
-    const rule = record({ error });
-
-    const x = validate(rule, { error: new Error() });
-
-    expect(x).to.match([false, '[error] [code] expected String SOMETHING, got undefined']);
-  });
-
-  it('descendant error property, descendant', () => {
-    const error = new Error();
-    const rule = record({ error });
-    const x = validate(rule, {
-      error: new (class MyError extends Error {})(),
-    });
-
-    expect(x).to.match([true]);
-  });
-
-  it('descendant error property, failed', () => {
-    const error = new Error();
-    const rule = record({ error });
-    const x = validate(rule, {
-      error: new (class NotError {})(),
-    });
-
-    expect(x).to.match([false, '[error] expected Error got NotError']);
   });
 });

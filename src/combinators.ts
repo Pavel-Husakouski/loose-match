@@ -285,15 +285,27 @@ export function instanceOf<T>(ctor: abstract new (...args: any[]) => T): Functio
 }
 
 /**
- * A rule - an error like object of a specific class and properties
+ * A rule - an error object of a specific class and properties
  * @param rule The rule to validate the error properties
  * @param clazz The error class, default to Error
  */
-export function errorLike<T extends RecordRule<any>, E extends Error = Error>(
+export function errorWith<T extends RecordRule<any>, E extends Error = Error>(
   rule: T,
   clazz: abstract new (...args: any[]) => E = Error as any
-): FunctionRule<Infer<T>> {
-  return allOf(instanceOf(clazz), record(rule));
+): FunctionRule<Infer<T> & E> {
+  return allOf(record(rule), instanceOf(clazz || Error));
+}
+
+/**
+ * A rule - an error object of a specific class and properties
+ * @param rule The rule to validate the error properties
+ * @param clazz The error class, default to Error
+ */
+export function errorAs<E extends Error, T extends RecordRule<any> = RecordRule<any>>(
+  clazz: abstract new (...args: any[]) => E,
+  rule?: T
+): FunctionRule<E & Infer<T>> {
+  return allOf(instanceOf(clazz), record((rule as any) || {}));
 }
 
 /**
@@ -364,7 +376,7 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     const message = schema.message;
 
     // @ts-ignore spread operator has issues with error properties
-    return errorLike({ /*name, too strict*/ message, ...schema }, ctor as any);
+    return errorWith({ /*name, too strict*/ message, ...schema }, ctor as any);
   }
   if (__isRecord(schema)) {
     return __record(schema);
