@@ -46,7 +46,7 @@ function __recordWith<T extends RecordRule<any> = RecordRule<any>>(schemaRule: T
   };
 }
 
-function __tuple<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> {
+function __arrayWith<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> {
   const rules = items.map(__toFunction);
 
   return function __arrayIs(value: unknown) {
@@ -74,15 +74,15 @@ function __tuple<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> {
 /**
  * A rule - a tuple of items
  */
-export function tuple<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
-  return __tuple(items);
+export function tupleWith<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
+  return __arrayWith(items);
 }
 
 /**
  * A rule - an array with fixed items
  */
 export function arrayWith<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<ItemsOf<T>>[]> {
-  return __tuple(items as any) as any;
+  return __arrayWith(items as any) as any;
 }
 
 /**
@@ -304,18 +304,6 @@ export function errorWith<T extends RecordRule<any>, E extends Error = Error>(
 }
 
 /**
- * A rule - an error object of a specific class and properties
- * @param rule The rule to validate the error properties
- * @param clazz The error class, default to Error
- */
-export function errorAs<E extends Error, T extends RecordRule<any> = RecordRule<any>>(
-  clazz: abstract new (...args: any[]) => E,
-  rule?: T
-): FunctionRule<E & Infer<T>> {
-  return allOf(instanceOf(clazz), recordWith((rule as any) || {}));
-}
-
-/**
  * A rule - the exact equality of a value
  * @param value The value
  * @returns The rule
@@ -331,7 +319,7 @@ export function equals<const T>(value: T): FunctionRule<T> {
 }
 
 /**
- * Create A rule - a primitive primitive value
+ * Create A rule - a primitive value
  * @param value The value
  * @returns The rule
  */
@@ -375,7 +363,7 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     return primitive(schema);
   }
   if (__isArray(schema)) {
-    return __tuple(schema);
+    return __arrayWith(schema);
   }
   if (__isError(schema)) {
     const ctor = schema.constructor;

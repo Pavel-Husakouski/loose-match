@@ -11,11 +11,11 @@ import {
   arrayWith,
   aString,
   equals,
-  errorAs,
   errorWith,
   FunctionRule,
   Infer,
   instanceOf,
+  length,
   noneOf,
   not,
   nullable,
@@ -27,7 +27,7 @@ import {
   RecordRule,
   recordWith,
   SchemaRule,
-  tuple,
+  tupleWith,
   validate,
   ValidationResult,
 } from '../src';
@@ -186,19 +186,19 @@ describe('type from', () => {
   });
 
   it('tupleOf', () => {
-    const pattern = tuple(aNumber(), '2', 8, new Date());
+    const pattern = tupleWith(aNumber(), '2', 8, new Date());
 
     expectType<typeof pattern>().is<FunctionRule<[number, string, number, Date]>>();
   });
 
   it('tupleOf', () => {
-    const pattern = tuple(aNumber(), '2', 8, new Date());
+    const pattern = tupleWith(aNumber(), '2', 8, new Date());
 
     expectType<typeof pattern>().is<FunctionRule<(number | string | Date)[]>>();
   });
 
   it('tupleOf', () => {
-    const pattern = tuple(1, 2, 3, 5, 6);
+    const pattern = tupleWith(1, 2, 3, 5, 6);
 
     expectType<typeof pattern>().is<FunctionRule<[number, number, number, number, number]>>();
   });
@@ -219,6 +219,12 @@ describe('type from', () => {
     const pattern = arrayOf(anyOf('1', 5, new Date()));
 
     expectType<Infer<typeof pattern>>().is<(string | Date | number)[]>();
+  });
+
+  it('length', () => {
+    const pattern = length(5);
+
+    expectType<Infer<typeof pattern>>().is<string | any[]>();
   });
 
   it('record with array', () => {
@@ -478,35 +484,6 @@ describe('type from', () => {
     expectType<Infer<typeof pattern>>().is<{ message: string; code: number } & MyError>();
   });
 
-  it('errorOf', () => {
-    class MyError extends Error {
-      code: number = 5;
-    }
-
-    const pattern = errorAs(MyError);
-
-    expectType<Infer<typeof pattern>>().is<MyError>();
-  });
-
-  it('errorOf', () => {
-    class MyError extends Error {
-      code: number = 5;
-    }
-
-    const pattern = errorAs(MyError);
-
-    expectType<Infer<typeof pattern>>().is<{ code: number; message: string; name: string; stack: string }>();
-  });
-
-  it('errorOf', () => {
-    class MyError extends Error {
-      code: number = 5;
-    }
-
-    const pattern = errorAs(MyError, { message: aString(), code: aNumber(), details: { info: 'x' } });
-
-    expectType<Infer<typeof pattern>>().is<MyError & { details: { info: string } }>();
-  });
   it('isNull', () => {
     const pattern = nullish();
 
