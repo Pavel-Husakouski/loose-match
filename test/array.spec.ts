@@ -1,5 +1,5 @@
 import { describe, it } from 'mocha';
-import { anyOf, anything, arrayOf, length, primitive, validate } from '../src';
+import { anyOf, anything, arrayOf, primitive, shapeWith, validate } from '../src';
 import { expect } from './@expect';
 
 describe('array', () => {
@@ -55,15 +55,15 @@ describe('array', () => {
   });
 
   it('a length of an array', () => {
-    const schema = length(2);
+    const schema = shapeWith({ length: 2 });
 
     expect(validate(schema, ['1', '2'])).to.match([true]);
     expect(validate(schema, 'xe')).to.match([true]);
     expect(validate(schema, { length: 2 })).to.match([true]);
-    expect(validate(schema, [])).to.match([false, 'expected length to be 2, got 0']);
-    expect(validate(schema, null)).to.match([false, 'expected length to be 2, got undefined']);
-    expect(validate(schema, { length: 4 })).to.match([false, 'expected length to be 2, got 4']);
-    expect(validate(schema, {})).to.match([false, 'expected length to be 2, got undefined']);
+    expect(validate(schema, [])).to.match([false, '[length] expected Number 2, got Number 0']);
+    expect(validate(schema, null)).to.match([false, 'expected non null value, got null']);
+    expect(validate(schema, { length: 4 })).to.match([false, '[length] expected Number 2, got Number 4']);
+    expect(validate(schema, {})).to.match([false, '[length] expected Number 2, got undefined']);
   });
 
   it('an array of anything', () => {

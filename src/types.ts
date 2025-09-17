@@ -135,8 +135,8 @@ export function __typeOf(v: any): __TypeOf {
 /**
  * @internal
  */
-export function __isRecord<T>(schema: unknown): schema is RecordRule<any> {
-  return typeof schema === 'object' && !Array.isArray(schema);
+export function __isRecord<T>(value: unknown): value is RecordRule<any> {
+  return __typeOf(value) === '[object Object]';
 }
 
 /**

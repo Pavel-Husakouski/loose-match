@@ -2,8 +2,7 @@ import {
   __invalid,
   __isArray,
   __isError,
-  __isPrimitive,
-  __isRecord,
+  __isPrimitive, __isRecord,
   __stringify,
   __typeOf,
   __valid,
@@ -26,8 +25,40 @@ export function recordWith<T extends RecordRule<any>>(rule: T): FunctionRule<Inf
 function __recordWith<T extends RecordRule<any> = RecordRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
   return function __record(obj: Infer<T>) {
     if (!__isRecord(obj)) {
-      return __invalid(`expected object, got ${__typeOf(obj)}`);
+      return __invalid(`expected object, got ${__stringify(obj)}`);
     }
+
+    for (const property in schemaRule) {
+      if (!schemaRule.hasOwnProperty(property)) {
+        continue;
+      }
+      const rule = __toFunction(schemaRule[property]);
+      const propertyValue = obj[property];
+      const [succeed, message] = rule(propertyValue);
+
+      if (!succeed) {
+        return __invalid(`[${property}] ${message}`);
+      }
+    }
+
+    return __valid;
+  };
+}
+
+/**
+ * A rule - a shape of the object
+ */
+export function shapeWith<T extends RecordRule<any>>(rule: T): FunctionRule<Infer<T>> {
+  return __shapeWith(rule);
+}
+
+function __shapeWith<T extends RecordRule<any> = RecordRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
+  return function __record(value: Infer<T>) {
+    if(value == null) {
+      return __invalid(`expected non null value, got ${__stringify(value)}`);
+    }
+
+    const obj = Object(value);
 
     for (const property in schemaRule) {
       if (!schemaRule.hasOwnProperty(property)) {
@@ -107,16 +138,6 @@ export function arrayOf<T extends SchemaRule<any>>(item: T): FunctionRule<Infer<
     }
 
     return __valid;
-  };
-}
-
-/**
- * A rule - a length of an array-like object
- * @param value The expected length of the array-like object
- */
-export function length<T extends { length: number } = string | Array<any>>(value: number): FunctionRule<T> {
-  return function __length(obj: any) {
-    return obj?.length === value ? __valid : __invalid(`expected length to be ${value}, got ${obj?.length}`);
   };
 }
 
@@ -298,7 +319,7 @@ export function instanceOf<T>(ctor: abstract new (...args: any[]) => T): Functio
  */
 export function errorWith<T extends RecordRule<any>, E extends Error = Error>(
   rule: T,
-  clazz: abstract new (...args: any[]) => E = Error as any
+  clazz: abstract new (...args: any[]) => E = Error as any,
 ): FunctionRule<Infer<T> & E> {
   return allOf(recordWith(rule), instanceOf(clazz || Error));
 }

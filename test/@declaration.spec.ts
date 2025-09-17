@@ -15,7 +15,6 @@ import {
   FunctionRule,
   Infer,
   instanceOf,
-  length,
   noneOf,
   not,
   nullable,
@@ -26,7 +25,7 @@ import {
   re,
   RecordRule,
   recordWith,
-  SchemaRule,
+  SchemaRule, shapeWith,
   tupleWith,
   validate,
   ValidationResult,
@@ -221,10 +220,10 @@ describe('type from', () => {
     expectType<Infer<typeof pattern>>().is<(string | Date | number)[]>();
   });
 
-  it('length', () => {
-    const pattern = length(5);
+  it('shape', () => {
+    const pattern = shapeWith({length: 5});
 
-    expectType<Infer<typeof pattern>>().is<string | any[]>();
+    expectType<Infer<typeof pattern>>().is<Array<any>>();
   });
 
   it('record with array', () => {

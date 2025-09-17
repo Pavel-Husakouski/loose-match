@@ -2,6 +2,16 @@ import { arrayOf, aString, nullable, primitive, recordWith, validate } from '../
 import { expect } from './@expect';
 
 describe('record', () => {
+  it('record, null', () => {
+    const schema = recordWith({
+      test: 'a test',
+    });
+
+    expect(
+      validate(schema, null)
+    ).to.match([false,'expected object, got null']);
+  });
+
   it('record of string valid', () => {
     const schema = recordWith({
       test: primitive('test'),

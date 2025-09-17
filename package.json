@@ -1,6 +1,6 @@
 {
   "name": "@beeff/loose-match",
-  "version": "0.4.5",
+  "version": "0.5.0",
   "description": "An asymmetric matcher library made for the @beeff project",
   "main": "lib/index.js",
   "type": "module",
@@ -26,11 +26,11 @@
     "readme.md"
   ],
   "devDependencies": {
-    "@types/mocha": "^10.0.1",
-    "mocha": "^10.5.2",
+    "@types/mocha": "^10.0.10",
+    "mocha": "^11.7.2",
     "prettier": "^3.6.2",
     "ts-node": "^10.9.2",
-    "tslib": "^2.6.3",
+    "tslib": "^2.8.1",
     "typescript": "^5.9.2"
   }
 }
