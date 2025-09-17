@@ -1,4 +1,4 @@
-import { allOf, aNumber, AssertionError, aString, match, instanceOf } from '../src';
+import { aNumber, AssertionError, aString, errorWith, match } from '../src';
 
 describe('expect', () => {
   it('expect', () => {
@@ -15,11 +15,14 @@ describe('expect', () => {
     }
 
     match(error).with(
-      allOf(instanceOf(AssertionError), {
-        message: 'expected a string, got [object Number]',
-        actual: 1,
-        expected: 'expected a string, got [object Number]',
-      })
+      errorWith(
+        {
+          message: 'expected a string, got [object Number]',
+          actual: 1,
+          expected: 'expected a string, got [object Number]',
+        },
+        AssertionError
+      )
     );
   });
 

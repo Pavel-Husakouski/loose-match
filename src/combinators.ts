@@ -2,7 +2,8 @@ import {
   __invalid,
   __isArray,
   __isError,
-  __isPrimitive, __isRecord,
+  __isPrimitive,
+  __isRecord,
   __stringify,
   __typeOf,
   __valid,
@@ -54,7 +55,7 @@ export function shapeWith<T extends RecordRule<any>>(rule: T): FunctionRule<Infe
 
 function __shapeWith<T extends RecordRule<any> = RecordRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
   return function __record(value: Infer<T>) {
-    if(value == null) {
+    if (value == null) {
       return __invalid(`expected non null value, got ${__stringify(value)}`);
     }
 
@@ -319,9 +320,9 @@ export function instanceOf<T>(ctor: abstract new (...args: any[]) => T): Functio
  */
 export function errorWith<T extends RecordRule<any>, E extends Error = Error>(
   rule: T,
-  clazz: abstract new (...args: any[]) => E = Error as any,
+  clazz: abstract new (...args: any[]) => E = Error as any
 ): FunctionRule<Infer<T> & E> {
-  return allOf(recordWith(rule), instanceOf(clazz || Error));
+  return allOf(shapeWith(rule), instanceOf(clazz || Error));
 }
 
 /**

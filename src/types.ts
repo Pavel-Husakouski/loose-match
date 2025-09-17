@@ -58,7 +58,7 @@ export type Infer<T> = T extends Primitives
       : T extends RecordRule<infer P>
         ? { [K in keyof P]: Infer<P[K]> }
         : // T extends [infer Head, ...infer Tail] ? [Infer<Head>, ...Infer<Tail>] :
-        T extends ArrayRule<infer P>
+          T extends ArrayRule<infer P>
           ? Infer<P>[]
           : never;
 
@@ -99,7 +99,8 @@ export type __TypeOf =
   | '[object BigInt]'
   | '[object Symbol]'
   | '[object Object]'
-  | '[object Error]';
+  | '[object Error]'
+  | '[object Function]';
 
 /**
  * @internal
@@ -146,12 +147,10 @@ export function __isError<T>(schema: unknown): schema is RecordRule<Error> {
   return __typeOf(schema) === '[object Error]';
 }
 
-
 /**
  * @internal
  */
 export const __valid = [true] as const;
-
 
 /**
  * @internal
@@ -182,4 +181,5 @@ export const __typeRender: Record<__TypeOf, (value: any) => string> = {
   '[object Symbol]': (value: any) => `Symbol ${value}`,
   '[object Object]': () => `Object object`,
   '[object Error]': (value: any) => `${value.name} ${value.message}`,
+  '[object Function]': (value: Function) => `function ${value.name || '<anonymous>'}`,
 };
