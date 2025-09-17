@@ -2,8 +2,8 @@ import {
   __invalid,
   __isArray,
   __isError,
+  __isObject,
   __isPrimitive,
-  __isRecord,
   __stringify,
   __typeOf,
   __valid,
@@ -11,21 +11,21 @@ import {
   Infer,
   InferIntersection,
   ItemsOf,
+  ObjectRule,
   PrimitiveRule,
-  RecordRule,
   SchemaRule,
 } from './types.js';
 
 /**
- * A rule - a shape of the object
+ * A rule - an object with specific properties
  */
-export function recordWith<T extends RecordRule<any>>(rule: T): FunctionRule<Infer<T>> {
-  return __recordWith(rule);
+export function objectWith<T extends ObjectRule<any>>(rule: T): FunctionRule<Infer<T>> {
+  return __objectWith(rule);
 }
 
-function __recordWith<T extends RecordRule<any> = RecordRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
-  return function __record(obj: Infer<T>) {
-    if (!__isRecord(obj)) {
+function __objectWith<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
+  return function __object(obj: Infer<T>) {
+    if (!__isObject(obj)) {
       return __invalid(`expected object, got ${__stringify(obj)}`);
     }
 
@@ -47,14 +47,14 @@ function __recordWith<T extends RecordRule<any> = RecordRule<any>>(schemaRule: T
 }
 
 /**
- * A rule - a shape of the object
+ * A rule - a shape of the object-like value (non-null)
  */
-export function shapeWith<T extends RecordRule<any>>(rule: T): FunctionRule<Infer<T>> {
+export function shapeWith<T extends ObjectRule<any>>(rule: T): FunctionRule<Infer<T>> {
   return __shapeWith(rule);
 }
 
-function __shapeWith<T extends RecordRule<any> = RecordRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
-  return function __record(value: Infer<T>) {
+function __shapeWith<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
+  return function __shapeWith(value: Infer<T>) {
     if (value == null) {
       return __invalid(`expected non null value, got ${__stringify(value)}`);
     }
@@ -318,7 +318,7 @@ export function instanceOf<T>(ctor: abstract new (...args: any[]) => T): Functio
  * @param rule The rule to validate the error properties
  * @param clazz The error class, default to Error
  */
-export function errorWith<T extends RecordRule<any>, E extends Error = Error>(
+export function errorWith<T extends ObjectRule<any>, E extends Error = Error>(
   rule: T,
   clazz: abstract new (...args: any[]) => E = Error as any
 ): FunctionRule<Infer<T> & E> {
@@ -395,8 +395,8 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     // @ts-ignore spread operator has issues with error properties
     return errorWith({ /*name, too strict*/ message, ...schema }, ctor as any);
   }
-  if (__isRecord(schema)) {
-    return __recordWith(schema);
+  if (__isObject(schema)) {
+    return __objectWith(schema);
   }
 
   throw new Error('hell knows');

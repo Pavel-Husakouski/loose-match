@@ -1,6 +1,5 @@
-import { arrayOf, aString, nullable, shapeWith, validate } from '../src';
+import { arrayOf, aString, equals, nullable, shapeWith, validate } from '../src';
 import { expect } from './@expect';
-import { equals } from '../lib';
 
 describe('shape', () => {
   it('shape, null', () => {

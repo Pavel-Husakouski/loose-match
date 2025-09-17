@@ -19,13 +19,14 @@ import {
   not,
   nullable,
   nullish,
+  ObjectRule,
+  objectWith,
   oneOf,
   PredicateRule,
   primitive,
   re,
-  RecordRule,
-  recordWith,
-  SchemaRule, shapeWith,
+  SchemaRule,
+  shapeWith,
   tupleWith,
   validate,
   ValidationResult,
@@ -128,13 +129,13 @@ describe('type from', () => {
 
   expectType<Infer<SchemaRule<number>[]>>().is<number[]>();
 
-  expectType<Infer<RecordRule<{ a: SchemaRule<string> }>[]>>().is<{ a: string }[]>();
+  expectType<Infer<ObjectRule<{ a: SchemaRule<string> }>[]>>().is<{ a: string }[]>();
 
-  expectType<Infer<[RecordRule<{ a: SchemaRule<User> }>]>>().is<[{ a: User }]>();
+  expectType<Infer<[ObjectRule<{ a: SchemaRule<User> }>]>>().is<[{ a: User }]>();
 
   expectType<Infer<[{ a: SchemaRule<User> }]>>().is<[{ a: User }]>();
 
-  expectType<Infer<[RecordRule<{ a: SchemaRule<User> }>, User, string]>>().is<[{ a: User }, User, string]>();
+  expectType<Infer<[ObjectRule<{ a: SchemaRule<User> }>, User, string]>>().is<[{ a: User }, User, string]>();
 
   expectType<Infer<FunctionRule<string> | FunctionRule<number> | PredicateRule<string[]>>>().is<
     string | number | string[]
@@ -221,7 +222,7 @@ describe('type from', () => {
   });
 
   it('shape', () => {
-    const pattern = shapeWith({length: 5});
+    const pattern = shapeWith({ length: 5 });
 
     expectType<Infer<typeof pattern>>().is<Array<any>>();
   });
@@ -259,7 +260,7 @@ describe('type from', () => {
   });
 
   it('record', () => {
-    const pattern = recordWith({
+    const pattern = objectWith({
       a: aString(),
       b: aNumber(),
     });
@@ -287,7 +288,7 @@ describe('type from', () => {
 
   it('nullable record', () => {
     const pattern = nullable(
-      recordWith({
+      objectWith({
         a: aString(),
       })
     );
@@ -357,7 +358,7 @@ describe('type from', () => {
       name: '2',
       email: '3',
     };
-    const pattern = allOf(recordWith({ id: '1' }), recordWith({ name: '2' }), recordWith({ email: aString() }));
+    const pattern = allOf(objectWith({ id: '1' }), objectWith({ name: '2' }), objectWith({ email: aString() }));
 
     pattern(obj);
 

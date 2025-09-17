@@ -32,9 +32,9 @@ export type Primitives = RegExp | boolean | string | number | bigint | symbol | 
 export type PrimitiveRule<T> = T extends Primitives ? T : never;
 
 /**
- * A record rule or and object schema
+ * An object schema
  */
-export type RecordRule<T> = { [key in keyof T]: SchemaRule<T[key]> };
+export type ObjectRule<T> = { [key in keyof T]: SchemaRule<T[key]> };
 
 /**
  * An array rule
@@ -44,7 +44,7 @@ export type ArrayRule<T> = SchemaRule<T>[];
 /**
  * A schema rule
  */
-export type SchemaRule<T> = PrimitiveRule<T> | PredicateRule<T> | FunctionRule<T> | RecordRule<T>;
+export type SchemaRule<T> = PrimitiveRule<T> | PredicateRule<T> | FunctionRule<T> | ObjectRule<T>;
 
 /**
  * Infer the type of a schema rule
@@ -55,7 +55,7 @@ export type Infer<T> = T extends Primitives
     ? P
     : T extends FunctionRule<infer P>
       ? P
-      : T extends RecordRule<infer P>
+      : T extends ObjectRule<infer P>
         ? { [K in keyof P]: Infer<P[K]> }
         : // T extends [infer Head, ...infer Tail] ? [Infer<Head>, ...Infer<Tail>] :
           T extends ArrayRule<infer P>
@@ -136,14 +136,14 @@ export function __typeOf(v: any): __TypeOf {
 /**
  * @internal
  */
-export function __isRecord<T>(value: unknown): value is RecordRule<any> {
+export function __isObject<T>(value: unknown): value is ObjectRule<any> {
   return __typeOf(value) === '[object Object]';
 }
 
 /**
  * @internal
  */
-export function __isError<T>(schema: unknown): schema is RecordRule<Error> {
+export function __isError<T>(schema: unknown): schema is ObjectRule<Error> {
   return __typeOf(schema) === '[object Error]';
 }
 

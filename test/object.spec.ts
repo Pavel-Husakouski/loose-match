@@ -1,19 +1,17 @@
-import { arrayOf, aString, nullable, primitive, recordWith, validate } from '../src';
+import { arrayOf, aString, nullable, objectWith, primitive, validate } from '../src';
 import { expect } from './@expect';
 
-describe('record', () => {
-  it('record, null', () => {
-    const schema = recordWith({
+describe('object', () => {
+  it('object, null', () => {
+    const schema = objectWith({
       test: 'a test',
     });
 
-    expect(
-      validate(schema, null)
-    ).to.match([false,'expected object, got null']);
+    expect(validate(schema, null)).to.match([false, 'expected object, got null']);
   });
 
-  it('record of string valid', () => {
-    const schema = recordWith({
+  it('object of string valid', () => {
+    const schema = objectWith({
       test: primitive('test'),
     });
 
@@ -24,8 +22,8 @@ describe('record', () => {
     ).to.match([true]);
   });
 
-  it('record of string invalid', () => {
-    const schema = recordWith({
+  it('object of string invalid', () => {
+    const schema = objectWith({
       test: primitive('test'),
     });
 
@@ -36,8 +34,8 @@ describe('record', () => {
     ).to.match([false, `[test] expected String test, got Number 5`]);
   });
 
-  it('record of array valid', () => {
-    const schema = recordWith({
+  it('object of array valid', () => {
+    const schema = objectWith({
       test: ['test', 'another test'],
     });
 
@@ -48,8 +46,8 @@ describe('record', () => {
     ).to.match([true]);
   });
 
-  it('record of tuples invalid', () => {
-    const schema = recordWith({
+  it('object of tuples invalid', () => {
+    const schema = objectWith({
       test: ['test', 'another test'],
     });
 
