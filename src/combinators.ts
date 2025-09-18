@@ -24,25 +24,12 @@ export function objectWith<T extends ObjectRule<any>>(rule: T): FunctionRule<Inf
 }
 
 function __objectWith<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
-  return function __object(obj: Infer<T>) {
-    if (!__isObject(obj)) {
-      return __invalid(`expected object, got ${__stringify(obj)}`);
+  return function __object(value: unknown) {
+    if (!__isObject(value)) {
+      return __invalid(`expected object, got ${__stringify(value)}`);
     }
 
-    for (const property in schemaRule) {
-      if (!schemaRule.hasOwnProperty(property)) {
-        continue;
-      }
-      const rule = __toFunction(schemaRule[property]);
-      const propertyValue = obj[property];
-      const [succeed, message] = rule(propertyValue);
-
-      if (!succeed) {
-        return __invalid(`[${property}] ${message}`);
-      }
-    }
-
-    return __valid;
+    return __props(value, schemaRule);
   };
 }
 
@@ -53,28 +40,32 @@ export function shapeWith<T extends ObjectRule<any>>(rule: T): FunctionRule<Infe
   return __shapeWith(rule);
 }
 
+function __props<T extends ObjectRule<any> = ObjectRule<any>>(value: unknown, schemaRule: T) {
+  const obj = Object(value);
+
+  for (const property in schemaRule) {
+    if (!schemaRule.hasOwnProperty(property)) {
+      continue;
+    }
+    const rule = __toFunction(schemaRule[property]);
+    const value = obj[property];
+    const [succeed, message] = rule(value);
+
+    if (!succeed) {
+      return __invalid(`[${property}] ${message}`);
+    }
+  }
+
+  return __valid;
+}
+
 function __shapeWith<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
   return function __shapeWith(value: Infer<T>) {
     if (value == null) {
       return __invalid(`expected non null value, got ${__stringify(value)}`);
     }
 
-    const obj = Object(value);
-
-    for (const property in schemaRule) {
-      if (!schemaRule.hasOwnProperty(property)) {
-        continue;
-      }
-      const rule = __toFunction(schemaRule[property]);
-      const value = obj[property];
-      const [succeed, message] = rule(value);
-
-      if (!succeed) {
-        return __invalid(`[${property}] ${message}`);
-      }
-    }
-
-    return __valid;
+    return __props(value, schemaRule);
   };
 }
 
