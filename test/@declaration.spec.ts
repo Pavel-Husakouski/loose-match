@@ -159,10 +159,16 @@ describe('type from', () => {
     expectType<Infer<typeof pattern>>().is<'1'>();
   });
 
-  it('arrayOf', () => {
+  it('array schema inference', () => {
     const pattern = [1, '2'];
 
     expectType<Infer<typeof pattern>>().is<(string | number)[]>();
+  });
+
+  it('array schema inference', () => {
+    const pattern = [1, '2'] as const;
+
+    expectType<Infer<typeof pattern>>().is<[1, '2']>();
   });
 
   it('arrayOf', () => {
