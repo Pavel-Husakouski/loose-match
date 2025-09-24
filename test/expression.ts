@@ -334,8 +334,8 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
 type FnRendered = Built<Fn.FunctionRule<any>>;
 
 const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule<any>> {
-  primitive<T>(value: T): FnRendered {
-    return Fn.primitive(value);
+  primitive<T extends Primitives>(value: T): FnRendered {
+    return Fn.literal(value);
   }
 
   aNumber(): FnRendered {
