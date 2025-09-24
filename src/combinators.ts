@@ -12,6 +12,7 @@ import {
   InferIntersection,
   ItemsOf,
   ObjectRule,
+  PredicateRule,
   SchemaRule,
 } from './types.js';
 import { literal } from './primitives';
@@ -357,4 +358,19 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
   }
 
   throw new Error('hell knows');
+}
+
+/**
+ * A rule - a custom predicate function
+ * @param fn The predicate function
+ * @param message The error message when the predicate fails, default to "predicate failed for <value>"
+ */
+export function predicate<T>(fn: PredicateRule<T>, message?: string): FunctionRule<T> {
+  return function __predicate(value: T) {
+    if (fn(value)) {
+      return __valid;
+    }
+
+    return __invalid(message || `predicate failed for ${__stringify(value)}`);
+  };
 }

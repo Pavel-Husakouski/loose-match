@@ -24,6 +24,7 @@ import {
   ObjectRule,
   objectWith,
   oneOf,
+  predicate,
   PredicateRule,
   re,
   SchemaRule,
@@ -533,10 +534,22 @@ describe('type from', () => {
     expectType<Infer<typeof pattern>>().is<{ message: string; code: number } & MyError>();
   });
 
-  it('isNull', () => {
+  it('nullish', () => {
     const pattern = nullish();
 
     expectType<Infer<typeof pattern>>().is<null>();
+  });
+
+  it('nullish', () => {
+    const pattern = nullish();
+
+    expectType<Infer<typeof pattern>>().is<undefined>();
+  });
+
+  it('nullish', () => {
+    const pattern = nullish<string>();
+
+    expectType<Infer<typeof pattern>>().is<undefined>();
   });
 
   it('aNull', () => {
@@ -549,6 +562,24 @@ describe('type from', () => {
     const pattern = anUndefined();
 
     expectType(pattern).is<FunctionRule<undefined>>();
+  });
+
+  it('predicate', () => {
+    const pattern = (value: string): boolean => String(value).length === 0;
+
+    expectType<Infer<typeof pattern>>().is<string>();
+  });
+
+  it('predicate', () => {
+    const pattern = predicate((value: string): boolean => String(value).length === 0);
+
+    expectType<Infer<typeof pattern>>().is<string>();
+  });
+
+  it('predicate', () => {
+    const pattern = { id: predicate((value: string): boolean => String(value).length !== 0) };
+
+    expectType<Infer<typeof pattern>>().is<{ id: string }>();
   });
 
   it('validate', () => {

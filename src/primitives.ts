@@ -1,9 +1,10 @@
 import { __invalid, __stringify, __typeOf, __valid, FunctionRule, LiteralTypes, ValidationResult } from './types.js';
 
 /**
- * A rule - anything
+ * A rule - any value (always valid).
+ * Warning: using this rule disables the type inference of the value. Avoid using it with the rules `anyOf`, `oneOf` and `allOf`.
  */
-export function anything(): FunctionRule<unknown> {
+export function anything(): FunctionRule<any> {
   return function __anything(value: unknown): ValidationResult<any> {
     return __valid;
   };
@@ -45,14 +46,14 @@ export function aBoolean(): FunctionRule<boolean> {
 /**
  * A rule - null or undefined
  */
-export function nullish(): FunctionRule<null> {
-  return function __nullish(value: unknown): ValidationResult<null> {
+export function nullish<T = never>(): FunctionRule<T | null | undefined> {
+  return function __nullish(value: unknown): ValidationResult<null | undefined> {
     return value == null ? __valid : __invalid('expected null or undefined, got ' + __typeOf(value));
   };
 }
 
 /**
- * A rule - the null value
+ * A rule - null value
  */
 export function aNull(): FunctionRule<null> {
   return function __aNull(value: unknown): ValidationResult<null> {
@@ -61,7 +62,7 @@ export function aNull(): FunctionRule<null> {
 }
 
 /**
- * A rule - the undefined value
+ * A rule - undefined value
  */
 export function anUndefined(): FunctionRule<undefined> {
   return function __anUndefined(value: unknown): ValidationResult<undefined> {
@@ -73,7 +74,7 @@ export function anUndefined(): FunctionRule<undefined> {
  * A rule - any date
  */
 export function aDate(): FunctionRule<Date> {
-  return function (value: unknown): ValidationResult<Date> {
+  return function __aDate(value: unknown): ValidationResult<Date> {
     const type = __typeOf(value);
 
     return type === '[object Date]' ? __valid : __invalid('expected a date, got ' + type);
@@ -126,30 +127,33 @@ export function re(rule: RegExp): FunctionRule<string> {
  * @returns The rule
  */
 export function literal<const T extends LiteralTypes>(value: T): FunctionRule<T> {
-  if (value instanceof Date) {
-    return function __date(x: unknown) {
-      if (x instanceof Date && x.getTime() === value.getTime()) {
-        return __valid;
-      }
-
-      return __invalid(`expected ${__stringify(value)}, got ${__stringify(x)}`);
-    };
-  }
-  if (value instanceof RegExp) {
-    return function __regexp(x: unknown) {
-      if (x instanceof RegExp && x.toString() === value.toString()) {
-        return __valid;
-      }
-
-      return __invalid(`expected ${__stringify(value)}, got ${__stringify(x)}`);
-    };
-  }
-
-  return function __primitive(x: unknown) {
-    if (x === value) {
+  return function __literal(x: unknown) {
+    if (__literalIs(x, value)) {
       return __valid;
     }
 
     return __invalid(`expected ${__stringify(value)}, got ${__stringify(x)}`);
   };
+}
+
+function __literalIs(a: any, b: any): boolean {
+  // Fast path for strict equality (includes same object refs, same primitives, +0/-0 considered equal)
+  if (a === b) {
+    return true;
+  }
+
+  // Handle NaN
+  if (a !== a && b !== b) {
+    return true;
+  }
+
+  if (a instanceof Date && b instanceof Date) {
+    return a.getTime() === b.getTime();
+  }
+
+  if (a instanceof RegExp && b instanceof RegExp) {
+    return a.toString() === b.toString();
+  }
+
+  return false;
 }

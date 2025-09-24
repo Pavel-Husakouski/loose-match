@@ -22,14 +22,24 @@ export type PredicateRule<T> = (a: T) => boolean | void | never;
 export type FunctionRule<T> = (a: T) => ValidationResult<T>;
 
 /**
- * The set of literal types
+ * The set of types that can be compared by value
  */
-export type LiteralTypes = RegExp | boolean | string | number | bigint | symbol | null | undefined | Date;
+export type LiteralTypes = boolean | string | number | bigint | symbol | null | undefined | Date | RegExp;
 
 /**
  * A primitive rule
  */
 export type PrimitiveRule<T> = T extends LiteralTypes ? T : never;
+
+/**
+ * A date rule
+ */
+export type DateRule = Date;
+
+/**
+ * A RegExp rule
+ */
+export type RegExpRule = RegExp;
 
 /**
  * An object schema
