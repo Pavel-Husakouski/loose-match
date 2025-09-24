@@ -4,6 +4,7 @@ import {
   aDate,
   allOf,
   aNull,
+  aNullish,
   aNumber,
   anUndefined,
   anyOf,
@@ -20,7 +21,6 @@ import {
   noneOf,
   not,
   nullable,
-  nullish,
   ObjectRule,
   objectWith,
   oneOf,
@@ -535,19 +535,19 @@ describe('type from', () => {
   });
 
   it('nullish', () => {
-    const pattern = nullish();
+    const pattern = aNullish();
 
     expectType<Infer<typeof pattern>>().is<null>();
   });
 
   it('nullish', () => {
-    const pattern = nullish();
+    const pattern = aNullish();
 
     expectType<Infer<typeof pattern>>().is<undefined>();
   });
 
   it('nullish', () => {
-    const pattern = nullish<string>();
+    const pattern = aNullish<string>();
 
     expectType<Infer<typeof pattern>>().is<undefined>();
   });

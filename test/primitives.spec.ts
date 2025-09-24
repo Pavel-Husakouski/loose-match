@@ -1,5 +1,5 @@
 import { describe, it } from 'mocha';
-import { aBigInt, aBoolean, aDate, aNumber, aRegExp, aString, literal, nullish, re, validate } from '../src';
+import { aBigInt, aBoolean, aDate, aNullish, aNumber, aRegExp, aString, literal, re, validate } from '../src';
 import { expect } from './@expect';
 
 describe('literal', () => {
@@ -82,19 +82,19 @@ describe('literal', () => {
   });
 
   it('isNull null', () => {
-    const schema = nullish();
+    const schema = aNullish();
 
     expect(validate(schema, null)).to.match([true]);
   });
 
   it('isNull undefined', () => {
-    const schema = nullish();
+    const schema = aNullish();
 
     expect(validate(schema, undefined)).to.match([true]);
   });
 
   it('isNull, failed', () => {
-    const schema = nullish();
+    const schema = aNullish();
 
     expect(validate(schema, {})).to.match([false, `expected null or undefined, got [object Object]`]);
   });

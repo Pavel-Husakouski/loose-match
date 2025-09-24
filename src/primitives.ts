@@ -46,7 +46,7 @@ export function aBoolean(): FunctionRule<boolean> {
 /**
  * A rule - null or undefined
  */
-export function nullish<T = never>(): FunctionRule<T | null | undefined> {
+export function aNullish<T = never>(): FunctionRule<T | null | undefined> {
   return function __nullish(value: unknown): ValidationResult<null | undefined> {
     return value == null ? __valid : __invalid('expected null or undefined, got ' + __typeOf(value));
   };
