@@ -1,9 +1,9 @@
-import { arrayOf, aString, equals, nullable, shapeWith, validate } from '../src';
+import { arrayOf, aString, nullable, objectLike, strictEqual, validate } from '../src';
 import { expect } from './@expect';
 
 describe('shape', () => {
   it('shape, null', () => {
-    const schema = shapeWith({
+    const schema = objectLike({
       test: 'a test',
     });
 
@@ -11,31 +11,31 @@ describe('shape', () => {
   });
 
   it('shape of string, valid', () => {
-    const schema = shapeWith({ length: 2 });
+    const schema = objectLike({ length: 2 });
 
     expect(validate(schema, 'xe')).to.match([true]);
   });
 
   it('shape of string, invalid', () => {
-    const schema = shapeWith({ length: 2 });
+    const schema = objectLike({ length: 2 });
 
     expect(validate(schema, 'xexe')).to.match([false, '[length] expected Number 2, got Number 4']);
   });
 
   it('shape of string, invalid', () => {
-    const schema = shapeWith({ length: 2 });
+    const schema = objectLike({ length: 2 });
 
     expect(validate(schema, 5)).to.match([false, '[length] expected Number 2, got undefined']);
   });
 
   it('shape of array object, valid', () => {
-    const schema = shapeWith({ constructor: equals(Array) });
+    const schema = objectLike({ constructor: strictEqual(Array) });
 
     expect(validate(schema, [])).to.match([true]);
   });
 
   it('shape of array object, invalid', () => {
-    const schema = shapeWith({ constructor: equals(Function) });
+    const schema = objectLike({ constructor: strictEqual(Function) });
 
     expect(validate(schema, [])).to.match([
       false,
@@ -44,13 +44,13 @@ describe('shape', () => {
   });
 
   it('shape of function object, valid', () => {
-    const schema = shapeWith({ length: 2 });
+    const schema = objectLike({ length: 2 });
 
     expect(validate(schema, function (a: any, b: any) {})).to.match([true]);
   });
 
   it('object', () => {
-    const schema = shapeWith({
+    const schema = objectLike({
       id: 9,
       title: nullable(3),
       items: [1, 2, 3, '4'],
@@ -64,7 +64,7 @@ describe('shape', () => {
   });
 
   it('object, failed', () => {
-    const schema = shapeWith({
+    const schema = objectLike({
       id: 9,
       title: nullable(arrayOf(aString())),
       items: [1, 2, 3, '4'],

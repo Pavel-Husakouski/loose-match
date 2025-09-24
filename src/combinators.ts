@@ -15,7 +15,7 @@ import {
   PredicateRule,
   SchemaRule,
 } from './types.js';
-import { literal } from './primitives';
+import { literal } from './literals';
 
 /**
  * A rule - an object with specific properties
@@ -35,10 +35,10 @@ function __objectWith<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T
 }
 
 /**
- * A rule - a shape of the object-like value (non-null)
+ * A rule - a shape of the non-null object-like value, e.g. Array, Function, Date etc.
  */
-export function shapeWith<T extends ObjectRule<any>>(rule: T): FunctionRule<Infer<T>> {
-  return __shapeWith(rule);
+export function objectLike<T extends ObjectRule<any>>(rule: T): FunctionRule<Infer<T>> {
+  return __objectLike(rule);
 }
 
 function __props<T extends ObjectRule<any> = ObjectRule<any>>(value: unknown, schemaRule: T) {
@@ -60,7 +60,7 @@ function __props<T extends ObjectRule<any> = ObjectRule<any>>(value: unknown, sc
   return __valid;
 }
 
-function __shapeWith<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
+function __objectLike<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
   return function __shapeWith(value: Infer<T>) {
     if (value == null) {
       return __invalid(`expected non null value, got ${__stringify(value)}`);
@@ -96,25 +96,25 @@ function __arrayWith<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>
 }
 
 /**
- * A rule - a tuple of items
+ * A rule - a tuple with positionally fixed items, every item must match the corresponding rule
  */
 export function tupleWith<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
   return __arrayWith(items);
 }
 
 /**
- * A rule - an array with fixed items
+ * A rule - an array with positionally fixed items, every item must match the corresponding rule
  */
 export function arrayWith<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<ItemsOf<T>>[]> {
   return __arrayWith(items as any) as any;
 }
 
 /**
- * A rule - an array of items
- * @param item The rule for each item
+ * A rule - an array of items, every item must match the schema rule
+ * @param schema The rule for each item
  */
-export function arrayOf<T extends SchemaRule<any>>(item: T): FunctionRule<Infer<T>[]> {
-  const rule = __toFunction(item);
+export function arrayOf<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T>[]> {
+  const fnRule = __toFunction(schema);
 
   return function __arrayOf(items: unknown) {
     if (!Array.isArray(items)) {
@@ -123,7 +123,7 @@ export function arrayOf<T extends SchemaRule<any>>(item: T): FunctionRule<Infer<
 
     for (let i = 0; i < items.length; i++) {
       const v = items[i];
-      const [succeed, message] = rule(v);
+      const [succeed, message] = fnRule(v);
 
       if (!succeed) {
         return __invalid(`[${i}] ${message}`);
@@ -176,10 +176,10 @@ export function nullable<T extends SchemaRule<any>>(schema: T): FunctionRule<Inf
 
 /**
  * A combinator rule - a not rule
- * @param items The rule
+ * @param rule The rule to negate
  */
-export function not<T extends SchemaRule<any>>(items: T): FunctionRule<never> {
-  return __not(items);
+export function not<T extends SchemaRule<any>>(rule: T): FunctionRule<never> {
+  return __not(rule);
 }
 
 function __not<T extends SchemaRule<any>>(item: T): FunctionRule<never> {
@@ -190,33 +190,6 @@ function __not<T extends SchemaRule<any>>(item: T): FunctionRule<never> {
 
     if (succeed) {
       return __invalid(`expected not to match, but got a match`);
-    }
-
-    return __valid;
-  };
-}
-
-/**
- * A combinator rule - a none rule
- * @param items The rules to be applied
- */
-export function noneOf<T extends SchemaRule<any>[]>(...items: T): FunctionRule<never> {
-  return __noneOf(items);
-}
-
-function __noneOf<T extends SchemaRule<any>[]>(items: T): FunctionRule<never> {
-  const rules = items.map(__toFunction);
-
-  return function __noneOf(value: never) {
-    let i = 0;
-
-    for (const rule of rules) {
-      const [succeed] = rule(value);
-
-      if (succeed) {
-        return __invalid(`expected none of ${items.length} rules, got a match at index ${i}`);
-      }
-      i++;
     }
 
     return __valid;
@@ -314,16 +287,16 @@ export function errorWith<T extends ObjectRule<any>, E extends Error = Error>(
   rule: T,
   clazz: abstract new (...args: any[]) => E = Error as any
 ): FunctionRule<InferIntersection<[T, E]>> {
-  return allOf(shapeWith(rule), instanceOf(clazz || Error));
+  return allOf(objectLike(rule), instanceOf(clazz || Error));
 }
 
 /**
- * A rule - the exact equality of a value
+ * A rule - the strict equality to a value, e.g. a reference equality (===)
  * @param value The value
  * @returns The rule
  */
-export function equals<const T>(value: T): FunctionRule<T> {
-  return function __equals(o: unknown) {
+export function strictEqual<const T>(value: T): FunctionRule<T> {
+  return function __strictEqual(o: unknown) {
     if (value === o) {
       return __valid;
     }

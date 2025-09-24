@@ -1,4 +1,4 @@
-import { noneOf, not, oneOf, validate } from '../src';
+import { not, oneOf, validate } from '../src';
 import { expect } from './@expect';
 
 describe('combinators', () => {
@@ -20,15 +20,15 @@ describe('combinators', () => {
   });
 
   it('noneOf', () => {
-    const pattern = noneOf({ id: '1' }, { name: '2' }, { email: '3' });
+    const pattern = not(oneOf({ id: '1' }, { name: '2' }, { email: '3' }));
 
     expect(validate(pattern, { test: '1' })).to.match([true]);
   });
 
   it('noneOf, failed', () => {
-    const pattern = noneOf({ id: '1' }, { name: '2' }, { email: '3' });
+    const pattern = not(oneOf({ id: '1' }, { name: '2' }, { email: '3' }));
 
-    expect(validate(pattern, { name: '2' })).to.match([false, 'expected none of 3 rules, got a match at index 1']);
+    expect(validate(pattern, { name: '2' })).to.match([false, 'expected not to match, but got a match']);
   });
 
   it('not', () => {

@@ -11,16 +11,15 @@ import {
   arrayOf,
   arrayWith,
   aString,
-  equals,
   errorWith,
   FunctionRule,
   Infer,
   InferIntersection,
   instanceOf,
   literal,
-  noneOf,
   not,
   nullable,
+  objectLike,
   ObjectRule,
   objectWith,
   oneOf,
@@ -28,7 +27,7 @@ import {
   PredicateRule,
   re,
   SchemaRule,
-  shapeWith,
+  strictEqual,
   tupleWith,
   validate,
   ValidationResult,
@@ -151,7 +150,7 @@ describe('type from', () => {
   }>();
 
   it('equals', () => {
-    const pattern = equals(1);
+    const pattern = strictEqual(1);
 
     expectType<Infer<typeof pattern>>().is<1>();
   });
@@ -249,7 +248,7 @@ describe('type from', () => {
   });
 
   it('shape', () => {
-    const pattern = shapeWith({ length: 5 });
+    const pattern = objectLike({ length: 5 });
 
     expectType<Infer<typeof pattern>>().is<Array<any>>();
   });
@@ -420,7 +419,7 @@ describe('type from', () => {
   });
 
   it('noneOf', () => {
-    const pattern = noneOf({ id: '1' }, { name: '2' }, { email: '3' });
+    const pattern = not(oneOf({ id: '1' }, { name: '2' }, { email: '3' }));
 
     expectType<Infer<typeof pattern>>().is<never>();
   });

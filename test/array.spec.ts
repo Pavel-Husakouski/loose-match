@@ -1,5 +1,5 @@
 import { describe, it } from 'mocha';
-import { anyOf, anything, arrayOf, literal, shapeWith, validate } from '../src';
+import { anyOf, anything, arrayOf, literal, objectLike, validate } from '../src';
 import { expect } from './@expect';
 
 describe('array', () => {
@@ -55,7 +55,7 @@ describe('array', () => {
   });
 
   it('a length of an array', () => {
-    const schema = shapeWith({ length: 2 });
+    const schema = objectLike({ length: 2 });
 
     expect(validate(schema, ['1', '2'])).to.match([true]);
     expect(validate(schema, 'xe')).to.match([true]);
