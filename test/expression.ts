@@ -28,7 +28,7 @@ export type ValidationResult<T = any> = Valid<T> | Invalid<T>;
 // export type PredicateRule<T> = (a: T) => boolean | void | never;
 
 export interface ExpressionVisitor<X> {
-  exact(value: Primitives): Built<X>;
+  primitive(value: Primitives): Built<X>;
 
   aNumber(): Built<X>;
 
@@ -38,7 +38,7 @@ export interface ExpressionVisitor<X> {
 
   allOf(schemas: SchemaRule<any>[]): Built<X>;
 
-  record(schema: RecordRule<any>): Built<X>;
+  objectWith(schema: RecordRule<any>): Built<X>;
 
   re(rule: RegExp): Built<X>;
 }
@@ -126,17 +126,17 @@ class __Exp {
   }
 }
 
-class __exact extends __Exp {
+class __primitive extends __Exp {
   constructor(
     readonly arg: Primitives,
-    readonly type = 'exact' as const
+    readonly type = 'primitive' as const
   ) {
     super();
   }
 }
 
-export function exact<T extends Primitives>(arg: T): ExpressionRule<Infer<T>> {
-  return new __exact(arg);
+export function primitive<T extends Primitives>(arg: T): ExpressionRule<Infer<T>> {
+  return new __primitive(arg);
 }
 
 class __oneOf extends __Exp {
@@ -204,17 +204,17 @@ export function re(rule: RegExp): ExpressionRule<string> {
   return new __re(rule);
 }
 
-class __record extends __Exp {
+class __objectWith extends __Exp {
   constructor(
     readonly arg: RecordRule<any>,
-    readonly type = 'record' as const
+    readonly type = 'objectWith' as const
   ) {
     super();
   }
 }
 
-export function record<T extends RecordRule<any>>(rule: T): ExpressionRule<Infer<T>> {
-  return new __record(rule);
+export function objectWith<T extends RecordRule<any>>(rule: T): ExpressionRule<Infer<T>> {
+  return new __objectWith(rule);
 }
 
 export function __isPrimitive(value: any): value is Primitives {
@@ -247,13 +247,13 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
     return schema;
   }
   if (__isPrimitive(schema)) {
-    return exact(schema);
+    return primitive(schema);
   }
   // if (__isArray(schema)) {
   //   return __arrayIs(schema) as ExpressionRule<Infer<T>>;
   // }
   if (__isRecord(schema)) {
-    return record(schema);
+    return objectWith(schema);
   }
 
   throw new Error('hell knows');
@@ -261,7 +261,7 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
 
 const a = aString();
 const b = aNumber();
-const c = exact(true);
+const c = primitive(true);
 const mixed = allOf({ id: '5' }, { email: 'a@gmail.com' }, { age: 8 });
 
 expectType(a).is<ExpressionRule<string>>();
@@ -284,7 +284,7 @@ expectType(d).is<ExpressionRule<string | number | true>>();
 type Rendered = Built<string>;
 
 const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
-  exact<T>(value: T): Rendered {
+  primitive<T>(value: T): Rendered {
     return `exact(${JSON.stringify(value)})`;
   }
 
@@ -320,7 +320,7 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
     return `re(${rule.toString()})`;
   }
 
-  record(schema: RecordRule<any>): Rendered {
+  objectWith(schema: RecordRule<any>): Rendered {
     const entries = Object.entries(schema).map(([key, value]) => {
       const expression = __toExpression(value);
 
@@ -334,8 +334,8 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
 type FnRendered = Built<Fn.FunctionRule<any>>;
 
 const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule<any>> {
-  exact<T>(value: T): FnRendered {
-    return Fn.literal(value);
+  primitive<T>(value: T): FnRendered {
+    return Fn.primitive(value);
   }
 
   aNumber(): FnRendered {
@@ -370,7 +370,7 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     return Fn.re(rule);
   }
 
-  record(schema: RecordRule<any>): FnRendered {
+  objectWith(schema: RecordRule<any>): FnRendered {
     const entries = Object.entries(schema).map(([key, value]) => {
       const expression = __toExpression(value);
 
@@ -397,7 +397,7 @@ function toFunction<T extends SchemaRule<any>>(expression: ExpressionRule<T>): F
 
 const y = toFunction(d);
 
-const za = toFunction(exact(8));
+const za = toFunction(primitive(8));
 
 expectType(za).is<Fn.FunctionRule<8>>();
 
