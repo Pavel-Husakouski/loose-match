@@ -1,9 +1,9 @@
-import { __invalid, __typeOf, __valid, FunctionRule, ValidationResult } from './types.js';
+import { __invalid, __stringify, __typeOf, __valid, FunctionRule, LiteralTypes, ValidationResult } from './types.js';
 
 /**
  * A rule - anything
  */
-export function anything(): FunctionRule<any> {
+export function anything(): FunctionRule<unknown> {
   return function __anything(value: unknown): ValidationResult<any> {
     return __valid;
   };
@@ -83,8 +83,8 @@ export function aDate(): FunctionRule<Date> {
 /**
  * A rule - any RegExp
  */
-export function aRegExp(): FunctionRule<string> {
-  return function __aRegExp(value: unknown): ValidationResult<string> {
+export function aRegExp(): FunctionRule<RegExp> {
+  return function __aRegExp(value: unknown): ValidationResult<RegExp> {
     const type = __typeOf(value);
 
     return type === '[object RegExp]' ? __valid : __invalid('expected a regexp, got ' + type);
@@ -117,5 +117,39 @@ export function re(rule: RegExp): FunctionRule<string> {
     }
 
     return __valid;
+  };
+}
+
+/**
+ * Create A rule - a value type literal
+ * @param value The value
+ * @returns The rule
+ */
+export function literal<const T extends LiteralTypes>(value: T): FunctionRule<T> {
+  if (value instanceof Date) {
+    return function __date(x: unknown) {
+      if (x instanceof Date && x.getTime() === value.getTime()) {
+        return __valid;
+      }
+
+      return __invalid(`expected ${__stringify(value)}, got ${__stringify(x)}`);
+    };
+  }
+  if (value instanceof RegExp) {
+    return function __regexp(x: unknown) {
+      if (x instanceof RegExp && x.toString() === value.toString()) {
+        return __valid;
+      }
+
+      return __invalid(`expected ${__stringify(value)}, got ${__stringify(x)}`);
+    };
+  }
+
+  return function __primitive(x: unknown) {
+    if (x === value) {
+      return __valid;
+    }
+
+    return __invalid(`expected ${__stringify(value)}, got ${__stringify(x)}`);
   };
 }

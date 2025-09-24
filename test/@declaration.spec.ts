@@ -14,7 +14,9 @@ import {
   errorWith,
   FunctionRule,
   Infer,
+  InferIntersection,
   instanceOf,
+  literal,
   noneOf,
   not,
   nullable,
@@ -23,7 +25,6 @@ import {
   objectWith,
   oneOf,
   PredicateRule,
-  primitive,
   re,
   SchemaRule,
   shapeWith,
@@ -141,20 +142,39 @@ describe('type from', () => {
     string | number | string[]
   >();
 
+  expectType<InferIntersection<[{ id: string }, { email: string }]>>().is<{ id: string; email: string }>();
+
+  expectType<InferIntersection<[{ id: string }, { email: FunctionRule<string> }]>>().is<{
+    id: string;
+    email: string;
+  }>();
+
   it('equals', () => {
     const pattern = equals(1);
 
     expectType<Infer<typeof pattern>>().is<1>();
   });
 
-  it('exact', () => {
-    const pattern = primitive('1');
+  it('literal', () => {
+    const pattern = literal('1');
 
     expectType<Infer<typeof pattern>>().is<'1'>();
   });
 
-  it('exact', () => {
-    const pattern = primitive('1');
+  it('literal', () => {
+    const pattern = literal(new Date());
+
+    expectType<Infer<typeof pattern>>().is<Date>();
+  });
+
+  it('literal', () => {
+    const pattern = literal(/x/);
+
+    expectType<Infer<typeof pattern>>().is<RegExp>();
+  });
+
+  it('literal', () => {
+    const pattern = literal('1');
 
     expectType<Infer<typeof pattern>>().is<'1'>();
   });
@@ -259,11 +279,20 @@ describe('type from', () => {
     expectType<Infer<typeof pattern>>().is<{ a: (string | number)[] }>();
   });
 
-  it('record', () => {
+  it('objectWith', () => {
     const pattern = objectWith({
       a: aString(),
       b: aNumber(),
     });
+
+    expectType<Infer<typeof pattern>>().is<{ a: string; b: number }>();
+  });
+
+  it('objectWith', () => {
+    const pattern = {
+      a: aString(),
+      b: aNumber(),
+    };
 
     expectType<Infer<typeof pattern>>().is<{ a: string; b: number }>();
   });
@@ -352,7 +381,7 @@ describe('type from', () => {
     expectType<Infer<typeof pattern>>().is<string>();
   });
 
-  it('allOf', () => {
+  it('allOf objectWith', () => {
     const obj = {
       id: '1',
       name: '2',
@@ -367,6 +396,20 @@ describe('type from', () => {
       name: string;
       email: string;
     }>();
+  });
+
+  it('allOf', () => {
+    const pattern = allOf(
+      {
+        a: aString(),
+      },
+      {
+        b: aNumber(),
+      }
+    );
+
+    expectType<typeof pattern>().is<FunctionRule<{ a: string; b: number }>>();
+    expectType<typeof pattern>().is<FunctionRule<{ a: string } & { b: number }>>();
   });
 
   it('noneOf', () => {
@@ -464,7 +507,7 @@ describe('type from', () => {
   });
 
   it('error', () => {
-    const pattern = errorWith({ details: 'a message' });
+    const pattern = errorWith({ details: aString() });
 
     expectType<Infer<typeof pattern>>().is<{ details: string } & Error>();
   });

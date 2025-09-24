@@ -2,8 +2,8 @@ import {
   __invalid,
   __isArray,
   __isError,
+  __isLiteral,
   __isObject,
-  __isPrimitive,
   __stringify,
   __typeOf,
   __valid,
@@ -12,9 +12,9 @@ import {
   InferIntersection,
   ItemsOf,
   ObjectRule,
-  PrimitiveRule,
   SchemaRule,
 } from './types.js';
+import { literal } from './primitives';
 
 /**
  * A rule - an object with specific properties
@@ -170,7 +170,7 @@ function __all<T>(items: SchemaRule<T>[]): FunctionRule<any> {
  * A combinator rule - a nullable rule
  * @param schema The schema to make nullable
  */
-export function nullable<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T>> {
+export function nullable<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | null | undefined> {
   const rule = __toFunction(schema);
 
   return function __nullable(value: Infer<T>) {
@@ -321,7 +321,7 @@ export function instanceOf<T>(ctor: abstract new (...args: any[]) => T): Functio
 export function errorWith<T extends ObjectRule<any>, E extends Error = Error>(
   rule: T,
   clazz: abstract new (...args: any[]) => E = Error as any
-): FunctionRule<Infer<T> & E> {
+): FunctionRule<InferIntersection<[T, E]>> {
   return allOf(shapeWith(rule), instanceOf(clazz || Error));
 }
 
@@ -341,48 +341,14 @@ export function equals<const T>(value: T): FunctionRule<T> {
 }
 
 /**
- * Create A rule - a primitive value
- * @param value The value
- * @returns The rule
- */
-export function primitive<const T extends PrimitiveRule<any>>(value: T): FunctionRule<Infer<T>> {
-  if (value instanceof Date) {
-    return function __date(x: unknown) {
-      if (x instanceof Date && x.getTime() === value.getTime()) {
-        return __valid;
-      }
-
-      return __invalid(`expected ${__stringify(value)}, got ${__stringify(x)}`);
-    };
-  }
-  if (value instanceof RegExp) {
-    return function __regexp(x: unknown) {
-      if (x instanceof RegExp && x.toString() === value.toString()) {
-        return __valid;
-      }
-
-      return __invalid(`expected ${__stringify(value)}, got ${__stringify(x)}`);
-    };
-  }
-
-  return function __primitive(x: unknown) {
-    if (x === value) {
-      return __valid;
-    }
-
-    return __invalid(`expected ${__stringify(value)}, got ${__stringify(x)}`);
-  };
-}
-
-/**
  * @internal
  */
 export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T>> {
   if (typeof schema === 'function') {
     return schema as FunctionRule<Infer<T>>;
   }
-  if (__isPrimitive(schema)) {
-    return primitive(schema);
+  if (__isLiteral(schema)) {
+    return literal(schema) as FunctionRule<Infer<T>>;
   }
   if (__isArray(schema)) {
     return __arrayWith(schema);

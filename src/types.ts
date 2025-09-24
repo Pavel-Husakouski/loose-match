@@ -22,14 +22,14 @@ export type PredicateRule<T> = (a: T) => boolean | void | never;
 export type FunctionRule<T> = (a: T) => ValidationResult<T>;
 
 /**
- * The set of primitive types
+ * The set of literal types
  */
-export type Primitives = RegExp | boolean | string | number | bigint | symbol | null | undefined | Date;
+export type LiteralTypes = RegExp | boolean | string | number | bigint | symbol | null | undefined | Date;
 
 /**
  * A primitive rule
  */
-export type PrimitiveRule<T> = T extends Primitives ? T : never;
+export type PrimitiveRule<T> = T extends LiteralTypes ? T : never;
 
 /**
  * An object schema
@@ -49,7 +49,7 @@ export type SchemaRule<T> = PrimitiveRule<T> | PredicateRule<T> | FunctionRule<T
 /**
  * Infer the type of a schema rule
  */
-export type Infer<T> = T extends Primitives
+export type Infer<T> = T extends LiteralTypes
   ? T
   : T extends PredicateRule<infer P>
     ? P
@@ -68,8 +68,8 @@ export type Infer<T> = T extends Primitives
 export type InferIntersection<T extends any[]> = T extends [infer First, ...infer Rest]
   ? First extends SchemaRule<infer U>
     ? Rest extends any[]
-      ? U & InferIntersection<Rest>
-      : U
+      ? Infer<U> & InferIntersection<Rest>
+      : Infer<U>
     : never
   : unknown;
 
@@ -105,7 +105,7 @@ export type __TypeOf =
 /**
  * @internal
  */
-export function __isPrimitive(value: any): value is Primitives {
+export function __isLiteral(value: any): value is LiteralTypes {
   return (
     value === null ||
     value === undefined ||

@@ -1,4 +1,4 @@
-import { arrayOf, aString, nullable, objectWith, primitive, validate } from '../src';
+import { arrayOf, aString, literal, nullable, objectWith, validate } from '../src';
 import { expect } from './@expect';
 
 describe('object', () => {
@@ -12,7 +12,7 @@ describe('object', () => {
 
   it('object of string valid', () => {
     const schema = objectWith({
-      test: primitive('test'),
+      test: literal('test'),
     });
 
     expect(
@@ -24,7 +24,7 @@ describe('object', () => {
 
   it('object of string invalid', () => {
     const schema = objectWith({
-      test: primitive('test'),
+      test: literal('test'),
     });
 
     expect(

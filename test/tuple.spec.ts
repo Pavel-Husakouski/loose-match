@@ -1,18 +1,18 @@
 import { describe, it } from 'mocha';
-import { primitive, tupleWith, validate } from '../src';
+import { literal, tupleWith, validate } from '../src';
 import { expect } from './@expect';
 
 type Json = string | number | boolean | null | undefined | Json[] | { [key: string]: Json };
 
 describe('tuple', () => {
   it('tuple of string', () => {
-    const schema = tupleWith(primitive('test'));
+    const schema = tupleWith(literal('test'));
 
     expect(validate(schema, ['test'])).to.match([true]);
   });
 
   it('tuple of string, failed', () => {
-    const schema = tupleWith(primitive('test'));
+    const schema = tupleWith(literal('test'));
 
     expect(validate(schema, [5])).to.match([false, `[0] expected String test, got Number 5`]);
   });
