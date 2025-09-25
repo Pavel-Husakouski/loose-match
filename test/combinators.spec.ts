@@ -67,4 +67,31 @@ describe('combinators', () => {
     expect(validate(isPrototypedBy(A), prot)).to.match([true]);
     expect(validate(isPrototypedBy(A), plain)).to.match([false, `expected object prototyped by ${A.name} got Object`]);
   });
+
+  it('isInstanceOf - basic instance and non-instance', () => {
+    class A {}
+    const inst = new A();
+
+    expect(validate(isInstanceOf(A), inst)).to.match([true]);
+    expect(validate(isInstanceOf(A), {})).to.match([false, `expected ${A.name} got Object`]);
+  });
+
+  it('isInstanceOf - with explicit schema on instance', () => {
+    class A {
+      constructor(public name: string) {}
+    }
+    const inst = new A('x');
+
+    expect(validate(isInstanceOf(A, { name: 'x' }), inst)).to.match([true]);
+    expect(validate(isInstanceOf(A, { name: 'y' }), inst)).to.match([false, '[name] expected String y, got String x']);
+  });
+
+  it('isInstanceOf - explicit schema on non-instance fails (no duck-typing when schema provided)', () => {
+    class A {
+      constructor(public name: string) {}
+    }
+    const plain = { name: 'x' };
+
+    expect(validate(isInstanceOf(A, { name: 'x' }), plain)).to.match([false, `expected ${A.name} got Object`]);
+  });
 });

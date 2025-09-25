@@ -24,6 +24,8 @@ import { __assert } from './assert';
  * Note: object is considered as [object Object]
  */
 export function objectShape<T extends ObjectRule<any>>(rule: T): FunctionRule<Infer<T>> {
+  __assert(rule != null, 'object shape rule cannot be null or undefined');
+
   return __objectShape(rule);
 }
 
@@ -42,6 +44,8 @@ function __objectShape<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: 
  * Note: object-like is considered as any non-null object, including errors, arrays, functions, dates, etc.
  */
 export function objectLike<T extends ObjectRule<any>>(rule: T): FunctionRule<Infer<T>> {
+  __assert(rule != null, 'object like rule cannot be null or undefined');
+
   return function __objectLike(value: Infer<T>) {
     if (value == null) {
       return __invalid(`expected non null value, got ${__stringify(value)}`);
@@ -165,9 +169,11 @@ function __all<T>(items: SchemaRule<T>[]): FunctionRule<any> {
  * @param schema The schema to make nullable
  */
 export function nullable<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | null | undefined> {
+  __assert(schema != null, 'nullable null or undefined? interesting...');
+
   const rule = __toFunction(schema);
 
-  return function __nullable(value: Infer<T>) {
+  return function __nullable(value: any) {
     if (value == null) {
       return __valid;
     }
@@ -245,7 +251,7 @@ function __anyOf<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<ItemsO
 }
 
 /**
- * A rule -
+ * A rule - an object prototyped by a specific constructor function
  * @param ctor
  */
 export function isPrototypedBy<T>(ctor: abstract new (...args: any[]) => T): FunctionRule<T> {
@@ -253,9 +259,7 @@ export function isPrototypedBy<T>(ctor: abstract new (...args: any[]) => T): Fun
 
   return function __isPrototypedBy(value: unknown) {
     if (typeof value === 'function') {
-      const proto = (value as any).prototype;
-
-      if (proto && Object.prototype.isPrototypeOf.call(ctor.prototype, proto)) {
+      if (ctor.isPrototypeOf(value)) {
         return __valid;
       }
     } else {
@@ -274,10 +278,15 @@ export function isPrototypedBy<T>(ctor: abstract new (...args: any[]) => T): Fun
 }
 
 /**
- * A rule - an instance of a class
+ * A rule - an instance of a class and optionally matches an extra object shape rule
  * @param ctor The class constructor
  */
 export function isInstanceOf<T>(ctor: abstract new (...args: any[]) => T): FunctionRule<T>;
+/**
+ * A rule - an instance of a class and optionally matches an extra object shape rule
+ * @param ctor The class constructor
+ * @param extraRule An optional extra object shape rule to match the instance properties
+ */
 export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<T>>(
   ctor: abstract new (...args: any[]) => T,
   extraRule?: S
@@ -286,6 +295,8 @@ export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<T>>(
   ctor: abstract new (...args: any[]) => T,
   extraRule?: S
 ): FunctionRule<T & Infer<S>> {
+  __assert(__typeOf(ctor) === '[object Function]', 'argument must be a constructor function');
+
   function __instanceOf(value: unknown) {
     const instance = new Object(value);
 
@@ -297,7 +308,6 @@ export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<T>>(
 
     return __invalid(`expected ${ctor.name} got ${ctorOrNull}`);
   }
-  const shapeRule = objectLike(extraRule as ObjectRule<any>);
   function __instanceOfWith(value: unknown) {
     const isInstance = __instanceOf(value);
 
@@ -305,7 +315,14 @@ export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<T>>(
       return isInstance;
     }
 
-    return shapeRule(value as any);
+    return __objectLike(value as any);
+  }
+  function __objectLike(value: unknown) {
+    if (value == null) {
+      return __invalid(`expected non null value, got ${__stringify(value)}`);
+    }
+
+    return __props(value, extraRule as any);
   }
 
   if (!extraRule) {
@@ -363,6 +380,8 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
  * @param message The error message when the predicate fails, default to "predicate failed for <value>"
  */
 export function predicate<T>(fn: PredicateRule<T>, message?: string): FunctionRule<T> {
+  __assert(typeof fn === 'function', 'predicate requires a function argument');
+
   return function __predicate(value: T) {
     if (fn(value)) {
       return __valid;
