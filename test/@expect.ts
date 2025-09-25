@@ -1,4 +1,4 @@
-import { AssertionError, aString, Invalid, SchemaRule, Valid, validate } from '../src';
+import { __toFunction, AssertionError, aString, Invalid, isInstanceOf, SchemaRule, Valid, validate } from '../src';
 
 export function expectType<A>(arg?: A): { is<X extends A>(): void } {
   return {
@@ -8,7 +8,7 @@ export function expectType<A>(arg?: A): { is<X extends A>(): void } {
   };
 }
 
-export function expect(actual: any) {
+export function expect(actual: unknown) {
   return {
     to: {
       match(rule: Valid<any> | Invalid<any>) {
@@ -37,6 +37,27 @@ export function expect(actual: any) {
             ]);
           }
         },
+      },
+      throw(expected?: SchemaRule<any>) {
+        if (typeof actual !== 'function') {
+          throw new AssertionError(`Expected a function to assert throw, got ${typeof actual}`, {}, {});
+        }
+
+        const schema = __toFunction(expected || isInstanceOf(Error));
+
+        try {
+          actual();
+        } catch (err: any) {
+          const result = validate(schema, err);
+
+          if (result[0] === true) {
+            return;
+          }
+
+          throw new AssertionError(result[1], err, schema);
+        }
+
+        throw new AssertionError(`Expected function to throw, but it did not`, {}, {});
       },
     },
   };

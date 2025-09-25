@@ -1,5 +1,5 @@
 import { expect } from './@expect';
-import { errorWith, objectWith, validate } from '../src';
+import { isInstanceOf, objectShape, validate } from '../src';
 
 describe('error', () => {
   it('error', () => {
@@ -8,11 +8,43 @@ describe('error', () => {
     // @ts-ignore
     err.code = 'SOMETHING';
 
-    const rule = errorWith({ code: 'SOMETHING' });
+    const rule = isInstanceOf(Error, { code: 'SOMETHING' });
 
     const x = validate(rule, err);
 
     expect(x).to.match([true]);
+  });
+
+  it('error as pattern', () => {
+    const pattern = new Error();
+
+    // @ts-ignore
+    pattern.code = 'SOMETHING';
+
+    const value = new Error();
+
+    // @ts-ignore
+    value.code = 'SOMETHING';
+
+    const x = validate(pattern, value);
+
+    expect(x).to.match([true]);
+  });
+
+  it('error as pattern, failed', () => {
+    const pattern = new Error();
+
+    // @ts-ignore
+    pattern.code = 'SOMETHING';
+
+    const value = new Error();
+
+    // @ts-ignore
+    value.code = 'NOT SOMETHING';
+
+    const x = validate(pattern, value);
+
+    expect(x).to.match([false, '[code] expected String SOMETHING, got String NOT SOMETHING']);
   });
 
   it('error, failed', () => {
@@ -21,7 +53,7 @@ describe('error', () => {
     // @ts-ignore
     err.code = 'SOMETHING';
 
-    const rule = errorWith({ code: 'SOMETHING' }, TypeError);
+    const rule = isInstanceOf(TypeError, { code: 'SOMETHING' });
 
     const x = validate(rule, err);
 
@@ -31,7 +63,7 @@ describe('error', () => {
   it('error, failed 2', () => {
     const err = new Error();
 
-    const rule = errorWith({ code: 'SOMETHING' }, Error);
+    const rule = isInstanceOf(Error, { code: 'SOMETHING' });
 
     const x = validate(rule, err);
 
@@ -44,7 +76,7 @@ describe('error', () => {
     // @ts-ignore
     err.code = 'SOMETHING';
 
-    const rule = objectWith({ err });
+    const rule = objectShape({ err });
 
     const x = validate(rule, { err });
 
@@ -57,7 +89,7 @@ describe('error', () => {
     // @ts-ignore
     err.code = 'SOMETHING';
 
-    const rule = objectWith({ err });
+    const rule = objectShape({ err });
 
     const x = validate(rule, { err: new Error() });
 
@@ -66,7 +98,7 @@ describe('error', () => {
 
   it('descendant error property, descendant', () => {
     const err = new Error();
-    const rule = objectWith({ err });
+    const rule = objectShape({ err });
     const x = validate(rule, {
       err: new (class MyError extends Error {})(),
     });
@@ -76,7 +108,7 @@ describe('error', () => {
 
   it('descendant error property, failed', () => {
     const err = new Error('test');
-    const rule = objectWith({ err });
+    const rule = objectShape({ err });
     const x = validate(rule, {
       err: new (class NotError {
         message = 'test';

@@ -7,6 +7,7 @@ import {
   __stringify,
   __typeOf,
   __valid,
+  AtLeastTwoItems,
   FunctionRule,
   Infer,
   InferIntersection,
@@ -16,15 +17,17 @@ import {
   SchemaRule,
 } from './types.js';
 import { literal } from './literals';
+import { __assert } from './assert';
 
 /**
- * A rule - an object with specific properties
+ * A rule - an object shape with specific properties
+ * Note: object is considered as [object Object]
  */
-export function objectWith<T extends ObjectRule<any>>(rule: T): FunctionRule<Infer<T>> {
-  return __objectWith(rule);
+export function objectShape<T extends ObjectRule<any>>(rule: T): FunctionRule<Infer<T>> {
+  return __objectShape(rule);
 }
 
-function __objectWith<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
+function __objectShape<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
   return function __object(value: unknown) {
     if (!__isObject(value)) {
       return __invalid(`expected object, got ${__stringify(value)}`);
@@ -35,10 +38,17 @@ function __objectWith<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T
 }
 
 /**
- * A rule - a shape of the non-null object-like value, e.g. Array, Function, Date etc.
+ * A rule - a shape of the non-null object-like value.
+ * Note: object-like is considered as any non-null object, including errors, arrays, functions, dates, etc.
  */
 export function objectLike<T extends ObjectRule<any>>(rule: T): FunctionRule<Infer<T>> {
-  return __objectLike(rule);
+  return function __objectLike(value: Infer<T>) {
+    if (value == null) {
+      return __invalid(`expected non null value, got ${__stringify(value)}`);
+    }
+
+    return __props(value, rule);
+  };
 }
 
 function __props<T extends ObjectRule<any> = ObjectRule<any>>(value: unknown, schemaRule: T) {
@@ -60,17 +70,7 @@ function __props<T extends ObjectRule<any> = ObjectRule<any>>(value: unknown, sc
   return __valid;
 }
 
-function __objectLike<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
-  return function __shapeWith(value: Infer<T>) {
-    if (value == null) {
-      return __invalid(`expected non null value, got ${__stringify(value)}`);
-    }
-
-    return __props(value, schemaRule);
-  };
-}
-
-function __arrayWith<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> {
+function __arrayExact<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> {
   const rules = items.map(__toFunction);
 
   return function __arrayIs(value: unknown) {
@@ -98,22 +98,22 @@ function __arrayWith<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>
 /**
  * A rule - a tuple with positionally fixed items, every item must match the corresponding rule
  */
-export function tupleWith<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
-  return __arrayWith(items);
+export function tupleWhole<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
+  return __arrayExact(items);
 }
 
 /**
  * A rule - an array with positionally fixed items, every item must match the corresponding rule
  */
-export function arrayWith<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<ItemsOf<T>>[]> {
-  return __arrayWith(items as any) as any;
+export function arrayWhole<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<ItemsOf<T>>[]> {
+  return __arrayExact(items as any) as any;
 }
 
 /**
  * A rule - an array of items, every item must match the schema rule
  * @param schema The rule for each item
  */
-export function arrayOf<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T>[]> {
+export function arrayItems<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T>[]> {
   const fnRule = __toFunction(schema);
 
   return function __arrayOf(items: unknown) {
@@ -138,7 +138,9 @@ export function arrayOf<T extends SchemaRule<any>>(schema: T): FunctionRule<Infe
  * A combinator rule - an intersection of rules
  * @param rules The rules to be applied
  */
-export function allOf<T extends SchemaRule<any>[]>(...rules: T): FunctionRule<InferIntersection<T>> {
+export function allOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...rules: T): FunctionRule<InferIntersection<T>> {
+  __assert(rules.length >= 2, 'allOf requires at least two arguments');
+
   return __all(rules);
 }
 
@@ -175,32 +177,12 @@ export function nullable<T extends SchemaRule<any>>(schema: T): FunctionRule<Inf
 }
 
 /**
- * A combinator rule - a not rule
- * @param rule The rule to negate
- */
-export function not<T extends SchemaRule<any>>(rule: T): FunctionRule<never> {
-  return __not(rule);
-}
-
-function __not<T extends SchemaRule<any>>(item: T): FunctionRule<never> {
-  const rule = __toFunction(item);
-
-  return function __not(value: never) {
-    const [succeed, message] = rule(value);
-
-    if (succeed) {
-      return __invalid(`expected not to match, but got a match`);
-    }
-
-    return __valid;
-  };
-}
-
-/**
  * A combinator rule - a union of rules with exactly one match
  * @param items The rules to be applied
  */
-export function oneOf<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
+export function oneOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
+  __assert(items.length >= 2, 'oneOf requires at least two arguments');
+
   return __oneOf(items);
 }
 
@@ -236,7 +218,9 @@ function __oneOf<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<Item
  * A combinator rule - a union of rules with any number of matches except zero
  * @param items The rules to be applied
  */
-export function anyOf<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
+export function anyOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
+  __assert(items.length >= 2, 'anyOf requires at least two arguments');
+
   return __anyOf(items);
 }
 
@@ -261,11 +245,48 @@ function __anyOf<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<ItemsO
 }
 
 /**
+ * A rule -
+ * @param ctor
+ */
+export function isPrototypedBy<T>(ctor: abstract new (...args: any[]) => T): FunctionRule<T> {
+  __assert(__typeOf(ctor) === '[object Function]', 'argument must be a constructor function');
+
+  return function __isPrototypedBy(value: unknown) {
+    if (typeof value === 'function') {
+      const proto = (value as any).prototype;
+
+      if (proto && Object.prototype.isPrototypeOf.call(ctor.prototype, proto)) {
+        return __valid;
+      }
+    } else {
+      // For non-functions, check whether ctor.prototype is in the object's prototype chain
+      const obj = Object(value);
+
+      if (Object.prototype.isPrototypeOf.call(ctor.prototype, obj)) {
+        return __valid;
+      }
+    }
+
+    const ctorOrNull = value == null ? String(value) : Object(value).constructor.name;
+
+    return __invalid(`expected object prototyped by ${ctor.name} got ${ctorOrNull}`);
+  };
+}
+
+/**
  * A rule - an instance of a class
  * @param ctor The class constructor
  */
-export function instanceOf<T>(ctor: abstract new (...args: any[]) => T): FunctionRule<T> {
-  return function __instanceOf(value: T) {
+export function isInstanceOf<T>(ctor: abstract new (...args: any[]) => T): FunctionRule<T>;
+export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<T>>(
+  ctor: abstract new (...args: any[]) => T,
+  extraRule?: S
+): FunctionRule<T & Infer<S>>;
+export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<T>>(
+  ctor: abstract new (...args: any[]) => T,
+  extraRule?: S
+): FunctionRule<T & Infer<S>> {
+  function __instanceOf(value: unknown) {
     const instance = new Object(value);
 
     if (value != null && instance instanceof ctor) {
@@ -275,19 +296,23 @@ export function instanceOf<T>(ctor: abstract new (...args: any[]) => T): Functio
     const ctorOrNull = value == null ? String(value) : instance.constructor.name;
 
     return __invalid(`expected ${ctor.name} got ${ctorOrNull}`);
-  };
-}
+  }
+  const shapeRule = objectLike(extraRule as ObjectRule<any>);
+  function __instanceOfWith(value: unknown) {
+    const isInstance = __instanceOf(value);
 
-/**
- * A rule - an error object of a specific class and properties
- * @param rule The rule to validate the error properties
- * @param clazz The error class, default to Error
- */
-export function errorWith<T extends ObjectRule<any>, E extends Error = Error>(
-  rule: T,
-  clazz: abstract new (...args: any[]) => E = Error as any
-): FunctionRule<InferIntersection<[T, E]>> {
-  return allOf(objectLike(rule), instanceOf(clazz || Error));
+    if (!isInstance[0]) {
+      return isInstance;
+    }
+
+    return shapeRule(value as any);
+  }
+
+  if (!extraRule) {
+    return __instanceOf;
+  }
+
+  return __instanceOfWith as any;
 }
 
 /**
@@ -316,18 +341,17 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     return literal(schema) as FunctionRule<Infer<T>>;
   }
   if (__isArray(schema)) {
-    return __arrayWith(schema);
+    return __arrayExact(schema);
   }
   if (__isError(schema)) {
-    const ctor = schema.constructor;
+    const ctor = schema.constructor as any;
     const name = schema.name;
-    const message = schema.message;
+    const message = schema.message as any;
 
-    // @ts-ignore spread operator has issues with error properties
-    return errorWith({ /*name, too strict*/ message, ...schema }, ctor as any);
+    return isInstanceOf(ctor, { /*name, too strict*/ message, ...(schema as any) });
   }
   if (__isObject(schema)) {
-    return __objectWith(schema);
+    return __objectShape(schema);
   }
 
   throw new Error('hell knows');

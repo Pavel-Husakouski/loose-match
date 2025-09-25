@@ -1,4 +1,4 @@
-import { arrayOf, aString, nullable, objectLike, strictEqual, validate } from '../src';
+import { arrayItems, aString, nullable, objectLike, strictEqual, validate } from '../src';
 import { expect } from './@expect';
 
 describe('shape', () => {
@@ -66,7 +66,7 @@ describe('shape', () => {
   it('object, failed', () => {
     const schema = objectLike({
       id: 9,
-      title: nullable(arrayOf(aString())),
+      title: nullable(arrayItems(aString())),
       items: [1, 2, 3, '4'],
     });
     const x = validate(schema, {

@@ -88,6 +88,8 @@ export type InferIntersection<T extends any[]> = T extends [infer First, ...infe
  */
 export type ItemsOf<T> = T extends (infer P)[] ? P : never;
 
+export type AtLeastTwoItems<T extends any> = [T, T, ...T[]];
+
 /**
  * @internal
  */

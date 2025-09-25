@@ -1,4 +1,4 @@
-import { not, oneOf, validate } from '../src';
+import { allOf, anyOf, isInstanceOf, isPrototypedBy, oneOf, validate } from '../src';
 import { expect } from './@expect';
 
 describe('combinators', () => {
@@ -19,22 +19,52 @@ describe('combinators', () => {
     ]);
   });
 
-  it('noneOf', () => {
-    const pattern = not(oneOf({ id: '1' }, { name: '2' }, { email: '3' }));
-
-    expect(validate(pattern, { test: '1' })).to.match([true]);
+  it('oneOf, empty', () => {
+    expect(() => oneOf(...([] as any))).to.throw(
+      isInstanceOf(Error, { message: 'oneOf requires at least two arguments' })
+    );
   });
 
-  it('noneOf, failed', () => {
-    const pattern = not(oneOf({ id: '1' }, { name: '2' }, { email: '3' }));
-
-    expect(validate(pattern, { name: '2' })).to.match([false, 'expected not to match, but got a match']);
+  it('allOf', () => {
+    const pattern = allOf({ id: '1' }, { name: '2' });
+    expect(validate(pattern, { id: '1', name: '2' })).to.match([true]);
+    expect(validate(pattern, { id: '1' })).to.match([false, '[name] expected String 2, got undefined']);
+    expect(validate(pattern, { name: '2' })).to.match([false, '[id] expected String 1, got undefined']);
   });
 
-  it('not', () => {
-    const pattern = not({ id: '1' });
+  it('allOf, empty', () => {
+    expect(() => allOf(...([] as any))).to.throw(
+      isInstanceOf(Error, { message: 'allOf requires at least two arguments' })
+    );
+  });
 
-    expect(validate(pattern, { test: '1' })).to.match([true]);
-    expect(validate(pattern, { id: '1' })).to.match([false, 'expected not to match, but got a match']);
+  it('anyOf', () => {
+    const pattern = anyOf({ id: '1' }, { name: '2' });
+    expect(validate(pattern, { id: '1' })).to.match([true]);
+    expect(validate(pattern, { name: '2' })).to.match([true]);
+    expect(validate(pattern, { id: '1', name: '2' })).to.match([true]);
+    expect(validate(pattern, { test: '3' })).to.match([
+      false,
+      '[id] expected String 1, got undefined,[name] expected String 2, got undefined',
+    ]);
+  });
+
+  it('anyOf, empty', () => {
+    expect(() => anyOf(...([] as any))).to.throw(
+      isInstanceOf(Error, { message: 'anyOf requires at least two arguments' })
+    );
+  });
+
+  it('isPrototypedBy', () => {
+    class A {}
+    class B extends A {}
+    const inst = new A();
+    const prot = Object.create(A.prototype);
+    const plain = {};
+
+    expect(validate(isPrototypedBy(A), B)).to.match([true]);
+    expect(validate(isPrototypedBy(A), inst)).to.match([true]);
+    expect(validate(isPrototypedBy(A), prot)).to.match([true]);
+    expect(validate(isPrototypedBy(A), plain)).to.match([false, `expected object prototyped by ${A.name} got Object`]);
   });
 });

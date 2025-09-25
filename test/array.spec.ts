@@ -1,28 +1,28 @@
 import { describe, it } from 'mocha';
-import { anyOf, anything, arrayOf, literal, objectLike, validate } from '../src';
+import { anyOf, anything, arrayItems, literal, objectLike, validate } from '../src';
 import { expect } from './@expect';
 
 describe('array', () => {
   it('array of string', () => {
-    const schema = arrayOf(literal('test'));
+    const schema = arrayItems(literal('test'));
 
     expect(validate(schema, ['test'])).to.match([true]);
   });
 
   it('array of string, failed', () => {
-    const schema = arrayOf(literal('test'));
+    const schema = arrayItems(literal('test'));
 
     expect(validate(schema, [5])).to.match([false, `[0] expected String test, got Number 5`]);
   });
 
   it('array of string, failed', () => {
-    const schema = arrayOf('test');
+    const schema = arrayItems('test');
 
     expect(validate(schema, [5])).to.match([false, `[0] expected String test, got Number 5`]);
   });
 
   it('array of string, failed', () => {
-    const schema = arrayOf(anyOf('1', '2', '3'));
+    const schema = arrayItems(anyOf('1', '2', '3'));
 
     expect(validate(schema, [1, 2, 3])).to.match([
       false,
@@ -31,13 +31,13 @@ describe('array', () => {
   });
 
   it('array of array', () => {
-    const schema = arrayOf(arrayOf(anyOf('1', '2', '3')));
+    const schema = arrayItems(arrayItems(anyOf('1', '2', '3')));
 
     expect(validate(schema, [['1', '2', '3']])).to.match([true]);
   });
 
   it('array of array, failed 1', () => {
-    const schema = arrayOf(arrayOf(anyOf('1', '2', '3')));
+    const schema = arrayItems(arrayItems(anyOf('1', '2', '3')));
 
     expect(validate(schema, [[1, 2, 3]])).to.match([
       false,
@@ -46,7 +46,7 @@ describe('array', () => {
   });
 
   it('array of array, failed 2', () => {
-    const schema = arrayOf(arrayOf(anyOf('1', '2', '3')));
+    const schema = arrayItems(arrayItems(anyOf('1', '2', '3')));
 
     expect(validate(schema, [['1'], ['2'], ['3'], ['4']])).to.match([
       false,
@@ -67,7 +67,7 @@ describe('array', () => {
   });
 
   it('an array of anything', () => {
-    const schema = arrayOf(anything());
+    const schema = arrayItems(anything());
 
     expect(validate(schema, ['1', '2'])).to.match([true]);
     expect(validate(schema, [1, 2])).to.match([true]);

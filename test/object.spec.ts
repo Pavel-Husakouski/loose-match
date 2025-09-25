@@ -1,9 +1,9 @@
-import { arrayOf, aString, literal, nullable, objectWith, validate } from '../src';
+import { arrayItems, aString, literal, nullable, objectShape, validate } from '../src';
 import { expect } from './@expect';
 
 describe('object', () => {
   it('object, null', () => {
-    const schema = objectWith({
+    const schema = objectShape({
       test: 'a test',
     });
 
@@ -11,7 +11,7 @@ describe('object', () => {
   });
 
   it('object of string valid', () => {
-    const schema = objectWith({
+    const schema = objectShape({
       test: literal('test'),
     });
 
@@ -23,7 +23,7 @@ describe('object', () => {
   });
 
   it('object of string invalid', () => {
-    const schema = objectWith({
+    const schema = objectShape({
       test: literal('test'),
     });
 
@@ -35,7 +35,7 @@ describe('object', () => {
   });
 
   it('object of array valid', () => {
-    const schema = objectWith({
+    const schema = objectShape({
       test: ['test', 'another test'],
     });
 
@@ -47,7 +47,7 @@ describe('object', () => {
   });
 
   it('object of tuples invalid', () => {
-    const schema = objectWith({
+    const schema = objectShape({
       test: ['test', 'another test'],
     });
 
@@ -75,7 +75,7 @@ describe('object', () => {
   it('object, failed', () => {
     const schema = {
       id: 9,
-      title: nullable(arrayOf(aString())),
+      title: nullable(arrayItems(aString())),
       items: [1, 2, 3, '4'],
     };
     const x = validate(schema, {
