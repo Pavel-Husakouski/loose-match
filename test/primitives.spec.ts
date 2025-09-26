@@ -1,5 +1,5 @@
 import { describe, it } from 'mocha';
-import { aBigInt, aBoolean, aDate, aNullish, aNumber, aRegExp, aString, literal, re, validate } from '../src';
+import { aBigInt, aBoolean, aDate, aNullish, aNumber, aString, literal, re, validate } from '../src';
 import { expect } from './@expect';
 
 describe('literal', () => {
@@ -114,13 +114,6 @@ describe('literal', () => {
     ]);
   });
 
-  it('literal regexp', () => {
-    const schema = literal(/test/);
-
-    expect(validate(schema, /test/)).to.match([true]);
-    expect(validate(schema, /x/)).to.match([false, `expected RegExp /test/, got RegExp /x/`]);
-  });
-
   it('a number', () => {
     const schema = aNumber();
 
@@ -180,24 +173,6 @@ describe('literal', () => {
     const schema = aBigInt();
 
     expect(validate(schema, 1)).to.match([false, `expected a bigint, got [object Number]`]);
-  });
-
-  it('a regexp', () => {
-    const schema = aRegExp();
-
-    expect(validate(schema, /test/)).to.match([true]);
-  });
-
-  it('a regexp', () => {
-    const schema = aRegExp();
-
-    expect(validate(schema, new RegExp('test'))).to.match([true]);
-  });
-
-  it('a regexp, failed', () => {
-    const schema = aRegExp();
-
-    expect(validate(schema, new Date())).to.match([false, `expected a regexp, got [object Date]`]);
   });
 
   it('re', () => {

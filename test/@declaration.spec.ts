@@ -33,8 +33,6 @@ import {
 import { expectType } from './@expect';
 
 describe('type from', () => {
-  expectType<Infer<RegExp>>().is<RegExp>();
-
   expectType<Infer<string>>().is<string>();
 
   expectType<Infer<number>>().is<number>();
@@ -49,15 +47,9 @@ describe('type from', () => {
 
   expectType<Infer<Date>>().is<Date>();
 
-  expectType<Infer<RegExp[]>>().is<RegExp[]>();
-
-  expectType<Infer<{ a: RegExp }>>().is<{ a: RegExp }>();
-
   expectType<Infer<['1']>>().is<['1']>();
 
   expectType<Infer<[]>>().is<[]>();
-
-  expectType<Infer<[RegExp, string]>>().is<[RegExp, string]>();
 
   expectType<Infer<null[]>>().is<null[]>();
 
@@ -120,8 +112,6 @@ describe('type from', () => {
 
   expectType<Infer<Date[]>>().is<Date[]>();
 
-  expectType<Infer<RegExp[]>>().is<RegExp[]>();
-
   expectType<Infer<FunctionRule<string>[]>>().is<string[]>();
 
   expectType<Infer<PredicateRule<string>[]>>().is<string[]>();
@@ -129,12 +119,6 @@ describe('type from', () => {
   expectType<Infer<SchemaRule<number>[]>>().is<number[]>();
 
   expectType<Infer<ObjectRule<{ a: SchemaRule<string> }>[]>>().is<{ a: string }[]>();
-
-  expectType<Infer<[ObjectRule<{ a: SchemaRule<User> }>]>>().is<[{ a: User }]>();
-
-  expectType<Infer<[{ a: SchemaRule<User> }]>>().is<[{ a: User }]>();
-
-  expectType<Infer<[ObjectRule<{ a: SchemaRule<User> }>, User, string]>>().is<[{ a: User }, User, string]>();
 
   expectType<Infer<FunctionRule<string> | FunctionRule<number> | PredicateRule<string[]>>>().is<
     string | number | string[]
@@ -163,12 +147,6 @@ describe('type from', () => {
     const pattern = literal(new Date());
 
     expectType<typeof pattern>().is<FunctionRule<Date>>();
-  });
-
-  it('literal', () => {
-    const pattern = literal(/x/);
-
-    expectType<typeof pattern>().is<FunctionRule<RegExp>>();
   });
 
   it('array schema inference', () => {
@@ -267,14 +245,6 @@ describe('type from', () => {
     expectType<Infer<typeof pattern>>().is<{ a: string }>();
   });
 
-  it('list of regexps', () => {
-    const pattern = {
-      a: arrayItems(anyOf(/xxx/, '2')),
-    };
-
-    expectType<Infer<typeof pattern>>().is<{ a: (RegExp | string)[] }>();
-  });
-
   it('list of regexp rules', () => {
     const pattern = {
       a: arrayItems(anyOf(re(/xxx/), aNumber())),
@@ -338,7 +308,6 @@ describe('type from', () => {
       boolean: true,
       null: null,
       undefined: undefined,
-      regexp: /xxx/,
       record: {
         a: '8',
         b: 6,
@@ -347,7 +316,6 @@ describe('type from', () => {
         boolean: true,
         null: null,
         undefined: undefined,
-        regexp: /xxx/,
       },
     };
 
@@ -359,7 +327,6 @@ describe('type from', () => {
       boolean: boolean;
       null: null;
       undefined: undefined;
-      regexp: RegExp;
       record: {
         a: string;
         b: number;
@@ -368,7 +335,6 @@ describe('type from', () => {
         boolean: boolean;
         null: null;
         undefined: undefined;
-        regexp: RegExp;
       };
     }>();
   });
@@ -488,6 +454,12 @@ describe('type from', () => {
     const pattern = isInstanceOf(Error, { details: aString() });
 
     expectType<typeof pattern>().is<FunctionRule<Error & { details: string }>>();
+  });
+
+  it('instanceOf', () => {
+    const pattern = isInstanceOf(RegExp, { source: 'xxx' });
+
+    expectType<typeof pattern>().is<FunctionRule<RegExp & { source: string }>>();
   });
 
   it('nullish', () => {

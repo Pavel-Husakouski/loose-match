@@ -82,17 +82,6 @@ export function aDate(): FunctionRule<Date> {
 }
 
 /**
- * A rule - any RegExp
- */
-export function aRegExp(): FunctionRule<RegExp> {
-  return function __aRegExp(value: unknown): ValidationResult<RegExp> {
-    const type = __typeOf(value);
-
-    return type === '[object RegExp]' ? __valid : __invalid('expected a regexp, got ' + type);
-  };
-}
-
-/**
  * A rule - any bigint
  */
 export function aBigInt(): FunctionRule<bigint> {

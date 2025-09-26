@@ -24,22 +24,12 @@ export type FunctionRule<T> = (a: T) => ValidationResult<T>;
 /**
  * The set of types that can be compared by value
  */
-export type LiteralTypes = boolean | string | number | bigint | symbol | null | undefined | Date | RegExp;
+export type LiteralTypes = boolean | string | number | bigint | symbol | null | undefined | Date;
 
 /**
  * A primitive rule
  */
 export type PrimitiveRule<T> = T extends LiteralTypes ? T : never;
-
-/**
- * A date rule
- */
-export type DateRule = Date;
-
-/**
- * A RegExp rule
- */
-export type RegExpRule = RegExp;
 
 /**
  * An object schema
@@ -126,8 +116,7 @@ export function __isLiteral(value: any): value is LiteralTypes {
     typeof value === 'bigint' ||
     typeof value === 'boolean' ||
     typeof value === 'symbol' ||
-    value instanceof Date ||
-    value instanceof RegExp
+    value instanceof Date
   );
 }
 

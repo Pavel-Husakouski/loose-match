@@ -94,4 +94,11 @@ describe('combinators', () => {
 
     expect(validate(isInstanceOf(A, { name: 'x' }), plain)).to.match([false, `expected ${A.name} got Object`]);
   });
+
+  it('isInstanceOf RegExp', () => {
+    const patter = isInstanceOf(RegExp, { source: '^test$' });
+    expect(validate(patter, /^test$/)).to.match([true]);
+    expect(validate(patter, /test/)).to.match([false, '[source] expected String ^test$, got String test']);
+    expect(validate(patter, {})).to.match([false, 'expected RegExp got Object']);
+  });
 });
