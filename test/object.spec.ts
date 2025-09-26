@@ -46,7 +46,7 @@ describe('object', () => {
     ).to.match([true]);
   });
 
-  it('object of tuples invalid', () => {
+  it('object of tuples invalid length', () => {
     const schema = objectShape({
       test: ['test', 'another test'],
     });
@@ -56,6 +56,18 @@ describe('object', () => {
         test: ['test', 'another test', 'one more test'],
       })
     ).to.match([false, `[test] expected array of 2 items, got 3`]);
+  });
+
+  it('object of tuples invalid item', () => {
+    const schema = objectShape({
+      test: ['test', 'test'],
+    });
+
+    expect(
+      validate(schema, {
+        test: ['test', 'another test', 'extra item, ignored'],
+      })
+    ).to.match([false, `[test] [1] expected String test, got String another test`]);
   });
 
   it('object', () => {

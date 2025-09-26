@@ -82,10 +82,6 @@ function __arrayExact<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T
       return __invalid(`expected array, got ${__typeOf(value)}`);
     }
 
-    if (value.length !== rules.length) {
-      return __invalid(`expected array of ${rules.length} items, got ${value.length}`);
-    }
-
     for (let i = 0; i < rules.length; i++) {
       const v = value[i];
       const [succeed, message] = rules[i](v);
@@ -93,6 +89,10 @@ function __arrayExact<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T
       if (!succeed) {
         return __invalid(`[${i}] ${message}`);
       }
+    }
+
+    if (value.length !== rules.length) {
+      return __invalid(`expected array of ${rules.length} items, got ${value.length}`);
     }
 
     return __valid;

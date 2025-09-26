@@ -30,7 +30,7 @@ import {
   validate,
   ValidationResult,
 } from '../src';
-import { expectType } from './@expect';
+import { expectSameType, expectType } from './@expect';
 
 describe('type from', () => {
   expectType<Infer<string>>().is<string>();
@@ -227,6 +227,18 @@ describe('type from', () => {
     const pattern = objectLike({ length: 5 });
 
     expectType<typeof pattern>().is<FunctionRule<Array<any>>>();
+  });
+
+  it('shape', () => {
+    const pattern = objectLike({ length: 5 });
+
+    expectSameType<Infer<typeof pattern>, { length: number }>().is<true>();
+  });
+
+  it('shape', () => {
+    const pattern = objectLike({ length: 5 } as const);
+
+    expectSameType<Infer<typeof pattern>, { length: number }>().is<false>();
   });
 
   it('record with array', () => {
