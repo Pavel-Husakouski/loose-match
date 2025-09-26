@@ -1,4 +1,4 @@
-import { __toFunction, AssertionError, aString, Invalid, isInstanceOf, SchemaRule, Valid, validate } from '../src';
+import { __toFunction, AssertionError, aString, Invalid, isInstanceOf, match, SchemaRule, Valid } from '../src';
 
 export type SameType<B, A> = A extends B ? (B extends A ? true : false) : false;
 
@@ -22,30 +22,15 @@ export function expect(actual: unknown) {
   return {
     to: {
       match(rule: Valid<any> | Invalid<any>) {
-        const result = validate(rule as SchemaRule<any>, actual);
-
-        if (result[0] !== true) {
-          throw new AssertionError(`Expected |${result}|, but got |${actual}|`, actual, rule);
-        }
+        match(actual).with(rule);
       },
       be: {
         true() {
-          const result = validate([true], actual);
-
-          if (result[0] !== true) {
-            throw new AssertionError(`Expected |${[true]}|, but got |${actual}|`, actual, [true]);
-          }
+          match(actual).with([true]);
         },
 
         false(msg?: string) {
-          const result = validate([false, msg || aString()], actual);
-
-          if (result[0] !== true) {
-            throw new AssertionError(`Expected |${[false, msg || '<string>']}|, but got |${actual}|`, actual, [
-              false,
-              msg || '<string>',
-            ]);
-          }
+          match(actual).with([false, msg || aString()]);
         },
       },
       throw(expected?: SchemaRule<any>) {
@@ -58,13 +43,9 @@ export function expect(actual: unknown) {
         try {
           actual();
         } catch (err: any) {
-          const result = validate(schema, err);
+          match(err).with(schema);
 
-          if (result[0] === true) {
-            return;
-          }
-
-          throw new AssertionError(result[1], err, schema);
+          return;
         }
 
         throw new AssertionError(`Expected function to throw, but it did not`, {}, {});
