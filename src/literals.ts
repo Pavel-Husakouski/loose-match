@@ -103,7 +103,7 @@ export function re(rule: RegExp): FunctionRule<string> {
     }
 
     if (!rule.test(value)) {
-      return __invalid(`expected ${rule}, got ${value}`);
+      return __invalid(`expected ${rule}, got ${__stringify(value)}`);
     }
 
     return __valid;

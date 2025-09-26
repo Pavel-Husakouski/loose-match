@@ -184,7 +184,7 @@ describe('literal', () => {
   it('re, failed', () => {
     const schema = re(/test/);
 
-    expect(validate(schema, 'to fail')).to.match([false, `expected /test/, got to fail`]);
+    expect(validate(schema, 'to fail')).to.match([false, `expected /test/, got String to fail`]);
   });
 
   it('re, failed', () => {

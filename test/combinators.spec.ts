@@ -1,4 +1,4 @@
-import { allOf, anyOf, isInstanceOf, isPrototypedBy, oneOf, strictEqual, validate } from '../src';
+import { allOf, anyOf, isInstanceOf, isPrototypedBy, nullable, oneOf, re, strictEqual, validate } from '../src';
 import { expect } from './@expect';
 
 describe('combinators', () => {
@@ -120,5 +120,20 @@ describe('combinators', () => {
   it('strictEqual with primitive values', () => {
     expect(validate(strictEqual(5), 5)).to.match([true]);
     expect(validate(strictEqual(5), '5')).to.match([false, 'expected strict equals Number 5, got String 5']);
+  });
+
+  it('nullable with valid value', () => {
+    const pattern = nullable('test');
+
+    expect(validate(pattern, 'test')).to.match([true]);
+    expect(validate(pattern, null)).to.match([true]);
+    expect(validate(pattern, undefined)).to.match([true]);
+  });
+
+  it('nullable with invalid value', () => {
+    const pattern = nullable(re(/^test/));
+
+    expect(validate(pattern, 'not-test')).to.match([false, 'expected /^test/, got String not-test']);
+    expect(validate(pattern, 123)).to.match([false, 'expected string, got [object Number]']);
   });
 });
