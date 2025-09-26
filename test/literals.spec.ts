@@ -3,109 +3,133 @@ import { aBigInt, aBoolean, aDate, aNullish, aNumber, aString, literal, re, vali
 import { expect } from './@expect';
 
 describe('literal', () => {
-  it('literal string', () => {
+  it('string', () => {
     const schema = literal('test');
 
     expect(validate(schema, 'test')).to.match([true]);
   });
 
-  it('literal string, failed', () => {
+  it('string, failed', () => {
     const schema = literal('test');
 
     expect(validate(schema, 'not a test')).to.be.false('expected String test, got String not a test');
   });
 
-  it('literal string, failed', () => {
+  it('string, failed', () => {
     const schema = literal('test');
 
     expect(validate(schema, 'not a test')).to.be.false('expected String test, got String not a test');
   });
 
-  it('literal number', () => {
+  it('number', () => {
     const schema = literal(1);
 
     expect(validate(schema, 1)).to.be.true();
   });
 
-  it('literal infinity', () => {
+  it('infinity', () => {
     const schema = literal(Infinity);
 
     expect(validate(schema, -Infinity)).to.be.false(`expected Number Infinity, got Number -Infinity`);
   });
 
-  it('literal +0 and -0', () => {
+  it('+0 and -0', () => {
     const schema = literal(0);
 
     expect(validate(schema, -0)).to.be.true();
   });
 
-  it('literal number, failed', () => {
+  it('number, failed', () => {
     const schema = literal(1);
 
     expect(validate(schema, 2)).to.match([false, `expected Number 1, got Number 2`]);
   });
 
-  it('literal boolean', () => {
+  it('boolean', () => {
     const schema = literal(true);
 
     expect(validate(schema, true)).to.match([true]);
   });
 
-  it('literal boolean, failed', () => {
+  it('boolean, failed', () => {
     const schema = literal(true);
 
     expect(validate(schema, false)).to.match([false, `expected Boolean true, got Boolean false`]);
   });
 
-  it('literal null', () => {
+  it('null', () => {
     const schema = literal(null);
 
     expect(validate(schema, null)).to.match([true]);
   });
 
-  it('literal null, failed', () => {
+  it('null', () => {
+    const schema = null;
+
+    expect(validate(schema, null)).to.match([true]);
+  });
+
+  it('null, failed', () => {
     const schema = literal(null);
 
     expect(validate(schema, undefined)).to.match([false, `expected null, got undefined`]);
   });
 
-  it('literal undefined', () => {
+  it('null, failed', () => {
+    const schema = null;
+
+    expect(validate(schema, undefined)).to.match([false, `expected null, got undefined`]);
+  });
+
+  it('undefined', () => {
     const schema = literal(undefined);
 
     expect(validate(schema, undefined)).to.match([true]);
   });
 
-  it('literal undefined, failed', () => {
+  it('undefined', () => {
+    const schema = undefined;
+
+    expect(validate(schema, undefined)).to.match([true]);
+  });
+
+  it('undefined, failed', () => {
     const schema = literal(undefined);
 
     expect(validate(schema, null)).to.match([false, `expected undefined, got null`]);
   });
 
-  it('isNull null', () => {
+  it('undefined, failed', () => {
+    const schema = undefined;
+
+    expect(validate(schema, null)).to.match([false, `expected undefined, got null`]);
+  });
+
+  it('nullish null', () => {
     const schema = aNullish();
 
     expect(validate(schema, null)).to.match([true]);
   });
 
-  it('isNull undefined', () => {
+  it('nullish undefined', () => {
     const schema = aNullish();
 
     expect(validate(schema, undefined)).to.match([true]);
   });
 
-  it('isNull, failed', () => {
+  it('nullish, failed', () => {
     const schema = aNullish();
 
     expect(validate(schema, {})).to.match([false, `expected null or undefined, got [object Object]`]);
   });
 
-  it('literal date', () => {
+  it('date', () => {
     const schema = literal(new Date(0));
 
     expect(validate(schema, new Date(0))).to.match([true]);
   });
 
-  it('literal date, failed', () => {
+  it('date, failed', () => {
     const schema = literal(new Date(0));
 
     expect(validate(schema, new Date(1))).to.match([

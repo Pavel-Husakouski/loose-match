@@ -2,6 +2,24 @@ import { arrayOf, aString, literal, nullable, objectShape, validate } from '../s
 import { expect } from './@expect';
 
 describe('object', () => {
+  it('null', () => {
+    const schema = objectShape({
+      test: null,
+    });
+    expect(validate(schema, { test: null })).to.match([true]);
+    expect(validate(schema, { test: undefined })).to.match([false, '[test] expected null, got undefined']);
+    expect(validate(schema, {})).to.match([false, '[test] expected null, got undefined']);
+  });
+
+  it('undefined', () => {
+    const schema = objectShape({
+      test: undefined,
+    });
+    expect(validate(schema, {})).to.match([true]);
+    expect(validate(schema, { test: undefined })).to.match([true]);
+    expect(validate(schema, { test: null })).to.match([false, '[test] expected undefined, got null']);
+  });
+
   it('object, null', () => {
     const schema = objectShape({
       test: 'a test',
