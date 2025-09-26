@@ -1,4 +1,4 @@
-import { allOf, anyOf, isInstanceOf, isPrototypedBy, oneOf, validate } from '../src';
+import { allOf, anyOf, isInstanceOf, isPrototypedBy, oneOf, strictEqual, validate } from '../src';
 import { expect } from './@expect';
 
 describe('combinators', () => {
@@ -100,5 +100,25 @@ describe('combinators', () => {
     expect(validate(patter, /^test$/)).to.match([true]);
     expect(validate(patter, /test/)).to.match([false, '[source] expected String ^test$, got String test']);
     expect(validate(patter, {})).to.match([false, 'expected RegExp got Object']);
+  });
+
+  it('strictEqual', () => {
+    const target = {};
+    const pattern = strictEqual(target);
+
+    expect(validate(pattern, target)).to.match([true]);
+    expect(validate(pattern, [])).to.match([false, 'expected strict equals [object Object], got [object Array]']);
+    expect(validate(pattern, {})).to.match([false, 'expected strict equals [object Object], got [object Object]']);
+  });
+
+  it('strictEqual with null and undefined', () => {
+    expect(validate(strictEqual(null), null)).to.match([true]);
+    expect(validate(strictEqual(null), undefined)).to.match([false, 'expected strict equals null, got undefined']);
+    expect(validate(strictEqual(null), 'test')).to.match([false, 'expected strict equals null, got String test']);
+  });
+
+  it('strictEqual with primitive values', () => {
+    expect(validate(strictEqual(5), 5)).to.match([true]);
+    expect(validate(strictEqual(5), '5')).to.match([false, 'expected strict equals Number 5, got String 5']);
   });
 });
