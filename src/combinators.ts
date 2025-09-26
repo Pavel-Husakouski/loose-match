@@ -74,6 +74,41 @@ function __props<T extends ObjectRule<any> = ObjectRule<any>>(value: unknown, sc
   return __valid;
 }
 
+function __tupleExact<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> {
+  const rules = items.map(__toFunction);
+
+  return function __tupleIs(value: unknown) {
+    if (!Array.isArray(value)) {
+      return __invalid(`expected tuple, got ${__typeOf(value)}`);
+    }
+
+    if (value.length !== rules.length) {
+      return __invalid(`expected tuple of ${rules.length} items, got ${value.length}`);
+    }
+
+    const result = __elements(value, rules);
+
+    if (!result[0]) {
+      return result;
+    }
+
+    return __valid;
+  };
+}
+
+function __elements(value: Array<any>, rules: FunctionRule<any>[]) {
+  for (let i = 0; i < rules.length; i++) {
+    const v = value[i];
+    const [succeed, message] = rules[i](v);
+
+    if (!succeed) {
+      return __invalid(`[${i}] ${message}`);
+    }
+  }
+
+  return __valid;
+}
+
 function __arrayExact<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T>> {
   const rules = items.map(__toFunction);
 
@@ -82,13 +117,10 @@ function __arrayExact<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T
       return __invalid(`expected array, got ${__typeOf(value)}`);
     }
 
-    for (let i = 0; i < rules.length; i++) {
-      const v = value[i];
-      const [succeed, message] = rules[i](v);
+    const result = __elements(value, rules);
 
-      if (!succeed) {
-        return __invalid(`[${i}] ${message}`);
-      }
+    if (!result[0]) {
+      return result;
     }
 
     if (value.length !== rules.length) {
@@ -103,7 +135,7 @@ function __arrayExact<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T
  * A rule - a tuple with positionally fixed items, every item must match the corresponding rule
  */
 export function tuple<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
-  return __arrayExact(items);
+  return __tupleExact(items);
 }
 
 /**

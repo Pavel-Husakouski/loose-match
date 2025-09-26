@@ -179,7 +179,7 @@ export const __typeRender: Record<__TypeOf, (value: any) => string> = {
   '[object Date]': (value: any) => `Date ${value.toISOString()}`,
   '[object RegExp]': (value: any) => `RegExp ${value}`,
   '[object BigInt]': (value: any) => `BigInt ${value}`,
-  '[object Symbol]': (value: any) => `Symbol ${value}`,
+  '[object Symbol]': (value: any) => `Symbol ${value.toString()}`,
   '[object Object]': () => `[object Object]`,
   '[object Error]': (value: any) => `${value.name} ${value.message}`,
   '[object Function]': (value: Function) => `function ${value.name || '<anonymous>'}`,
