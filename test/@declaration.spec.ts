@@ -3,10 +3,8 @@ import {
   aBoolean,
   aDate,
   allOf,
-  aNull,
   aNullish,
   aNumber,
-  anUndefined,
   anyOf,
   array,
   arrayOf,
@@ -484,18 +482,6 @@ describe('type from', () => {
     const pattern = aNullish<string>();
 
     expectType<typeof pattern>().is<FunctionRule<string | null | undefined>>();
-  });
-
-  it('aNull', () => {
-    const pattern = aNull();
-
-    expectType<Infer<typeof pattern>>().is<null>();
-  });
-
-  it('anUndefined', () => {
-    const pattern = anUndefined();
-
-    expectType(pattern).is<FunctionRule<undefined>>();
   });
 
   it('predicate', () => {

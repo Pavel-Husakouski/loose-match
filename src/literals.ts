@@ -53,24 +53,6 @@ export function aNullish<T = never>(): FunctionRule<T | null | undefined> {
 }
 
 /**
- * A rule - null value
- */
-export function aNull(): FunctionRule<null> {
-  return function __aNull(value: unknown): ValidationResult<null> {
-    return value === null ? __valid : __invalid('expected null, got ' + __typeOf(value));
-  };
-}
-
-/**
- * A rule - undefined value
- */
-export function anUndefined(): FunctionRule<undefined> {
-  return function __anUndefined(value: unknown): ValidationResult<undefined> {
-    return value === undefined ? __valid : __invalid('expected undefined, got ' + __typeOf(value));
-  };
-}
-
-/**
  * A rule - any date
  */
 export function aDate(): FunctionRule<Date> {
