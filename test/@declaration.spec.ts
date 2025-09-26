@@ -8,8 +8,8 @@ import {
   aNumber,
   anUndefined,
   anyOf,
-  arrayItems,
-  arrayWhole,
+  array,
+  arrayOf,
   aString,
   FunctionRule,
   Infer,
@@ -26,7 +26,7 @@ import {
   re,
   SchemaRule,
   strictEqual,
-  tupleWhole,
+  tuple,
   validate,
   ValidationResult,
 } from '../src';
@@ -163,50 +163,50 @@ describe('type from', () => {
 
   it('arrayOf', () => {
     const item = allOf(re(/^xxx/), re(/yyy$/));
-    const pattern = arrayItems(item);
+    const pattern = arrayOf(item);
 
     expectType<typeof pattern>().is<FunctionRule<string[]>>();
   });
 
   it('arrayOf', () => {
     const item = anyOf(aNumber(), '2', new Date());
-    const pattern = arrayItems(item);
+    const pattern = arrayOf(item);
 
     expectType<typeof pattern>().is<FunctionRule<(number | '2' | Date)[]>>();
   });
 
   it('arrayOf', () => {
-    const pattern = arrayItems(anyOf(1, 2, 's', aBoolean(), 5));
+    const pattern = arrayOf(anyOf(1, 2, 's', aBoolean(), 5));
 
     expectType<typeof pattern>().is<FunctionRule<(1 | 2 | 5 | 's' | boolean)[]>>();
   });
 
   it('tupleOf', () => {
-    const pattern = tupleWhole(aNumber(), '2', 8, new Date());
+    const pattern = tuple(aNumber(), '2', 8, new Date());
 
     expectType<typeof pattern>().is<FunctionRule<[number, string, number, Date]>>();
   });
 
   it('tupleOf', () => {
-    const pattern = tupleWhole(aNumber(), '2', 8, new Date());
+    const pattern = tuple(aNumber(), '2', 8, new Date());
 
     expectType<typeof pattern>().is<FunctionRule<(number | string | Date)[]>>();
   });
 
   it('tupleOf', () => {
-    const pattern = tupleWhole(1, 2, 3, 5, 6);
+    const pattern = tuple(1, 2, 3, 5, 6);
 
     expectType<typeof pattern>().is<FunctionRule<[number, number, number, number, number]>>();
   });
 
   it('arrayWith', () => {
-    const pattern = arrayWhole();
+    const pattern = array();
 
     expectType<typeof pattern>().is<FunctionRule<never[]>>();
   });
 
   it('arrayWith', () => {
-    const pattern = arrayWhole(1, 2, 3, 5, 's');
+    const pattern = array(1, 2, 3, 5, 's');
 
     expectType<typeof pattern>().is<FunctionRule<(string | number)[]>>();
   });
@@ -218,7 +218,7 @@ describe('type from', () => {
   });
 
   it('array of enum', () => {
-    const pattern = arrayItems(anyOf('1', 5, new Date()));
+    const pattern = arrayOf(anyOf('1', 5, new Date()));
 
     expectType<typeof pattern>().is<FunctionRule<(string | Date | number)[]>>();
   });
@@ -235,7 +235,7 @@ describe('type from', () => {
     expectSameType<Infer<typeof pattern>, { length: number }>().is<true>();
   });
 
-  it('shape', () => {
+  it('shape const', () => {
     const pattern = objectLike({ length: 5 } as const);
 
     expectSameType<Infer<typeof pattern>, { length: number }>().is<false>();
@@ -259,7 +259,7 @@ describe('type from', () => {
 
   it('list of regexp rules', () => {
     const pattern = {
-      a: arrayItems(anyOf(re(/xxx/), aNumber())),
+      a: arrayOf(anyOf(re(/xxx/), aNumber())),
     };
 
     expectType<Infer<typeof pattern>>().is<{ a: (string | number)[] }>();
@@ -423,7 +423,7 @@ describe('type from', () => {
   });
 
   it('anyOf', () => {
-    const pattern = anyOf(aString(), { id: re(/x/) }, arrayItems(aString()));
+    const pattern = anyOf(aString(), { id: re(/x/) }, arrayOf(aString()));
 
     expectType<typeof pattern>().is<FunctionRule<string | { id: string } | string[]>>();
   });
@@ -525,7 +525,7 @@ describe('type from', () => {
     };
     const pattern = {
       id: aString(),
-      email: arrayItems(aString()),
+      email: arrayOf(aString()),
       born: aDate(),
       mask: re(/x/),
     };

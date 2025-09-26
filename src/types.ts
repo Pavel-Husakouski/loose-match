@@ -164,7 +164,7 @@ export function __stringify(value: any): string {
     return render(value);
   }
 
-  throw new Error(`Unexpected primitive ${type}`);
+  return type;
 }
 
 /**
@@ -180,7 +180,7 @@ export const __typeRender: Record<__TypeOf, (value: any) => string> = {
   '[object RegExp]': (value: any) => `RegExp ${value}`,
   '[object BigInt]': (value: any) => `BigInt ${value}`,
   '[object Symbol]': (value: any) => `Symbol ${value}`,
-  '[object Object]': () => `Object object`,
+  '[object Object]': () => `[object Object]`,
   '[object Error]': (value: any) => `${value.name} ${value.message}`,
   '[object Function]': (value: Function) => `function ${value.name || '<anonymous>'}`,
 };

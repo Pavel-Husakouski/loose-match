@@ -1,4 +1,4 @@
-import { arrayItems, aString, literal, nullable, objectShape, validate } from '../src';
+import { arrayOf, aString, literal, nullable, objectShape, validate } from '../src';
 import { expect } from './@expect';
 
 describe('object', () => {
@@ -87,7 +87,7 @@ describe('object', () => {
   it('object, failed', () => {
     const schema = {
       id: 9,
-      title: nullable(arrayItems(aString())),
+      title: nullable(arrayOf(aString())),
       items: [1, 2, 3, '4'],
     };
     const x = validate(schema, {

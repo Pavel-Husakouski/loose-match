@@ -102,14 +102,14 @@ function __arrayExact<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T
 /**
  * A rule - a tuple with positionally fixed items, every item must match the corresponding rule
  */
-export function tupleWhole<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
+export function tuple<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
   return __arrayExact(items);
 }
 
 /**
  * A rule - an array with positionally fixed items, every item must match the corresponding rule
  */
-export function arrayWhole<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<ItemsOf<T>>[]> {
+export function array<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<ItemsOf<T>>[]> {
   return __arrayExact(items as any) as any;
 }
 
@@ -117,7 +117,7 @@ export function arrayWhole<T extends SchemaRule<any>[]>(...items: T): FunctionRu
  * A rule - an array of items, every item must match the schema rule
  * @param schema The rule for each item
  */
-export function arrayItems<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T>[]> {
+export function arrayOf<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T>[]> {
   const fnRule = __toFunction(schema);
 
   return function __arrayOf(items: unknown) {
