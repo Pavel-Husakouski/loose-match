@@ -5,10 +5,10 @@ An asymmetric pattern matching library for TypeScript.
 ## Example
 
 ```typescript
-import { match, oneOf, all, re, aString, aNumber, aBigInt, nullable, arrayOf } from '@beeff/loose-match';
+import { match, oneOf, allOf, re, aString, aNumber, aBigInt, nullable, arrayOf, aNullish } from '@beeff/loose-match';
 
 it('create user request', async () => {
-  const request = awat createUserRequest(context, {username, password});
+  const request = await createUserRequest(context, {username, password});
 
   match(request).with([
     '/users',
@@ -29,12 +29,12 @@ it('create user request', async () => {
 });
 
 it('created user', async () => {
-  const request = awat createUserRequest(username, password, token);
+  const request = await createUserRequest(username, password, token);
   const response = await fetch(...request);
   const json = await response.json();
 
   match(response).with({
-    status: oneOf(200, 201), // some env return 200, some 201
+    status: oneOf(200, 201), // weirdly, some return 200, some 201
     headers: {
         'Content-Type': 'application/json',
     }
@@ -43,7 +43,7 @@ it('created user', async () => {
     id: Guid,
     username,
     capabilities: arrayOf(oneOf('read', 'write', 'delete', 'login')),
-    token: anUndefined(), // token must not be returned
+    token: aNullish(), // token must not be returned
     created: oneOf(aNumber(), DateISO),
     // some env return epoch, some return date in ISO format
   });
