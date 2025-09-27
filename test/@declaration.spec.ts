@@ -199,13 +199,13 @@ describe('type from', () => {
   });
 
   describe('arrayWith', () => {
-    const pattern = array();
+    const pattern = array([]);
 
     expectType<typeof pattern>().is<FunctionRule<never[]>>();
   });
 
   describe('arrayWith', () => {
-    const pattern = array(1, 2, 3, 5, 's');
+    const pattern = array([1, 2, 3, 5, 's']);
 
     expectType<typeof pattern>().is<FunctionRule<(string | number)[]>>();
   });

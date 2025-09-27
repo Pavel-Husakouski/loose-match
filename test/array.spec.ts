@@ -4,7 +4,7 @@ import { expect } from './@expect';
 
 describe('array', () => {
   it('array with single element', () => {
-    const schema = array('test');
+    const schema = array(['test']);
 
     expect(validate(schema, ['test'])).to.match([true]);
     expect(validate(schema, ['wrong'])).to.match([false, '[0] expected String test, got String wrong']);
@@ -13,7 +13,7 @@ describe('array', () => {
   });
 
   it('array with multiple fixed elements', () => {
-    const schema = array('first', 42, true);
+    const schema = array(['first', 42, true]);
 
     expect(validate(schema, ['first', 42, true])).to.match([true]);
     expect(validate(schema, ['wrong', 42, true])).to.match([false, '[0] expected String first, got String wrong']);
@@ -24,7 +24,7 @@ describe('array', () => {
   });
 
   it('array with null and undefined values', () => {
-    const schema = array(null, undefined);
+    const schema = array([null, undefined]);
 
     expect(validate(schema, [null, undefined])).to.match([true]);
     expect(validate(schema, [undefined, null])).to.match([false, '[0] expected null, got undefined']);
@@ -32,14 +32,14 @@ describe('array', () => {
   });
 
   it('array with literal rules', () => {
-    const schema = array('test', 123);
+    const schema = array(['test', 123]);
 
     expect(validate(schema, ['test', 123])).to.match([true]);
     expect(validate(schema, ['test', 456])).to.match([false, '[1] expected Number 123, got Number 456']);
   });
 
   it('array with nested arrays', () => {
-    const schema = array(array('x'), array(1, 2));
+    const schema = array([array(['x']), array([1, 2])]);
 
     expect(validate(schema, [['x'], [1, 2]])).to.match([true]);
     expect(validate(schema, [['y'], [1, 2]])).to.match([false, '[0] [0] expected String x, got String y']);
@@ -48,7 +48,7 @@ describe('array', () => {
   });
 
   it('array with object shapes', () => {
-    const schema = array({ name: 'John' }, { age: 30 });
+    const schema = array([{ name: 'John' }, { age: 30 }]);
 
     expect(validate(schema, [{ name: 'John' }, { age: 30 }])).to.match([true]);
     expect(validate(schema, [{ name: 'Jane' }, { age: 30 }])).to.match([
@@ -62,10 +62,7 @@ describe('array', () => {
   });
 
   it('array with predicate rules', () => {
-    const schema = array(
-      predicate((x: number) => x > 0),
-      predicate((x: string) => x.length > 2)
-    );
+    const schema = array([predicate((x: number) => x > 0), predicate((x: string) => x.length > 2)]);
 
     expect(validate(schema, [5, 'hello'])).to.match([true]);
     expect(validate(schema, [-1, 'hello'])).to.match([false, '[0] predicate failed for Number -1']);
@@ -73,7 +70,7 @@ describe('array', () => {
   });
 
   it('array with mixed types', () => {
-    const schema = array('string', 42, true, null, undefined, { key: 'value' });
+    const schema = array(['string', 42, true, null, undefined, { key: 'value' }]);
 
     expect(validate(schema, ['string', 42, true, null, undefined, { key: 'value' }])).to.match([true]);
     expect(validate(schema, ['string', 42, true, null, undefined, { key: 'wrong' }])).to.match([
@@ -83,7 +80,7 @@ describe('array', () => {
   });
 
   it('array with non-array input', () => {
-    const schema = array('test');
+    const schema = array(['test']);
 
     expect(validate(schema, 'test')).to.match([false, 'expected array, got [object String]']);
     expect(validate(schema, null)).to.match([false, 'expected array, got [object Null]']);
@@ -93,14 +90,14 @@ describe('array', () => {
   });
 
   it('array with empty schema', () => {
-    const schema = array();
+    const schema = array([]);
 
     expect(validate(schema, [])).to.match([true]);
     expect(validate(schema, ['anything'])).to.match([false, 'expected array of 0 items, got 1']);
   });
 
   it('array error positioning at different indices', () => {
-    const schema = array('a', 'b', 'c', 'd');
+    const schema = array(['a', 'b', 'c', 'd']);
 
     expect(validate(schema, ['wrong', 'b', 'c', 'd'])).to.match([false, '[0] expected String a, got String wrong']);
     expect(validate(schema, ['a', 'wrong', 'c', 'd'])).to.match([false, '[1] expected String b, got String wrong']);
@@ -109,11 +106,11 @@ describe('array', () => {
   });
 
   it('array with complex nested structure', () => {
-    const schema = array(
+    const schema = array([
       { user: { name: 'John', age: 30 } },
-      array('nested', 42),
-      objectLike({ items: arrayOf('item') })
-    );
+      array(['nested', 42]),
+      objectLike({ items: arrayOf('item') }),
+    ]);
 
     const validData = [{ user: { name: 'John', age: 30 } }, ['nested', 42], { items: ['item', 'item'] }];
 
