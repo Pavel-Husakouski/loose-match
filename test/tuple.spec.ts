@@ -1,10 +1,10 @@
 import { describe, it } from 'mocha';
-import { anyOf, anything, arrayOf, objectLike, predicate, tuple, validate } from '../src';
+import { anyOf, anything, arrayOf, predicate, tuple, validate } from '../src';
 import { expect } from './@expect';
 
 describe('tuple', () => {
   it('tuple with single element', () => {
-    const schema = tuple('test');
+    const schema = tuple(['test']);
 
     expect(validate(schema, ['test'])).to.match([true]);
     expect(validate(schema, ['wrong'])).to.match([false, '[0] expected String test, got String wrong']);
@@ -13,7 +13,7 @@ describe('tuple', () => {
   });
 
   it('tuple with multiple fixed elements', () => {
-    const schema = tuple('first', 42, true);
+    const schema = tuple(['first', 42, true]);
 
     expect(validate(schema, ['first', 42, true])).to.match([true]);
     expect(validate(schema, ['wrong', 42, true])).to.match([false, '[0] expected String first, got String wrong']);
@@ -24,7 +24,7 @@ describe('tuple', () => {
   });
 
   it('tuple with null and undefined values', () => {
-    const schema = tuple(null, undefined);
+    const schema = tuple([null, undefined]);
 
     expect(validate(schema, [null, undefined])).to.match([true]);
     expect(validate(schema, [undefined, null])).to.match([false, '[0] expected null, got undefined']);
@@ -32,14 +32,14 @@ describe('tuple', () => {
   });
 
   it('tuple with literal rules', () => {
-    const schema = tuple('test', 123);
+    const schema = tuple(['test', 123]);
 
     expect(validate(schema, ['test', 123])).to.match([true]);
     expect(validate(schema, ['test', 456])).to.match([false, '[1] expected Number 123, got Number 456']);
   });
 
   it('tuple with nested tuples', () => {
-    const schema = tuple(tuple('x'), tuple(1, 2));
+    const schema = tuple([tuple(['x']), tuple([1, 2])]);
 
     expect(validate(schema, [['x'], [1, 2]])).to.match([true]);
     expect(validate(schema, [['y'], [1, 2]])).to.match([false, '[0] [0] expected String x, got String y']);
@@ -48,7 +48,7 @@ describe('tuple', () => {
   });
 
   it('tuple with mixed tuple and array types', () => {
-    const schema = tuple(tuple('a', 'b'), arrayOf('item'));
+    const schema = tuple([tuple(['a', 'b']), arrayOf('item')]);
 
     expect(
       validate(schema, [
@@ -64,7 +64,7 @@ describe('tuple', () => {
   });
 
   it('tuple with object shapes', () => {
-    const schema = tuple({ name: 'John' }, { age: 30 });
+    const schema = tuple([{ name: 'John' }, { age: 30 }]);
 
     expect(validate(schema, [{ name: 'John' }, { age: 30 }])).to.match([true]);
     expect(validate(schema, [{ name: 'Jane' }, { age: 30 }])).to.match([
@@ -78,10 +78,7 @@ describe('tuple', () => {
   });
 
   it('tuple with predicate rules', () => {
-    const schema = tuple(
-      predicate((x: number) => x > 0),
-      predicate((x: string) => x.length > 2)
-    );
+    const schema = tuple([predicate((x: number) => x > 0), predicate((x: string) => x.length > 3)]);
 
     expect(validate(schema, [5, 'hello'])).to.match([true]);
     expect(validate(schema, [-1, 'hello'])).to.match([false, '[0] predicate failed for Number -1']);
@@ -89,7 +86,7 @@ describe('tuple', () => {
   });
 
   it('tuple with mixed types', () => {
-    const schema = tuple('string', 42, true, null, undefined, { key: 'value' });
+    const schema = tuple(['string', 42, true, null, undefined, { key: 'value' }]);
 
     expect(validate(schema, ['string', 42, true, null, undefined, { key: 'value' }])).to.match([true]);
     expect(validate(schema, ['string', 42, true, null, undefined, { key: 'wrong' }])).to.match([
@@ -99,7 +96,7 @@ describe('tuple', () => {
   });
 
   it('tuple with non-array input', () => {
-    const schema = tuple('test');
+    const schema = tuple(['test']);
 
     expect(validate(schema, 'test')).to.match([false, 'expected tuple, got [object String]']);
     expect(validate(schema, null)).to.match([false, 'expected tuple, got [object Null]']);
@@ -109,14 +106,14 @@ describe('tuple', () => {
   });
 
   it('tuple with empty schema', () => {
-    const schema = tuple();
+    const schema = tuple([]);
 
     expect(validate(schema, [])).to.match([true]);
     expect(validate(schema, ['anything'])).to.match([false, 'expected tuple of 0 items, got 1']);
   });
 
   it('tuple error positioning at different indices', () => {
-    const schema = tuple('a', 'b', 'c', 'd');
+    const schema = tuple(['a', 'b', 'c', 'd']);
 
     expect(validate(schema, ['wrong', 'b', 'c', 'd'])).to.match([false, '[0] expected String a, got String wrong']);
     expect(validate(schema, ['a', 'wrong', 'c', 'd'])).to.match([false, '[1] expected String b, got String wrong']);
@@ -125,9 +122,9 @@ describe('tuple', () => {
   });
 
   it('tuple length validation with various sizes', () => {
-    const singleTuple = tuple('one');
-    const pairTuple = tuple('first', 'second');
-    const tripleTuple = tuple('a', 'b', 'c');
+    const singleTuple = tuple(['one']);
+    const pairTuple = tuple(['first', 'second']);
+    const tripleTuple = tuple(['a', 'b', 'c']);
 
     expect(validate(singleTuple, ['one'])).to.match([true]);
     expect(validate(singleTuple, [])).to.match([false, 'expected tuple of 1 items, got 0']);
@@ -143,11 +140,7 @@ describe('tuple', () => {
   });
 
   it('tuple with complex nested structure', () => {
-    const schema = tuple(
-      { user: { name: 'John', age: 30 } },
-      tuple('nested', 42),
-      objectLike({ items: arrayOf('item') })
-    );
+    const schema = tuple([{ user: { name: 'John', age: 30 } }, tuple(['nested', 42]), { items: arrayOf('item') }]);
 
     const validData = [{ user: { name: 'John', age: 30 } }, ['nested', 42], { items: ['item', 'item'] }];
 
@@ -161,7 +154,7 @@ describe('tuple', () => {
   });
 
   it('tuple type semantics vs array semantics', () => {
-    const tupleSchema = tuple('a', 'b');
+    const tupleSchema = tuple(['a', 'b']);
     const arraySchema = arrayOf(anyOf('a', 'b'));
 
     expect(validate(tupleSchema, ['a', 'b'])).to.match([true]);

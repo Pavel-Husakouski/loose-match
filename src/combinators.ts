@@ -134,7 +134,7 @@ function __arrayExact<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T
 /**
  * A rule - a tuple with positionally fixed items, every item must match the corresponding rule
  */
-export function tuple<T extends SchemaRule<any>[]>(...items: T): FunctionRule<Infer<T>> {
+export function tuple<const T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<T>> {
   return __tupleExact(items);
 }
 

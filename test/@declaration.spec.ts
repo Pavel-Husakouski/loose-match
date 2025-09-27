@@ -180,21 +180,22 @@ describe('type from', () => {
   });
 
   describe('tupleOf', () => {
-    const pattern = tuple(aNumber(), '2', 8, new Date());
+    const pattern = tuple([aNumber(), '2', 8, new Date()]);
 
     expectType<typeof pattern>().is<FunctionRule<[number, string, number, Date]>>();
   });
 
   describe('tupleOf', () => {
-    const pattern = tuple(aNumber(), '2', 8, new Date());
+    const pattern = tuple([aNumber(), '2', 8, new Date()]);
 
     expectType<typeof pattern>().is<FunctionRule<(number | string | Date)[]>>();
   });
 
   describe('tupleOf', () => {
-    const pattern = tuple(1, 2, 3, 5, 6);
+    const pattern = tuple([1, 2, 3]);
 
-    expectType<typeof pattern>().is<FunctionRule<[number, number, number, number, number]>>();
+    expectSameType<Infer<typeof pattern>, [1, 2, 3]>().is<true>();
+    expectSameType<Infer<typeof pattern>, [number, number, number]>().is<false>();
   });
 
   describe('arrayWith', () => {
