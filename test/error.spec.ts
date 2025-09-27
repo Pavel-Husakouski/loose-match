@@ -2,72 +2,39 @@ import { expect } from './@expect';
 import { isInstanceOf, objectShape, validate } from '../src';
 
 describe('error', () => {
-  it('error', () => {
-    const err = new Error();
-
-    // @ts-ignore
-    err.code = 'SOMETHING';
-
-    const rule = isInstanceOf(Error, { code: 'SOMETHING' });
-
-    const x = validate(rule, err);
-
-    expect(x).to.match([true]);
-  });
-
   it('error as pattern', () => {
-    const pattern = new Error();
+    const pattern = new Error('test');
 
-    // @ts-ignore
-    pattern.code = 'SOMETHING';
-
-    const value = new Error();
-
-    // @ts-ignore
-    value.code = 'SOMETHING';
-
-    const x = validate(pattern, value);
-
-    expect(x).to.match([true]);
+    expect(validate(pattern, new Error('test'))).to.match([true]);
+    expect(validate(pattern, new Error('not a test'))).to.match([
+      false,
+      '[message] expected String test, got String not a test',
+    ]);
+    expect(validate(pattern, { message: 'test' })).to.match([false, 'expected instanceof Error got instanceof Object']);
   });
 
-  it('error as pattern, failed', () => {
-    const pattern = new Error();
-
-    // @ts-ignore
-    pattern.code = 'SOMETHING';
-
-    const value = new Error();
-
-    // @ts-ignore
-    value.code = 'NOT SOMETHING';
-
-    const x = validate(pattern, value);
-
-    expect(x).to.match([false, '[code] expected String SOMETHING, got String NOT SOMETHING']);
-  });
-
-  it('error, failed', () => {
-    const err = new Error();
+  it('error instanceOf with extra properties', () => {
+    const err = new TypeError();
 
     // @ts-ignore
     err.code = 'SOMETHING';
+
+    const err2 = new TypeError();
+
+    // @ts-ignore
+    err2.code = 'SOMETHING ELSE';
+
+    const err3 = new Error();
+
+    // @ts-ignore
+    err3.code = 'SOMETHING';
 
     const rule = isInstanceOf(TypeError, { code: 'SOMETHING' });
 
-    const x = validate(rule, err);
-
-    expect(x).to.match([false, 'expected TypeError got Error']);
-  });
-
-  it('error, failed 2', () => {
-    const err = new Error();
-
-    const rule = isInstanceOf(Error, { code: 'SOMETHING' });
-
-    const x = validate(rule, err);
-
-    expect(x).to.match([false, '[code] expected String SOMETHING, got undefined']);
+    expect(validate(rule, err)).to.match([true]);
+    expect(validate(rule, new TypeError())).to.match([false, '[code] expected String SOMETHING, got undefined']);
+    expect(validate(rule, err2)).to.match([false, '[code] expected String SOMETHING, got String SOMETHING ELSE']);
+    expect(validate(rule, err3)).to.match([false, 'expected instanceof TypeError got instanceof Error']);
   });
 
   it('error property', () => {
@@ -78,22 +45,11 @@ describe('error', () => {
 
     const rule = objectShape({ err });
 
-    const x = validate(rule, { err });
-
-    expect(x).to.match([true]);
-  });
-
-  it('error property, failed', () => {
-    const err = new Error();
-
-    // @ts-ignore
-    err.code = 'SOMETHING';
-
-    const rule = objectShape({ err });
-
-    const x = validate(rule, { err: new Error() });
-
-    expect(x).to.match([false, '[err] [code] expected String SOMETHING, got undefined']);
+    expect(validate(rule, { err })).to.match([true]);
+    expect(validate(rule, { err: new Error() })).to.match([
+      false,
+      '[err] [code] expected String SOMETHING, got undefined',
+    ]);
   });
 
   it('descendant error property, descendant', () => {
@@ -107,14 +63,13 @@ describe('error', () => {
   });
 
   it('descendant error property, failed', () => {
-    const err = new Error('test');
-    const rule = objectShape({ err });
+    const rule = objectShape({ err: new Error('test') });
     const x = validate(rule, {
-      err: new (class NotError {
+      err: new (class NotAnError {
         message = 'test';
       })(),
     });
 
-    expect(x).to.match([false, '[err] expected Error got NotError']);
+    expect(x).to.match([false, '[err] expected instanceof Error got instanceof NotAnError']);
   });
 });

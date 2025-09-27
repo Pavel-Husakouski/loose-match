@@ -338,7 +338,7 @@ export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<T>>(
 
     const ctorOrNull = value == null ? String(value) : instance.constructor.name;
 
-    return __invalid(`expected ${ctor.name} got ${ctorOrNull}`);
+    return __invalid(`expected instanceof ${ctor.name} got instanceof ${ctorOrNull}`);
   }
   function __instanceOfWith(value: unknown) {
     const isInstance = __instanceOf(value);

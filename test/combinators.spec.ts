@@ -73,7 +73,7 @@ describe('combinators', () => {
     const inst = new A();
 
     expect(validate(isInstanceOf(A), inst)).to.match([true]);
-    expect(validate(isInstanceOf(A), {})).to.match([false, `expected ${A.name} got Object`]);
+    expect(validate(isInstanceOf(A), {})).to.match([false, `expected instanceof ${A.name} got instanceof Object`]);
   });
 
   it('isInstanceOf - with explicit schema on instance', () => {
@@ -92,14 +92,17 @@ describe('combinators', () => {
     }
     const plain = { name: 'x' };
 
-    expect(validate(isInstanceOf(A, { name: 'x' }), plain)).to.match([false, `expected ${A.name} got Object`]);
+    expect(validate(isInstanceOf(A, { name: 'x' }), plain)).to.match([
+      false,
+      `expected instanceof ${A.name} got instanceof Object`,
+    ]);
   });
 
   it('isInstanceOf RegExp', () => {
     const patter = isInstanceOf(RegExp, { source: '^test$' });
     expect(validate(patter, /^test$/)).to.match([true]);
     expect(validate(patter, /test/)).to.match([false, '[source] expected String ^test$, got String test']);
-    expect(validate(patter, {})).to.match([false, 'expected RegExp got Object']);
+    expect(validate(patter, {})).to.match([false, 'expected instanceof RegExp got instanceof Object']);
   });
 
   it('strictEqual', () => {
