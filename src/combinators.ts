@@ -319,11 +319,11 @@ export function isInstanceOf<T>(ctor: abstract new (...args: any[]) => T): Funct
  * @param ctor The class constructor
  * @param extraRule An optional extra object shape rule to match the instance properties
  */
-export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<T>>(
+export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
   ctor: abstract new (...args: any[]) => T,
   extraRule?: S
 ): FunctionRule<T & Infer<S>>;
-export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<T>>(
+export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
   ctor: abstract new (...args: any[]) => T,
   extraRule?: S
 ): FunctionRule<T & Infer<S>> {
