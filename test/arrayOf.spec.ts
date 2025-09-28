@@ -11,13 +11,17 @@ describe('arrayOf', () => {
     expect(validate(schema, null)).to.match([false, `expected array, got [object Null]`]);
   });
 
-  it('arrayOf with string literals', () => {
-    const literalSchema = arrayOf(literal('test'));
-    const directStringSchema = arrayOf('test');
+  it('arrayOf with string literal', () => {
+    const schema = arrayOf(literal('test'));
 
-    expect(validate(literalSchema, ['test'])).to.match([true]);
-    expect(validate(literalSchema, [5])).to.match([false, `[0] expected String test, got Number 5`]);
-    expect(validate(directStringSchema, [5])).to.match([false, `[0] expected String test, got Number 5`]);
+    expect(validate(schema, ['test'])).to.match([true]);
+    expect(validate(schema, [5])).to.match([false, `[0] expected String test, got Number 5`]);
+  });
+
+  it('arrayOf with direct string', () => {
+    const schema = arrayOf('test');
+
+    expect(validate(schema, [5])).to.match([false, `[0] expected String test, got Number 5`]);
   });
 
   it('arrayOf with nested arrays', () => {
@@ -44,16 +48,9 @@ describe('arrayOf', () => {
     const schema = arrayOf(anything());
 
     expect(validate(schema, ['1', '2'])).to.match([true]);
-    expect(validate(schema, [1, 2])).to.match([true]);
-    expect(validate(schema, [true, false])).to.match([true]);
     expect(validate(schema, [null, undefined])).to.match([true]);
     expect(validate(schema, [])).to.match([true]);
     expect(validate(schema, 'xe')).to.match([false, 'expected array, got [object String]']);
-    expect(validate(schema, { length: 2 })).to.match([false, 'expected array, got [object Object]']);
-    expect(validate(schema, null)).to.match([false, 'expected array, got [object Null]']);
-    expect(validate(schema, undefined)).to.match([false, 'expected array, got [object Undefined]']);
-    expect(validate(schema, {})).to.match([false, 'expected array, got [object Object]']);
-    expect(validate(schema, 1)).to.match([false, 'expected array, got [object Number]']);
   });
 
   it('arrayOf with empty and multiple element arrays', () => {

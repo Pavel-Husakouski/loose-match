@@ -1,4 +1,5 @@
 import { __invalid, __stringify, __typeOf, __valid, FunctionRule, LiteralTypes, ValidationResult } from './types.js';
+import { __assert } from './assert';
 
 /**
  * A rule - any value (always valid).
@@ -46,7 +47,7 @@ export function aBoolean(): FunctionRule<boolean> {
 /**
  * A rule - null or undefined
  */
-export function aNullish<T = never>(): FunctionRule<T | null | undefined> {
+export function nullish<T = never>(): FunctionRule<T | null | undefined> {
   return function __nullish(value: unknown): ValidationResult<null | undefined> {
     return value == null ? __valid : __invalid('expected null or undefined, got ' + __typeOf(value));
   };
@@ -79,6 +80,8 @@ export function aBigInt(): FunctionRule<bigint> {
  * @param rule
  */
 export function re(rule: RegExp): FunctionRule<string> {
+  __assert(rule != null && rule instanceof RegExp, 'rule must be a RegExp');
+
   return function __re(value: unknown) {
     if (typeof value !== 'string') {
       return __invalid(`expected string, got ${__typeOf(value)}`);

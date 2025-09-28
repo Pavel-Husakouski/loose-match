@@ -121,22 +121,28 @@ describe('tuple', () => {
     expect(validate(schema, ['a', 'b', 'c', 'wrong'])).to.match([false, '[3] expected String d, got String wrong']);
   });
 
-  it('tuple length validation with various sizes', () => {
-    const singleTuple = tuple(['one']);
-    const pairTuple = tuple(['first', 'second']);
-    const tripleTuple = tuple(['a', 'b', 'c']);
+  it('tuple length validation with 1 item', () => {
+    const schema = tuple(['one']);
 
-    expect(validate(singleTuple, ['one'])).to.match([true]);
-    expect(validate(singleTuple, [])).to.match([false, 'expected tuple of 1 items, got 0']);
-    expect(validate(singleTuple, ['one', 'two'])).to.match([false, 'expected tuple of 1 items, got 2']);
+    expect(validate(schema, ['one'])).to.match([true]);
+    expect(validate(schema, [])).to.match([false, 'expected tuple of 1 items, got 0']);
+    expect(validate(schema, ['one', 'two'])).to.match([false, 'expected tuple of 1 items, got 2']);
+  });
 
-    expect(validate(pairTuple, ['first', 'second'])).to.match([true]);
-    expect(validate(pairTuple, ['first'])).to.match([false, 'expected tuple of 2 items, got 1']);
-    expect(validate(pairTuple, ['first', 'second', 'third'])).to.match([false, 'expected tuple of 2 items, got 3']);
+  it('tuple length validation with 2 items', () => {
+    const schema = tuple(['first', 'second']);
 
-    expect(validate(tripleTuple, ['a', 'b', 'c'])).to.match([true]);
-    expect(validate(tripleTuple, ['a', 'b'])).to.match([false, 'expected tuple of 3 items, got 2']);
-    expect(validate(tripleTuple, ['a', 'b', 'c', 'd'])).to.match([false, 'expected tuple of 3 items, got 4']);
+    expect(validate(schema, ['first', 'second'])).to.match([true]);
+    expect(validate(schema, ['first'])).to.match([false, 'expected tuple of 2 items, got 1']);
+    expect(validate(schema, ['first', 'second', 'third'])).to.match([false, 'expected tuple of 2 items, got 3']);
+  });
+
+  it('tuple length validation with 3 items', () => {
+    const schema = tuple(['a', 'b', 'c']);
+
+    expect(validate(schema, ['a', 'b', 'c'])).to.match([true]);
+    expect(validate(schema, ['a', 'b'])).to.match([false, 'expected tuple of 3 items, got 2']);
+    expect(validate(schema, ['a', 'b', 'c', 'd'])).to.match([false, 'expected tuple of 3 items, got 4']);
   });
 
   it('tuple with complex nested structure', () => {

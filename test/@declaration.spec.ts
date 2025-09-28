@@ -3,7 +3,6 @@ import {
   aBoolean,
   aDate,
   allOf,
-  aNullish,
   aNumber,
   anyOf,
   array,
@@ -15,6 +14,7 @@ import {
   isInstanceOf,
   literal,
   nullable,
+  nullish,
   objectLike,
   ObjectRule,
   objectShape,
@@ -476,13 +476,13 @@ describe('type from', () => {
   });
 
   describe('nullish', () => {
-    const pattern = aNullish();
+    const pattern = nullish();
 
     expectType<typeof pattern>().is<FunctionRule<null | undefined>>();
   });
 
   describe('nullish', () => {
-    const pattern = aNullish<string>();
+    const pattern = nullish<string>();
 
     expectType<typeof pattern>().is<FunctionRule<string | null | undefined>>();
   });
