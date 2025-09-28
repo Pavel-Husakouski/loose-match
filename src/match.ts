@@ -4,17 +4,19 @@ import { Infer, SchemaRule, ValidationResult } from './types.js';
 /**
  * An assertion function
  */
-export function match(value: unknown) {
+export function match(actual: unknown) {
   return {
-    with(schema: SchemaRule<any>) {
+    with(schema: SchemaRule<any>, fn?: (arg: any) => any) {
       const rule = __toFunction(schema);
-      const [succeed, message] = rule(value);
+      const [succeed, message] = rule(actual);
 
       if (succeed) {
         return;
       }
 
-      throw new AssertionError(message, value, message);
+      const exception = fn ? fn({ message, actual, schema }) : null;
+
+      throw exception || new AssertionError(message, actual, message);
     },
   };
 }

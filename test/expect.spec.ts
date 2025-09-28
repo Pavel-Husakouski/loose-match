@@ -5,6 +5,27 @@ describe('expect', () => {
     match(1).with(aNumber());
   });
 
+  it('self-testing', () => {
+    let error: unknown;
+
+    try {
+      match([true]).with(
+        [false, 'failed expectation'],
+        ({ message, actual, schema }) => new AssertionError(message, actual, schema)
+      );
+    } catch (e) {
+      error = e;
+    }
+
+    match(error).with(
+      isInstanceOf(AssertionError, {
+        message: '[0] expected Boolean false, got Boolean true',
+        actual: [true],
+        expected: [false, 'failed expectation'],
+      })
+    );
+  });
+
   it('expect, failed', () => {
     let error: unknown;
 

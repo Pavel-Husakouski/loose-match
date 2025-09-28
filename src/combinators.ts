@@ -177,23 +177,23 @@ export function arrayOf<T extends SchemaRule<any>>(schema: T): FunctionRule<Infe
 export function allOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...rules: T): FunctionRule<InferIntersection<T>> {
   __assert(rules.length >= 2, 'allOf requires at least two arguments');
 
-  return __all(rules);
-}
+  function __all<T>(items: SchemaRule<T>[]): FunctionRule<any> {
+    const rules = items.map(__toFunction);
 
-function __all<T>(items: SchemaRule<T>[]): FunctionRule<any> {
-  const rules = items.map(__toFunction);
+    return function __all(value: T) {
+      for (const rule of rules) {
+        const [succeed, message] = rule(value);
 
-  return function __all(value: T) {
-    for (const rule of rules) {
-      const [succeed, message] = rule(value);
-
-      if (!succeed) {
-        return __invalid(message);
+        if (!succeed) {
+          return __invalid(message);
+        }
       }
-    }
 
-    return __valid;
-  };
+      return __valid;
+    };
+  }
+
+  return __all(rules);
 }
 
 /**
