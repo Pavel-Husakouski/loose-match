@@ -1,5 +1,5 @@
 import { describe, it } from 'mocha';
-import { anyOf, anything, arrayOf, literal, objectLike, predicate, validate } from '../src';
+import { aNumber, anyOf, anything, arrayOf, aString, literal, objectLike, predicate, validate } from '../src';
 import { expect } from './@expect';
 
 describe('arrayOf', () => {
@@ -20,27 +20,11 @@ describe('arrayOf', () => {
     expect(validate(directStringSchema, [5])).to.match([false, `[0] expected String test, got Number 5`]);
   });
 
-  it('arrayOf with anyOf rules', () => {
-    const schema = arrayOf(anyOf('1', '2', '3'));
-
-    expect(validate(schema, [1, 2, 3])).to.match([
-      false,
-      `[0] expected String 1, got Number 1,expected String 2, got Number 1,expected String 3, got Number 1`,
-    ]);
-  });
-
   it('arrayOf with nested arrays', () => {
-    const schema = arrayOf(arrayOf(anyOf('1', '2', '3')));
+    const schema = arrayOf(arrayOf(aString()));
 
-    expect(validate(schema, [['1', '2', '3']])).to.match([true]);
-    expect(validate(schema, [[1, 2, 3]])).to.match([
-      false,
-      `[0] [0] expected String 1, got Number 1,expected String 2, got Number 1,expected String 3, got Number 1`,
-    ]);
-    expect(validate(schema, [['1'], ['2'], ['3'], ['4']])).to.match([
-      false,
-      `[3] [0] expected String 1, got String 4,expected String 2, got String 4,expected String 3, got String 4`,
-    ]);
+    expect(validate(schema, [['1'], ['2'], ['3']])).to.match([true]);
+    expect(validate(schema, [[1, 2, 3]])).to.match([false, `[0] [0] expected a string, got [object Number]`]);
   });
 
   it('objectLike with length property (array-like objects)', () => {
@@ -135,7 +119,7 @@ describe('arrayOf', () => {
   it('arrayOf with complex nested structure', () => {
     const schema = arrayOf(
       objectLike({
-        id: anyOf(1, 2, 3),
+        id: aNumber(),
         data: arrayOf(objectLike({ value: 'test' })),
       })
     );

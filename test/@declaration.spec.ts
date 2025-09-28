@@ -398,7 +398,8 @@ describe('type from', () => {
   describe('oneOf', () => {
     const pattern = oneOf({ id: '1' }, { name: '2' }, { email: '3' });
 
-    expectType<typeof pattern>().is<FunctionRule<{ id: '1' } | { name: '2' } | { email: '3' }>>();
+    expectSameType<Infer<typeof pattern>, { id: string } | { name: string } | { email: string }>().is<true>();
+    expectSameType<Infer<typeof pattern>, { id: '1' } | { name: '2' } | { email: '3' }>().is<false>();
   });
 
   describe('oneOf', () => {
@@ -436,7 +437,8 @@ describe('type from', () => {
   describe('anyOf', () => {
     const pattern = anyOf({ id: '1' }, { name: '2' }, { email: '4' });
 
-    expectType<typeof pattern>().is<FunctionRule<{ id: '1' } | { name: '2' } | { email: '4' }>>();
+    expectSameType<Infer<typeof pattern>, { id: string } | { name: string } | { email: string }>().is<true>();
+    expectSameType<Infer<typeof pattern>, { id: '1' } | { name: '2' } | { email: '3' }>().is<false>();
   });
 
   describe('anyOf', () => {

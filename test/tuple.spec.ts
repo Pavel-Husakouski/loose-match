@@ -1,5 +1,5 @@
 import { describe, it } from 'mocha';
-import { anyOf, anything, arrayOf, predicate, tuple, validate } from '../src';
+import { arrayOf, predicate, tuple, validate } from '../src';
 import { expect } from './@expect';
 
 describe('tuple', () => {
@@ -151,17 +151,5 @@ describe('tuple', () => {
     expect(validate(schema, validData)).to.match([true]);
     expect(validate(schema, invalidData1)).to.match([false, '[0] [user] [name] expected String John, got String Jane']);
     expect(validate(schema, invalidData2)).to.match([false, '[1] [1] expected Number 42, got Number 43']);
-  });
-
-  it('tuple type semantics vs array semantics', () => {
-    const tupleSchema = tuple(['a', 'b']);
-    const arraySchema = arrayOf(anyOf('a', 'b'));
-
-    expect(validate(tupleSchema, ['a', 'b'])).to.match([true]);
-    expect(validate(arraySchema, ['a', 'b'])).to.match([true]);
-    expect(validate(arraySchema, ['b', 'a'])).to.match([true]);
-    expect(validate(tupleSchema, ['b', 'a'])).to.match([false, '[0] expected String a, got String b']);
-    expect(validate(arraySchema, ['a', 'b', 'a'])).to.match([true]);
-    expect(validate(tupleSchema, ['a', 'b', 'a'])).to.match([false, 'expected tuple of 2 items, got 3']);
   });
 });

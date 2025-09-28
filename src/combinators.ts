@@ -221,35 +221,35 @@ export function nullable<T extends SchemaRule<any>>(schema: T): FunctionRule<Inf
 export function oneOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
   __assert(items.length >= 2, 'oneOf requires at least two arguments');
 
-  return __oneOf(items);
-}
+  function __oneOf<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>> {
+    const rules = items.map(__toFunction);
 
-function __oneOf<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>> {
-  const rules = items.map(__toFunction);
+    return function __oneOf(value: Infer<ItemsOf<T>>) {
+      let count = 0;
+      let i = 0;
 
-  return function __oneOf(value: Infer<ItemsOf<T>>) {
-    let count = 0;
-    let i = 0;
+      for (const rule of rules) {
+        const [succeed] = rule(value);
 
-    for (const rule of rules) {
-      const [succeed] = rule(value);
+        if (succeed) {
+          count++;
 
-      if (succeed) {
-        count++;
-
-        if (count > 1) {
-          return __invalid(`expected one of ${items.length} rules, got multiple matches at index ${i}`);
+          if (count > 1) {
+            return __invalid(`expected one of ${items.length} rules, got multiple matches at index ${i}`);
+          }
         }
+        i++;
       }
-      i++;
-    }
 
-    if (count === 0) {
-      return __invalid(`expected one of ${items.length} rules, got 0 matches`);
-    }
+      if (count === 0) {
+        return __invalid(`expected one of ${items.length} rules, got 0 matches`);
+      }
 
-    return __valid;
-  };
+      return __valid;
+    };
+  }
+
+  return __oneOf(items);
 }
 
 /**
@@ -259,27 +259,23 @@ function __oneOf<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<Item
 export function anyOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
   __assert(items.length >= 2, 'anyOf requires at least two arguments');
 
-  return __anyOf(items);
-}
+  function __anyOf<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>> {
+    const rules = items.map(__toFunction);
 
-function __anyOf<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>> {
-  const rules = items.map(__toFunction);
+    return function __some(value: Infer<ItemsOf<T>>) {
+      for (const rule of rules) {
+        const [succeed, message] = rule(value);
 
-  return function __some(value: Infer<ItemsOf<T>>) {
-    const errors = [];
-
-    for (const rule of rules) {
-      const [succeed, message] = rule(value);
-
-      if (succeed) {
-        return __valid;
+        if (succeed) {
+          return __valid;
+        }
       }
 
-      errors.push(message);
-    }
+      return __invalid(`expected at least one of ${items.length} rules, got 0 matches`);
+    };
+  }
 
-    return __invalid(errors.join(','));
-  };
+  return __anyOf(items);
 }
 
 /**
