@@ -5,7 +5,7 @@ An asymmetric pattern matching library for TypeScript.
 ## Example
 
 ```typescript
-import { match, oneOf, allOf, re, aString, aNumber, aBigInt, nullable, arrayOf, nullish } from '@beeff/loose-match';
+import { match, oneOf, allOf, re, aString, aNumber, aBigInt, arrayOf } from '@beeff/loose-match';
 
 it('create user request', async () => {
   const request = await createUserRequest(context, {username, password});
@@ -43,9 +43,8 @@ it('created user', async () => {
     id: Guid,
     username,
     capabilities: arrayOf(oneOf('read', 'write', 'delete', 'login')),
-    token: nullish(), // token must not be returned
-    created: oneOf(aNumber(), DateISO),
-    // some env return epoch, some return date in ISO format
+    token: undefined, // token must not be returned
+    created: oneOf(aNumber(), DateISO) // some env return epoch, some return date in ISO format
   });
 });
 
