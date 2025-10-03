@@ -65,9 +65,24 @@ describe('objectLike', () => {
     expect(
       validate(schema, {
         id: 9,
+        title: 3,
         items: [1, 2, 3, '4'],
       })
     ).to.match([true]);
+    expect(
+      validate(schema, {
+        id: 9,
+        title: null,
+        items: [1, 2, 3, '4'],
+      })
+    ).to.match([true]);
+    expect(
+      validate(schema, {
+        id: 9,
+        title: undefined,
+        items: [1, 2, 3, '4'],
+      })
+    ).to.match([false, '[title] expected Number 3, got undefined']);
   });
 
   it('fails with invalid nested array property', () => {

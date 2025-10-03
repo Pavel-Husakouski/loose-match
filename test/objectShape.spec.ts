@@ -121,10 +121,12 @@ describe('object', () => {
       items: [1, 2, 3, '4'],
     };
 
-    expect(validate(schema, { id: 9, items: [1, 2, 3, '4'] })).to.match([true]);
-    expect(validate(schema, { id: 9, title: 3, items: [1, 2, 3, '4'] })).to.match([true]);
     expect(validate(schema, { id: 9, title: null, items: [1, 2, 3, '4'] })).to.match([true]);
-    expect(validate(schema, { id: 9, title: undefined, items: [1, 2, 3, '4'] })).to.match([true]);
+    expect(validate(schema, { id: 9, title: 3, items: [1, 2, 3, '4'] })).to.match([true]);
+    expect(validate(schema, { id: 9, title: undefined, items: [1, 2, 3, '4'] })).to.match([
+      false,
+      '[title] expected Number 3, got undefined',
+    ]);
   });
 
   it('plain object validation with complex nested structure', () => {

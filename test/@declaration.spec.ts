@@ -19,6 +19,7 @@ import {
   ObjectRule,
   objectShape,
   oneOf,
+  optional,
   predicate,
   PredicateRule,
   re,
@@ -282,6 +283,12 @@ describe('type from', () => {
     expectType<Infer<typeof pattern>>().is<{ a: string; b: number }>();
   });
 
+  describe('optional', () => {
+    const pattern = optional('1' as const);
+
+    expectType<typeof pattern>().is<FunctionRule<'1' | undefined>>();
+  });
+
   describe('nullable', () => {
     const pattern = nullable('1' as const);
 
@@ -476,13 +483,7 @@ describe('type from', () => {
   });
 
   describe('nullish', () => {
-    const pattern = nullish();
-
-    expectType<typeof pattern>().is<FunctionRule<null | undefined>>();
-  });
-
-  describe('nullish', () => {
-    const pattern = nullish<string>();
+    const pattern = nullish(aString());
 
     expectType<typeof pattern>().is<FunctionRule<string | null | undefined>>();
   });

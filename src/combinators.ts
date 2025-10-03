@@ -197,16 +197,52 @@ export function allOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...rules: T): 
 }
 
 /**
- * A combinator rule - a nullable rule
- * @param schema The schema to make nullable
+ * A rule - either null or undefined or specified schema
+ * @param schema The schema
  */
-export function nullable<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | null | undefined> {
+export function nullish<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | null | undefined> {
+  __assert(schema != null, 'nullish null or undefined? interesting...');
+
+  const rule = __toFunction(schema);
+
+  return function __nullish(value: any) {
+    if (value == null) {
+      return __valid;
+    }
+
+    return rule(value);
+  };
+}
+
+/**
+ * A combinator rule - a rule that accepts undefined or the specified schema
+ * @param schema The schema
+ */
+export function optional<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | undefined> {
+  __assert(schema !== undefined, 'optional undefined? interesting...');
+
+  const rule = __toFunction(schema);
+
+  return function __optional(value: any) {
+    if (value === undefined) {
+      return __valid;
+    }
+
+    return rule(value);
+  };
+}
+
+/**
+ * A combinator rule - a rule that accepts null or the specified schema
+ * @param schema The schema
+ */
+export function nullable<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | null> {
   __assert(schema != null, 'nullable null or undefined? interesting...');
 
   const rule = __toFunction(schema);
 
   return function __nullable(value: any) {
-    if (value == null) {
+    if (value === null) {
       return __valid;
     }
 
