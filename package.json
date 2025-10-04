@@ -1,6 +1,6 @@
 {
   "name": "@beeff/loose-match",
-  "version": "0.5.0",
+  "version": "1.0.0-rc.1",
   "description": "An asymmetric matcher library made for the @beeff project",
   "main": "lib/index.js",
   "type": "module",
