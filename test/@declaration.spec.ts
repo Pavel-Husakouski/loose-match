@@ -31,185 +31,185 @@ import {
 } from '../src';
 
 describe('Type inference: primitives', () => {
-  expectType<Infer<string>>().sameType<string>().is<true>();
-  expectType<Infer<number>>().sameType<number>().is<true>();
-  expectType<Infer<bigint>>().sameType<bigint>().is<true>();
-  expectType<Infer<boolean>>().sameType<boolean>().is<true>();
-  expectType<Infer<null>>().sameType<null>().is<true>();
-  expectType<Infer<undefined>>().sameType<undefined>().is<true>();
-  expectType<Infer<Date>>().sameType<Date>().is<true>();
-  expectType<Infer<['1']>>().sameType<['1']>().is<true>();
-  expectType<Infer<[]>>().sameType<[]>().is<true>();
-  expectType<Infer<null[]>>().sameType<null[]>().is<true>();
-  expectType<Infer<undefined[]>>().sameType<undefined[]>().is<true>();
-  expectType<Infer<[null, undefined]>>().sameType<[null, undefined]>().is<true>();
-  expectType<Infer<{ a: null; b: undefined }>>().sameType<{ a: null; b: undefined }>().is<true>();
-  expectType<Infer<string | number | Date | boolean | null | undefined>>()
-    .sameType<string | number | Date | boolean | null | undefined>()
-    .is<true>();
+  expect<Infer<string>>().isOfType<string>().equals<true>();
+  expect<Infer<number>>().isOfType<number>().equals<true>();
+  expect<Infer<bigint>>().isOfType<bigint>().equals<true>();
+  expect<Infer<boolean>>().isOfType<boolean>().equals<true>();
+  expect<Infer<null>>().isOfType<null>().equals<true>();
+  expect<Infer<undefined>>().isOfType<undefined>().equals<true>();
+  expect<Infer<Date>>().isOfType<Date>().equals<true>();
+  expect<Infer<['1']>>().isOfType<['1']>().equals<true>();
+  expect<Infer<[]>>().isOfType<[]>().equals<true>();
+  expect<Infer<null[]>>().isOfType<null[]>().equals<true>();
+  expect<Infer<undefined[]>>().isOfType<undefined[]>().equals<true>();
+  expect<Infer<[null, undefined]>>().isOfType<[null, undefined]>().equals<true>();
+  expect<Infer<{ a: null; b: undefined }>>().isOfType<{ a: null; b: undefined }>().equals<true>();
+  expect<Infer<string | number | Date | boolean | null | undefined>>()
+    .isOfType<string | number | Date | boolean | null | undefined>()
+    .equals<true>();
 });
 
 describe('Type inference: FunctionRule', () => {
-  expectType<Infer<FunctionRule<string>>>().sameType<string>().is<true>();
-  expectType<Infer<FunctionRule<number>>>().sameType<number>().is<true>();
-  expectType<Infer<FunctionRule<bigint>>>().sameType<bigint>().is<true>();
-  expectType<Infer<FunctionRule<boolean>>>().sameType<boolean>().is<true>();
-  expectType<Infer<FunctionRule<null>>>().sameType<null>().is<true>();
-  expectType<Infer<FunctionRule<undefined>>>().sameType<undefined>().is<true>();
-  expectType<Infer<FunctionRule<Date>>>().sameType<Date>().is<true>();
-  expectType<Infer<FunctionRule<FunctionRule<RegExp>>>>().sameType<FunctionRule<RegExp>>().is<true>();
+  expect<Infer<FunctionRule<string>>>().isOfType<string>().equals<true>();
+  expect<Infer<FunctionRule<number>>>().isOfType<number>().equals<true>();
+  expect<Infer<FunctionRule<bigint>>>().isOfType<bigint>().equals<true>();
+  expect<Infer<FunctionRule<boolean>>>().isOfType<boolean>().equals<true>();
+  expect<Infer<FunctionRule<null>>>().isOfType<null>().equals<true>();
+  expect<Infer<FunctionRule<undefined>>>().isOfType<undefined>().equals<true>();
+  expect<Infer<FunctionRule<Date>>>().isOfType<Date>().equals<true>();
+  expect<Infer<FunctionRule<FunctionRule<RegExp>>>>().isOfType<FunctionRule<RegExp>>().equals<true>();
 });
 
 describe('Type inference: PredicateRule', () => {
-  expectType<Infer<PredicateRule<string>>>().sameType<string>().is<true>();
-  expectType<Infer<PredicateRule<number>>>().sameType<number>().is<true>();
-  expectType<Infer<PredicateRule<bigint>>>().sameType<bigint>().is<true>();
-  expectType<Infer<PredicateRule<boolean>>>().sameType<boolean>().is<true>();
-  expectType<Infer<PredicateRule<null>>>().sameType<null>().is<true>();
-  expectType<Infer<PredicateRule<undefined>>>().sameType<undefined>().is<true>();
-  expectType<Infer<PredicateRule<Date>>>().sameType<Date>().is<true>();
+  expect<Infer<PredicateRule<string>>>().isOfType<string>().equals<true>();
+  expect<Infer<PredicateRule<number>>>().isOfType<number>().equals<true>();
+  expect<Infer<PredicateRule<bigint>>>().isOfType<bigint>().equals<true>();
+  expect<Infer<PredicateRule<boolean>>>().isOfType<boolean>().equals<true>();
+  expect<Infer<PredicateRule<null>>>().isOfType<null>().equals<true>();
+  expect<Infer<PredicateRule<undefined>>>().isOfType<undefined>().equals<true>();
+  expect<Infer<PredicateRule<Date>>>().isOfType<Date>().equals<true>();
 });
 
 describe('Type inference: array types', () => {
-  expectType<Infer<any[]>>().sameType<any[]>().is<true>();
-  expectType<Infer<string[]>>().sameType<string[]>().is<true>();
-  expectType<Infer<number[]>>().sameType<number[]>().is<true>();
-  expectType<Infer<bigint[]>>().sameType<bigint[]>().is<true>();
-  expectType<Infer<boolean[]>>().sameType<boolean[]>().is<true>();
-  expectType<Infer<null[]>>().sameType<null[]>().is<true>();
-  expectType<Infer<undefined[]>>().sameType<undefined[]>().is<true>();
-  expectType<Infer<Date[]>>().sameType<Date[]>().is<true>();
-  expectType<Infer<FunctionRule<string>[]>>().sameType<string[]>().is<true>();
-  expectType<Infer<PredicateRule<string>[]>>().sameType<string[]>().is<true>();
-  expectType<Infer<SchemaRule<number>[]>>().sameType<number[]>().is<true>();
-  expectType<Infer<ObjectRule<{ a: SchemaRule<string> }>[]>>().sameType<{ a: string }[]>().is<true>();
+  expect<Infer<any[]>>().isOfType<any[]>().equals<true>();
+  expect<Infer<string[]>>().isOfType<string[]>().equals<true>();
+  expect<Infer<number[]>>().isOfType<number[]>().equals<true>();
+  expect<Infer<bigint[]>>().isOfType<bigint[]>().equals<true>();
+  expect<Infer<boolean[]>>().isOfType<boolean[]>().equals<true>();
+  expect<Infer<null[]>>().isOfType<null[]>().equals<true>();
+  expect<Infer<undefined[]>>().isOfType<undefined[]>().equals<true>();
+  expect<Infer<Date[]>>().isOfType<Date[]>().equals<true>();
+  expect<Infer<FunctionRule<string>[]>>().isOfType<string[]>().equals<true>();
+  expect<Infer<PredicateRule<string>[]>>().isOfType<string[]>().equals<true>();
+  expect<Infer<SchemaRule<number>[]>>().isOfType<number[]>().equals<true>();
+  expect<Infer<ObjectRule<{ a: SchemaRule<string> }>[]>>().isOfType<{ a: string }[]>().equals<true>();
 });
 
 describe('Type inference: union and intersection', () => {
-  expectType<Infer<FunctionRule<string> | FunctionRule<number> | PredicateRule<string[]>>>()
-    .sameType<string | number | string[]>()
-    .is<true>();
-  expectType<InferIntersection<[{ id: string }, { email: string }]>>()
-    .sameType<{ id: string; email: string }>()
-    .is<true>();
-  expectType<InferIntersection<[{ id: string }, { email: FunctionRule<string> }]>>()
-    .sameType<{ id: string; email: string }>()
-    .is<true>();
+  expect<Infer<FunctionRule<string> | FunctionRule<number> | PredicateRule<string[]>>>()
+    .isOfType<string | number | string[]>()
+    .equals<true>();
+  expect<InferIntersection<[{ id: string }, { email: string }]>>()
+    .isOfType<{ id: string; email: string }>()
+    .equals<true>();
+  expect<InferIntersection<[{ id: string }, { email: FunctionRule<string> }]>>()
+    .isOfType<{ id: string; email: string }>()
+    .equals<true>();
 });
 
 describe('Type inference: object types', () => {
-  expectType<Infer<{ a: string; b: number; c: Date }>>().sameType<{ a: string; b: number; c: Date }>().is<true>();
+  expect<Infer<{ a: string; b: number; c: Date }>>().isOfType<{ a: string; b: number; c: Date }>().equals<true>();
 });
 
 describe('strictEqual', () => {
   const pattern = strictEqual(globalThis);
 
-  expectType<typeof pattern>().sameType<FunctionRule<typeof globalThis>>().is<true>();
+  expect(pattern).isOfType<FunctionRule<typeof globalThis>>().equals<true>();
 });
 
 describe('literal: string value', () => {
   const pattern = literal('1');
 
-  expectType<typeof pattern>().is<FunctionRule<'1'>>();
+  expect(pattern).isOfType<FunctionRule<'1'>>().equals<true>();
 });
 
 describe('literal: Date value', () => {
   const pattern = literal(new Date());
 
-  expectType<typeof pattern>().is<FunctionRule<Date>>();
+  expect(pattern).isOfType<FunctionRule<Date>>().equals<true>();
 });
 
 describe('Array schema: union', () => {
   const pattern = [1, '2'];
 
-  expectType<Infer<typeof pattern>>().is<(string | number)[]>();
+  expect<Infer<typeof pattern>>().isOfType<(string | number)[]>().equals<true>();
 });
 
 describe('Array schema: tuple (as const)', () => {
   const pattern = [1, '2'] as const;
 
-  expectType<Infer<typeof pattern>>().is<[1, '2']>();
+  expect<Infer<typeof pattern>>().isOfType<readonly [1, '2']>().equals<true>();
 });
 
 describe('arrayOf: allOf combinator', () => {
   const item = allOf(re(/^xxx/), re(/yyy$/));
   const pattern = arrayOf(item);
 
-  expectType<typeof pattern>().is<FunctionRule<string[]>>();
+  expect(pattern).isOfType<FunctionRule<string[]>>().equals<true>();
 });
 
 describe('arrayOf: anyOf with mixed types', () => {
   const item = anyOf(aNumber(), '2', new Date());
   const pattern = arrayOf(item);
 
-  expectType<typeof pattern>().is<FunctionRule<(number | '2' | Date)[]>>();
+  expect(pattern).isOfType<FunctionRule<(number | '2' | Date)[]>>().equals<true>();
 });
 
 describe('arrayOf: anyOf with primitives and boolean', () => {
   const pattern = arrayOf(anyOf(1, 2, 's', aBoolean(), 5));
 
-  expectType<typeof pattern>().is<FunctionRule<(1 | 2 | 5 | 's' | boolean)[]>>();
+  expect(pattern).isOfType<FunctionRule<(1 | 2 | 5 | 's' | boolean)[]>>().equals<true>();
 });
 
 describe('tuple: mixed types', () => {
   const pattern = tuple([aNumber(), '2', 8, new Date()]);
 
-  expectType<typeof pattern>().is<FunctionRule<[number, string, number, Date]>>();
+  expect(pattern).isOfType<FunctionRule<[number, string, number, Date]>>().equals<true>();
 });
 
 describe('tuple: union type', () => {
   const pattern = tuple([aNumber(), '2', 8, new Date()]);
 
-  expectType<typeof pattern>().is<FunctionRule<(number | string | Date)[]>>();
+  expect(pattern).isOfType<FunctionRule<(number | string | Date)[]>>().equals<true>();
 });
 
 describe('tuple: literal numbers', () => {
   const pattern = tuple([1, 2, 3]);
 
-  expectType<Infer<typeof pattern>>().sameType<[1, 2, 3]>().is<true>();
-  expectType<Infer<typeof pattern>>().sameType<[number, number, number]>().is<false>();
+  expect<Infer<typeof pattern>>().isOfType<[1, 2, 3]>().equals<true>();
+  expect<Infer<typeof pattern>>().isOfType<[number, number, number]>().equals<false>();
 });
 
 describe('array: empty', () => {
   const pattern = array([]);
 
-  expectType<typeof pattern>().is<FunctionRule<never[]>>();
+  expect(pattern).isOfType<FunctionRule<never[]>>().equals<true>();
 });
 
 describe('array: mixed values', () => {
   const pattern = array([1, 2, 3, 5, 's']);
 
-  expectType<typeof pattern>().is<FunctionRule<(string | number)[]>>();
+  expect(pattern).isOfType<FunctionRule<(string | number)[]>>().equals<true>();
 });
 
 describe('anyOf: primitives and Date', () => {
   const pattern = anyOf('1', 5, aDate(), aNumber());
 
-  expectType<Infer<typeof pattern>>().is<'1' | Date | number>();
+  expect<Infer<typeof pattern>>().isOfType<'1' | Date | number>().equals<true>();
 });
 
 describe('arrayOf: anyOf with primitives and Date', () => {
   const pattern = arrayOf(anyOf('1', 5, new Date()));
 
-  expectType<typeof pattern>().is<FunctionRule<(string | Date | number)[]>>();
+  expect(pattern).isOfType<FunctionRule<(string | Date | number)[]>>().equals<true>();
 });
 
 describe('objectLike: with length property', () => {
   const pattern = objectLike({ length: 5 });
 
-  expectType<typeof pattern>().is<FunctionRule<Array<any>>>();
+  expect(pattern).isOfType<FunctionRule<Array<any>>>().equals<true>();
 });
 
 describe('objectLike: type check', () => {
   const pattern = objectLike({ length: 5 });
 
-  expectType<Infer<typeof pattern>>().sameType<{ length: number }>().is<true>();
+  expect<Infer<typeof pattern>>().isOfType<{ length: number }>().equals<true>();
 });
 
 describe('objectLike: as const type check', () => {
   const pattern = objectLike({ length: 5 } as const);
 
-  expectType<Infer<typeof pattern>>().sameType<{ length: number }>().is<false>();
+  expect<Infer<typeof pattern>>().isOfType<{ length: number }>().equals<false>();
 });
 
 describe('record: with array property', () => {
@@ -217,7 +217,7 @@ describe('record: with array property', () => {
     messages: [aNumber(), aString()],
   };
 
-  expectType<Infer<typeof pattern>>().is<{ messages: (string | number)[] }>();
+  expect<Infer<typeof pattern>>().isOfType<{ messages: (string | number)[] }>().equals<true>();
 });
 
 describe('record: with regexp property', () => {
@@ -225,7 +225,7 @@ describe('record: with regexp property', () => {
     a: re(/xxx/),
   };
 
-  expectType<Infer<typeof pattern>>().is<{ a: string }>();
+  expect<Infer<typeof pattern>>().isOfType<{ a: string }>().equals<true>();
 });
 
 describe('record: with arrayOf and anyOf', () => {
@@ -233,7 +233,7 @@ describe('record: with arrayOf and anyOf', () => {
     a: arrayOf(anyOf(re(/xxx/), aNumber())),
   };
 
-  expectType<Infer<typeof pattern>>().is<{ a: (string | number)[] }>();
+  expect<Infer<typeof pattern>>().isOfType<{ a: (string | number)[] }>().equals<true>();
 });
 
 describe('objectShape: string and number', () => {
@@ -242,7 +242,7 @@ describe('objectShape: string and number', () => {
     b: aNumber(),
   });
 
-  expectType<typeof pattern>().is<FunctionRule<{ a: string; b: number }>>();
+  expect(pattern).isOfType<FunctionRule<{ a: string; b: number }>>().equals<true>();
 });
 
 describe('objectShape: plain object', () => {
@@ -251,31 +251,40 @@ describe('objectShape: plain object', () => {
     b: aNumber(),
   };
 
-  expectType<Infer<typeof pattern>>().is<{ a: string; b: number }>();
+  expect<Infer<typeof pattern>>().isOfType<{ a: string; b: number }>().equals<true>();
+});
+
+describe('objectShape: plain object', () => {
+  const pattern = {
+    a: 'test' as string,
+    b: 6 as number,
+  };
+
+  expect<Infer<typeof pattern>>().isOfType<{ a: string; b: number }>().equals<true>();
 });
 
 describe('optional: string literal', () => {
   const pattern = optional('1' as const);
 
-  expectType<typeof pattern>().is<FunctionRule<'1' | undefined>>();
+  expect(pattern).isOfType<FunctionRule<'1' | undefined>>().equals<true>();
 });
 
 describe('nullable: string literal', () => {
   const pattern = nullable('1' as const);
 
-  expectType<typeof pattern>().is<FunctionRule<'1'>>();
+  expect(pattern).isOfType<FunctionRule<'1'>>().equals<true>();
 });
 
 describe('nullable: aString', () => {
   const pattern = nullable(aString());
 
-  expectType<typeof pattern>().is<FunctionRule<string>>();
+  expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
 });
 
 describe('nullable: aString (duplicate)', () => {
   const pattern = nullable(aString());
 
-  expectType<typeof pattern>().is<FunctionRule<string>>();
+  expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
 });
 
 describe('nullable: objectShape', () => {
@@ -285,7 +294,7 @@ describe('nullable: objectShape', () => {
     })
   );
 
-  expectType<typeof pattern>().is<FunctionRule<{ a: string }>>();
+  expect(pattern).isOfType<FunctionRule<{ a: string }>>().equals<true>();
 });
 
 describe('record: exact values', () => {
@@ -308,15 +317,8 @@ describe('record: exact values', () => {
     },
   };
 
-  expectType<Infer<typeof pattern>>().is<{
-    a: string;
-    b: 6;
-    date: Date;
-    array: string[];
-    boolean: boolean;
-    null: null;
-    undefined: undefined;
-    record: {
+  expect<Infer<typeof pattern>>()
+    .isOfType<{
       a: string;
       b: number;
       date: Date;
@@ -324,20 +326,29 @@ describe('record: exact values', () => {
       boolean: boolean;
       null: null;
       undefined: undefined;
-    };
-  }>();
+      record: {
+        a: string;
+        b: number;
+        date: Date;
+        array: string[];
+        boolean: boolean;
+        null: null;
+        undefined: undefined;
+      };
+    }>()
+    .equals<true>();
 });
 
 describe('allOf: incompatible types', () => {
   const pattern = allOf(aString(), aNumber(), aDate());
 
-  expectType<typeof pattern>().is<FunctionRule<never>>();
+  expect(pattern).isOfType<FunctionRule<never>>().equals<true>();
 });
 
 describe('allOf: string and regexp', () => {
   const pattern = allOf(aString(), re(/x/));
 
-  expectType<typeof pattern>().is<FunctionRule<string>>();
+  expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
 });
 
 describe('allOf: explicit objectShape', () => {
@@ -350,13 +361,15 @@ describe('allOf: explicit objectShape', () => {
 
   pattern(obj);
 
-  expectType<typeof pattern>().is<
-    FunctionRule<{
-      id: string;
-      name: string;
-      email: string;
-    }>
-  >();
+  expect(pattern)
+    .isOfType<
+      FunctionRule<{
+        id: string;
+        name: string;
+        email: string;
+      }>
+    >()
+    .equals<true>();
 });
 
 describe('allOf: objectShape vs plain object', () => {
@@ -370,7 +383,7 @@ describe('allOf: objectShape vs plain object', () => {
     }
   );
 
-  expectType<Infer<typeof pattern1>>().sameType<Infer<typeof pattern2>>().is<true>();
+  expect<Infer<typeof pattern1>>().isOfType<Infer<typeof pattern2>>().equals<true>();
 });
 
 describe('allOf: objectShape as const vs plain object as const', () => {
@@ -384,14 +397,14 @@ describe('allOf: objectShape as const vs plain object as const', () => {
     } as const
   );
 
-  expectType<Infer<typeof pattern1>>().sameType<Infer<typeof pattern2>>().is<true>();
+  expect<Infer<typeof pattern1>>().isOfType<Infer<typeof pattern2>>().equals<true>();
 });
 
 describe('oneOf: object literals', () => {
   const pattern = oneOf({ id: '1' }, { name: '2' }, { email: '3' });
 
-  expectType<Infer<typeof pattern>>().sameType<{ id: string } | { name: string } | { email: string }>().is<true>();
-  expectType<Infer<typeof pattern>>().sameType<{ id: '1' } | { name: '2' } | { email: '3' }>().is<false>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: string } | { name: string } | { email: string }>().equals<true>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '3' }>().equals<false>();
 });
 
 describe('oneOf: primitives and combinators', () => {
@@ -399,96 +412,98 @@ describe('oneOf: primitives and combinators', () => {
   const b = aString();
   const pattern = oneOf('test', 5, a, b, new Date());
 
-  expectType<typeof pattern>().is<FunctionRule<string | number | Date>>();
+  expect(pattern).isOfType<FunctionRule<string | number | Date>>().equals<true>();
 });
 
 describe('anyOf: primitives, number, Date', () => {
   const pattern = anyOf(aString(), aNumber(), aDate());
 
-  expectType<typeof pattern>().is<FunctionRule<string | number | Date>>();
+  expect(pattern).isOfType<FunctionRule<string | number | Date>>().equals<true>();
 });
 
 describe('anyOf: object with regexp', () => {
   const pattern = anyOf({ id: re(/x/) }, { id: re(/y/) }, { id: re(/z/) });
 
-  expectType<typeof pattern>().is<FunctionRule<{ id: string }>>();
+  expect(pattern).isOfType<FunctionRule<{ id: string }>>().equals<true>();
 });
 
 describe('anyOf: string, object, array', () => {
   const pattern = anyOf(aString(), { id: re(/x/) }, arrayOf(aString()));
 
-  expectType<typeof pattern>().is<FunctionRule<string | { id: string } | string[]>>();
+  expect(pattern).isOfType<FunctionRule<string | { id: string } | string[]>>().equals<true>();
 });
 
 describe('anyOf: string literals', () => {
   const pattern = anyOf('1', '2', '3');
 
-  expectType<typeof pattern>().is<FunctionRule<string>>();
+  expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
 });
 
 describe('anyOf: object literals', () => {
   const pattern = anyOf({ id: '1' }, { name: '2' }, { email: '4' });
 
-  expectType<Infer<typeof pattern>>().sameType<{ id: string } | { name: string } | { email: string }>().is<true>();
-  expectType<Infer<typeof pattern>>().sameType<{ id: '1' } | { name: '2' } | { email: '3' }>().is<false>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: string } | { name: string } | { email: string }>().equals<true>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '3' }>().equals<false>();
 });
 
 describe('anyOf: object id union', () => {
   const pattern = anyOf({ id: '1' }, { id: '2' }, { id: '4' });
 
-  expectType<typeof pattern>().is<
-    FunctionRule<{
-      id: '1' | '2' | '4';
-    }>
-  >();
+  expect(pattern)
+    .isOfType<
+      FunctionRule<{
+        id: '1' | '2' | '4';
+      }>
+    >()
+    .equals<true>();
 });
 
 describe('anyOf: object id union as union type', () => {
   const pattern = anyOf({ id: '1' }, { id: '2' }, { id: '4' });
 
-  expectType<typeof pattern>().is<FunctionRule<{ id: '1' } | { id: '2' } | { id: '4' }>>();
+  expect(pattern).isOfType<FunctionRule<{ id: '1' } | { id: '2' } | { id: '4' }>>().equals<true>();
 });
 
 describe('isInstanceOf: Error', () => {
   const pattern = isInstanceOf(Error);
 
-  expectType<typeof pattern>().is<FunctionRule<Error>>();
+  expect(pattern).isOfType<FunctionRule<Error>>().equals<true>();
 });
 
 describe('isInstanceOf: Error with details', () => {
   const pattern = isInstanceOf(Error, { details: aString() });
 
-  expectType<typeof pattern>().is<FunctionRule<Error & { details: string }>>();
+  expect(pattern).isOfType<FunctionRule<Error & { details: string }>>().equals<true>();
 });
 
 describe('isInstanceOf: RegExp with source', () => {
   const pattern = isInstanceOf(RegExp, { source: 'xxx' });
 
-  expectType<typeof pattern>().is<FunctionRule<RegExp & { source: string }>>();
+  expect(pattern).isOfType<FunctionRule<RegExp & { source: string }>>().equals<true>();
 });
 
 describe('nullish: aString', () => {
   const pattern = nullish(aString());
 
-  expectType<typeof pattern>().is<FunctionRule<string | null | undefined>>();
+  expect(pattern).isOfType<FunctionRule<string | null | undefined>>().equals<true>();
 });
 
 describe('predicate: function', () => {
   const pattern = (value: string): boolean => String(value).length === 0;
 
-  expectType<Infer<typeof pattern>>().is<string>();
+  expect<Infer<typeof pattern>>().isOfType<string>().equals<true>();
 });
 
 describe('predicate: PredicateRule', () => {
   const pattern = predicate((value: string): boolean => String(value).length === 0);
 
-  expectType<typeof pattern>().is<FunctionRule<string>>();
+  expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
 });
 
 describe('predicate: in object', () => {
   const pattern = { id: predicate((value: string): boolean => String(value).length !== 0) };
 
-  expectType<Infer<typeof pattern>>().is<{ id: string }>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: string }>().equals<true>();
 });
 
 describe('validate: object and pattern', () => {
@@ -499,28 +514,23 @@ describe('validate: object and pattern', () => {
     mask: /x/,
   };
   const pattern = {
-    id: aString(),
     email: arrayOf(aString()),
     born: aDate(),
     mask: re(/x/),
   };
 
-  expectType(validate(pattern, obj)).is<ValidationResult<Infer<typeof pattern>>>();
+  expect(validate(pattern, obj)).isOfType<ValidationResult<Infer<typeof pattern>>>().equals<true>();
 });
 
 export type SameType<B, A> = A extends B ? (B extends A ? true : false) : false;
 
-export function expectType<A>(arg?: A): {
-  is<X extends A>(): void;
-  sameType<B>(): { is<Y extends SameType<A, B>>(): void };
+export function expect<A>(arg?: A): {
+  isOfType<B>(): { equals<Y extends SameType<A, B>>(): void };
 } {
   return {
-    is<X extends A>() {
-      // do nothing
-    },
-    sameType<B>(): { is<Y extends SameType<A, B>>(): void } {
+    isOfType<B>(): { equals<Y extends SameType<A, B>>(): void } {
       return {
-        is<Y extends SameType<A, B>>() {
+        equals<Y extends SameType<A, B>>() {
           // do nothing
         },
       };
