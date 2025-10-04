@@ -131,7 +131,7 @@ export function __isArray<T>(schema: unknown): schema is ArrayRule<any> {
  * @internal
  */
 export function __typeOf(v: any): __TypeOf {
-  return Object.prototype.toString.call(v);
+  return Object.prototype.toString.call(v) as __TypeOf;
 }
 
 /**

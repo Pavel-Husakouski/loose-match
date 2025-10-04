@@ -142,25 +142,26 @@ describe('arrayOf: anyOf with mixed types', () => {
   const item = anyOf(aNumber(), '2' as const, new Date());
   const pattern = arrayOf(item);
 
-  expect<typeof pattern>().isOfType<FunctionRule<(number | '3' | Date)[]>>().equals<false>();
+  expect<typeof pattern>().isOfType<FunctionRule<(number | '2' | Date)[]>>().equals<true>();
   expect<typeof pattern>().isOfType<FunctionRule<(number | string | Date)[]>>().equals<true>();
 });
 
 describe('arrayOf: anyOf with primitives and boolean', () => {
   const pattern = arrayOf(anyOf(1, 2, 's', aBoolean(), 5));
 
-  expect(pattern).isOfType<FunctionRule<(1 | 2 | 5 | 's' | boolean)[]>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<(string | number | boolean)[]>>().equals<true>();
 });
 
 describe('tuple: mixed types', () => {
   const pattern = tuple([aNumber(), '2', 8, new Date()]);
 
-  expect(pattern).isOfType<FunctionRule<[number, string, number, Date]>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<[number, '2', 8, Date]>>().equals<true>();
 });
 
 describe('tuple: union type', () => {
   const pattern = tuple([aNumber(), '2', 8, new Date()]);
 
+  expect(pattern).isOfType<FunctionRule<[number, '2', 8, Date]>>().equals<true>();
   expect(pattern).isOfType<FunctionRule<(number | string | Date)[]>>().equals<true>();
 });
 
@@ -198,6 +199,7 @@ describe('arrayOf: anyOf with primitives and Date', () => {
 describe('objectLike: with length property', () => {
   const pattern = objectLike({ length: 5 });
 
+  expect(pattern).isOfType<FunctionRule<{ length: number }>>().equals<true>();
   expect(pattern).isOfType<FunctionRule<Array<any>>>().equals<true>();
 });
 
@@ -216,6 +218,14 @@ describe('objectLike: as const type check', () => {
 describe('record: with array property', () => {
   const pattern = {
     messages: [aNumber(), aString()],
+  };
+
+  expect<Infer<typeof pattern>>().isOfType<{ messages: (string | number)[] }>().equals<true>();
+});
+
+describe('record: with array property', () => {
+  const pattern = {
+    messages: array([aNumber(), aString()]),
   };
 
   expect<Infer<typeof pattern>>().isOfType<{ messages: (string | number)[] }>().equals<true>();
@@ -274,18 +284,14 @@ describe('nullable: string literal', () => {
   const pattern = nullable('1' as const);
 
   expect(pattern).isOfType<FunctionRule<'1'>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<'1' | null>>().equals<true>();
 });
 
 describe('nullable: aString', () => {
   const pattern = nullable(aString());
 
   expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
-});
-
-describe('nullable: aString (duplicate)', () => {
-  const pattern = nullable(aString());
-
-  expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<string | null>>().equals<true>();
 });
 
 describe('nullable: objectShape', () => {
@@ -296,6 +302,7 @@ describe('nullable: objectShape', () => {
   );
 
   expect(pattern).isOfType<FunctionRule<{ a: string }>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<{ a: string } | null>>().equals<true>();
 });
 
 describe('record: exact values', () => {

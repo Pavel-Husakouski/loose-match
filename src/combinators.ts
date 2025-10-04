@@ -422,7 +422,7 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     return literal(schema) as FunctionRule<Infer<T>>;
   }
   if (__isArray(schema)) {
-    return __arrayExact(schema);
+    return __arrayExact(schema) as FunctionRule<Infer<T>>;
   }
   if (__isError(schema)) {
     const ctor = schema.constructor as any;
@@ -432,7 +432,7 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     return isInstanceOf(ctor, { /*name, too strict*/ message, ...(schema as any) });
   }
   if (__isObject(schema)) {
-    return __objectShape(schema);
+    return __objectShape(schema) as FunctionRule<Infer<T>>;
   }
 
   throw new Error('hell knows');
