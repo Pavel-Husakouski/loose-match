@@ -139,10 +139,11 @@ describe('arrayOf: allOf combinator', () => {
 });
 
 describe('arrayOf: anyOf with mixed types', () => {
-  const item = anyOf(aNumber(), '2', new Date());
+  const item = anyOf(aNumber(), '2' as const, new Date());
   const pattern = arrayOf(item);
 
-  expect(pattern).isOfType<FunctionRule<(number | '2' | Date)[]>>().equals<true>();
+  expect<typeof pattern>().isOfType<FunctionRule<(number | '3' | Date)[]>>().equals<false>();
+  expect<typeof pattern>().isOfType<FunctionRule<(number | string | Date)[]>>().equals<true>();
 });
 
 describe('arrayOf: anyOf with primitives and boolean', () => {
@@ -447,21 +448,17 @@ describe('anyOf: object literals', () => {
 });
 
 describe('anyOf: object id union', () => {
-  const pattern = anyOf({ id: '1' }, { id: '2' }, { id: '4' });
+  const pattern = anyOf({ id: '1' } as const, { id: '2' } as const, { id: '4' } as const);
 
-  expect(pattern)
-    .isOfType<
-      FunctionRule<{
-        id: '1' | '2' | '4';
-      }>
-    >()
-    .equals<true>();
+  expect(pattern).isOfType<FunctionRule<{ id: '1' | '2' | '4' }>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<{ id: '1' } | { id: '2' } | { id: '4' }>>().equals<true>();
 });
 
 describe('anyOf: object id union as union type', () => {
-  const pattern = anyOf({ id: '1' }, { id: '2' }, { id: '4' });
+  const pattern = anyOf({ id: '1' as const }, { id: '2' as const }, { id: '4' as const });
 
-  expect(pattern).isOfType<FunctionRule<{ id: '1' } | { id: '2' } | { id: '4' }>>().equals<true>();
+  expect<typeof pattern>().isOfType<FunctionRule<{ id: '1' | '2' | '4' }>>().equals<true>();
+  expect<typeof pattern>().isOfType<FunctionRule<{ id: '1' | '2' | '5' }>>().equals<false>();
 });
 
 describe('isInstanceOf: Error', () => {
@@ -522,9 +519,9 @@ describe('validate: object and pattern', () => {
   expect(validate(pattern, obj)).isOfType<ValidationResult<Infer<typeof pattern>>>().equals<true>();
 });
 
-export type SameType<B, A> = A extends B ? (B extends A ? true : false) : false;
+type SameType<B, A> = A extends B ? (B extends A ? true : false) : false;
 
-export function expect<A>(arg?: A): {
+function expect<A>(arg?: A): {
   isOfType<B>(): { equals<Y extends SameType<A, B>>(): void };
 } {
   return {
