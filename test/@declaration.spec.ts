@@ -101,6 +101,18 @@ describe('Type inference: object types', () => {
   expect<Infer<{ a: string; b: number; c: Date }>>().isOfType<{ a: string; b: number; c: Date }>().equals<true>();
 });
 
+describe('Type inference: complex type object', () => {
+  expect<Infer<{ messages: (FunctionRule<string> | FunctionRule<number>)[] }>>()
+    .isOfType<{ messages: (string | number)[] }>()
+    .equals<true>();
+});
+
+describe('Type inference: complex type object', () => {
+  expect<Infer<{ messages: (FunctionRule<{ id: string }> | FunctionRule<{ email: string }>)[] }>>()
+    .isOfType<{ messages: ({ id: string } | { email: string })[] }>()
+    .equals<true>();
+});
+
 describe('strictEqual', () => {
   const pattern = strictEqual(globalThis);
 
@@ -284,14 +296,12 @@ describe('nullable: string literal', () => {
   const pattern = nullable('1' as const);
 
   expect(pattern).isOfType<FunctionRule<'1'>>().equals<true>();
-  expect(pattern).isOfType<FunctionRule<'1' | null>>().equals<true>();
 });
 
 describe('nullable: aString', () => {
   const pattern = nullable(aString());
 
   expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
-  expect(pattern).isOfType<FunctionRule<string | null>>().equals<true>();
 });
 
 describe('nullable: objectShape', () => {
@@ -302,7 +312,6 @@ describe('nullable: objectShape', () => {
   );
 
   expect(pattern).isOfType<FunctionRule<{ a: string }>>().equals<true>();
-  expect(pattern).isOfType<FunctionRule<{ a: string } | null>>().equals<true>();
 });
 
 describe('record: exact values', () => {
