@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     "strict": true,
-    "strictFunctionTypes": false,
+    "strictFunctionTypes": true,
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "noImplicitThis": true,
@@ -22,16 +22,16 @@
     "noEmitHelpers": false,
     "importHelpers": false,
     "stripInternal": true,
-    "outDir": "lib"
+    "outDir": "../lib"
   },
   "files": [
     "src/index.ts"
   ],
   "include": [
-    "test/**/*.ts"
+    "core/test/**/*.ts"
   ],
   "exclude": [
-    "node_modules",
-    "test"
+    "../node_modules",
+    "core/test"
   ]
 }

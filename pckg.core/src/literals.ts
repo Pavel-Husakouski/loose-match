@@ -1,5 +1,5 @@
-import { __invalid, __stringify, __typeOf, __valid, FunctionRule, LiteralTypes, ValidationResult } from './types.js';
-import { __assert } from './assert.js';
+import { __invalid, __stringify, __typeOf, __valid, FunctionRule, LiteralTypes, ValidationResult } from './types';
+import { __assert } from './assert';
 
 /**
  * A rule - any value (always valid).

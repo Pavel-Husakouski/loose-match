@@ -1,36 +1,24 @@
 {
-  "name": "@beeff/loose-match",
+  "name": "loose match workspace",
   "version": "1.0.0-rc.4",
-  "description": "An asymmetric matcher library made for the @beeff project",
-  "main": "lib/index.js",
-  "type": "module",
-  "types": "lib/index.d.ts",
+  "private": true,
+  "description": "Workspace for loose-match library and its test packages",
+  "workspaces": [
+    "pckg.core",
+    "pckg.test.loose",
+    "pckg.test.strict",
+    "pckg.common"
+  ],
   "scripts": {
-    "clean": "rm -rf lib",
-    "build": "npm run clean && npm run compile",
-    "compile": "tsc",
-    "test": "mocha"
-  },
-  "keywords": [],
-  "repository": {
-    "url": "https://github.com/Pavel-Husakouski/loose-match"
+    "build": "npm run build -w pckg.core",
+    "test:core": "npm run test -w pckg.core",
+    "test:loose": "npm run test -w pckg.test.loose",
+    "test:strict": "npm run test -w pckg.test.strict",
+    "test": "npm run -ws test"
   },
   "author": "Pauel <phusakouski@gmail.com>",
   "license": "MIT",
-  "peerDependencies": {
-    "tslib": "^2.6.3"
-  },
-  "files": [
-    "lib/*",
-    "LICENSE",
-    "readme.md"
-  ],
-  "devDependencies": {
-    "@types/mocha": "^10.0.10",
-    "mocha": "^11.7.2",
-    "prettier": "^3.6.2",
-    "ts-node": "^10.9.2",
-    "tslib": "^2.8.1",
-    "typescript": "^5.9.2"
+  "repository": {
+    "url": "https://github.com/Pavel-Husakouski/loose-match"
   }
 }

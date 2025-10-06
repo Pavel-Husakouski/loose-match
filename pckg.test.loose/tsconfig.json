@@ -1,0 +1,37 @@
+{
+  "compilerOptions": {
+    "strict": true,
+    "strictFunctionTypes": false,
+    "strictNullChecks": true,
+    "strictPropertyInitialization": true,
+    "noImplicitThis": true,
+    "alwaysStrict": true,
+    "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "module": "ESNext",
+    "target": "es2020",
+    "moduleResolution": "node",
+    "lib": [
+      "es6"
+    ],
+    "sourceMap": true,
+    "declaration": true,
+    "noEmitHelpers": false,
+    "importHelpers": false,
+    "stripInternal": true,
+    "outDir": "../lib"
+  },
+  "files": [
+    "src/index.ts"
+  ],
+  "include": [
+    "core/test/**/*.ts"
+  ],
+  "exclude": [
+    "../node_modules",
+    "core/test"
+  ]
+}

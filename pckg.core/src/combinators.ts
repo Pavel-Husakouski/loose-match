@@ -15,9 +15,9 @@ import {
   ObjectRule,
   PredicateRule,
   SchemaRule,
-} from './types.js';
-import { literal } from './literals.js';
-import { __assert } from './assert.js';
+} from './types';
+import { literal } from './literals';
+import { __assert } from './assert';
 
 /**
  * A rule - an object shape with specific properties
@@ -372,6 +372,7 @@ export function instanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
 
     return __invalid(`expected instanceof ${ctor.name} got instanceof ${ctorOrNull}`);
   }
+
   function __instanceOfWith(value: unknown) {
     const isInstance = __instanceOf(value);
 
@@ -381,6 +382,7 @@ export function instanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
 
     return __objectLike(value as any);
   }
+
   function __objectLike(value: unknown) {
     if (value == null) {
       return __invalid(`expected non null value, got ${__stringify(value)}`);

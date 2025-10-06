@@ -1,5 +1,5 @@
-import { __toFunction } from './combinators.js';
-import { Infer, SchemaRule, ValidationResult } from './types.js';
+import { __toFunction } from './combinators';
+import { Infer, SchemaRule, ValidationResult } from './types';
 
 /**
  * An assertion function
