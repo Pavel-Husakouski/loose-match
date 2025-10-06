@@ -1,4 +1,4 @@
-import { aNumber, AssertionError, aString, isInstanceOf, match } from '../src';
+import { aNumber, AssertionError, aString, instanceOf, match } from '../src';
 
 describe('expect', () => {
   it('expect', () => {
@@ -18,7 +18,7 @@ describe('expect', () => {
     }
 
     match(error).with(
-      isInstanceOf(AssertionError, {
+      instanceOf(AssertionError, {
         message: '[0] expected Boolean false, got Boolean true',
         actual: [true],
         expected: [false, 'failed expectation'],
@@ -36,7 +36,7 @@ describe('expect', () => {
     }
 
     match(error).with(
-      isInstanceOf(AssertionError, {
+      instanceOf(AssertionError, {
         message: 'expected a string, got [object Number]',
         actual: 1,
         expected: 'expected a string, got [object Number]',

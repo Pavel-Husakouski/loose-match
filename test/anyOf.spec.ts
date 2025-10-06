@@ -1,4 +1,4 @@
-import { anyOf, isInstanceOf, validate } from '../src';
+import { anyOf, instanceOf, validate } from '../src';
 import { expect } from './@expect';
 
 describe('anyOf', () => {
@@ -13,7 +13,7 @@ describe('anyOf', () => {
 
   it('anyOf, empty', () => {
     expect(() => anyOf(...([] as any))).to.throw(
-      isInstanceOf(Error, { message: 'anyOf requires at least two arguments' })
+      instanceOf(Error, { message: 'anyOf requires at least two arguments' })
     );
   });
 });

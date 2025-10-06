@@ -16,8 +16,8 @@ import {
   PredicateRule,
   SchemaRule,
 } from './types.js';
-import { literal } from './literals';
-import { __assert } from './assert';
+import { literal } from './literals.js';
+import { __assert } from './assert.js';
 
 /**
  * A rule - an object shape with specific properties
@@ -345,17 +345,17 @@ export function isPrototypedBy<T>(ctor: abstract new (...args: any[]) => T): Fun
  * A rule - an instance of a class and optionally matches an extra object shape rule
  * @param ctor The class constructor
  */
-export function isInstanceOf<T>(ctor: abstract new (...args: any[]) => T): FunctionRule<T>;
+export function instanceOf<T>(ctor: abstract new (...args: any[]) => T): FunctionRule<T>;
 /**
  * A rule - an instance of a class and optionally matches an extra object shape rule
  * @param ctor The class constructor
  * @param extraRule An optional extra object shape rule to match the instance properties
  */
-export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
+export function instanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
   ctor: abstract new (...args: any[]) => T,
   extraRule?: S
 ): FunctionRule<T & Infer<S>>;
-export function isInstanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
+export function instanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
   ctor: abstract new (...args: any[]) => T,
   extraRule?: S
 ): FunctionRule<T & Infer<S>> {
@@ -429,7 +429,7 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
     const name = schema.name;
     const message = schema.message as any;
 
-    return isInstanceOf(ctor, { /*name, too strict*/ message, ...(schema as any) });
+    return instanceOf(ctor, { /*name, too strict*/ message, ...(schema as any) });
   }
   if (__isObject(schema)) {
     return __objectShape(schema) as FunctionRule<Infer<T>>;

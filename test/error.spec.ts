@@ -1,6 +1,6 @@
 import { describe, it } from 'mocha';
 import { expect } from './@expect';
-import { aString, isInstanceOf, objectLike, objectShape, validate } from '../src';
+import { aString, instanceOf, objectLike, objectShape, validate } from '../src';
 
 describe('error', () => {
   it('error as pattern', () => {
@@ -30,7 +30,7 @@ describe('error', () => {
     // @ts-ignore
     err3.code = 'SOMETHING';
 
-    const rule = isInstanceOf(TypeError, { code: 'SOMETHING' });
+    const rule = instanceOf(TypeError, { code: 'SOMETHING' });
 
     expect(validate(rule, err)).to.match([true]);
     expect(validate(rule, new TypeError())).to.match([false, '[code] expected String SOMETHING, got undefined']);
@@ -74,7 +74,7 @@ describe('error', () => {
     expect(x).to.match([false, '[err] expected instanceof Error got instanceof NotAnError']);
   });
 
-  it('custom error class with isInstanceOf', () => {
+  it('custom error class with instanceOf', () => {
     class CustomError extends Error {
       constructor(
         public code: string,
@@ -85,7 +85,7 @@ describe('error', () => {
       }
     }
 
-    const rule = isInstanceOf(CustomError);
+    const rule = instanceOf(CustomError);
     const customErr = new CustomError('CUSTOM_CODE', 'custom message');
 
     expect(validate(rule, customErr)).to.match([true]);
@@ -112,7 +112,7 @@ describe('error', () => {
       }
     }
 
-    const rule = isInstanceOf(NetworkError, { statusCode: 404, url: 'http://example.com' });
+    const rule = instanceOf(NetworkError, { statusCode: 404, url: 'http://example.com' });
     const networkErr = new NetworkError(404, 'http://example.com', 'Not found');
 
     expect(validate(rule, networkErr)).to.match([true]);
@@ -161,7 +161,7 @@ describe('error', () => {
       errors: [
         new Error('validation failed'),
         new TypeError('invalid type'),
-        isInstanceOf(RangeError, { message: 'out of range' }),
+        instanceOf(RangeError, { message: 'out of range' }),
       ],
     });
 
@@ -200,10 +200,10 @@ describe('error', () => {
     expect(validate(errorLikeRule, null)).to.match([false, 'expected non null value, got null']);
   });
 
-  it('mixed error types with isInstanceOf', () => {
-    const syntaxErrRule = isInstanceOf(SyntaxError);
-    const rangeErrRule = isInstanceOf(RangeError);
-    const refErrRule = isInstanceOf(ReferenceError);
+  it('mixed error types with instanceOf', () => {
+    const syntaxErrRule = instanceOf(SyntaxError);
+    const rangeErrRule = instanceOf(RangeError);
+    const refErrRule = instanceOf(ReferenceError);
 
     expect(validate(syntaxErrRule, new SyntaxError('syntax error'))).to.match([true]);
     expect(validate(rangeErrRule, new RangeError('range error'))).to.match([true]);
@@ -230,7 +230,7 @@ describe('error', () => {
     // @ts-ignore
     err.details = undefined;
 
-    const rule = isInstanceOf(Error, {
+    const rule = instanceOf(Error, {
       message: 'test',
       code: null,
       details: undefined,
@@ -274,9 +274,9 @@ describe('error', () => {
       }
     }
 
-    const baseRule = isInstanceOf(BaseError, { category: 'validation' });
-    const validationRule = isInstanceOf(ValidationError, { field: 'email' });
-    const fieldRule = isInstanceOf(FieldValidationError, { field: 'email', reason: 'invalid_format' });
+    const baseRule = instanceOf(BaseError, { category: 'validation' });
+    const validationRule = instanceOf(ValidationError, { field: 'email' });
+    const fieldRule = instanceOf(FieldValidationError, { field: 'email', reason: 'invalid_format' });
 
     const fieldErr = new FieldValidationError('email', 'invalid_format', 'Email format is invalid');
 
@@ -299,11 +299,11 @@ describe('error', () => {
     // @ts-ignore
     topError.cause = middleError;
 
-    const rule = isInstanceOf(Error, {
+    const rule = instanceOf(Error, {
       message: 'top error',
-      cause: isInstanceOf(Error, {
+      cause: instanceOf(Error, {
         message: 'middle error',
-        cause: isInstanceOf(Error, { message: 'root cause' }),
+        cause: instanceOf(Error, { message: 'root cause' }),
       }),
     });
 
@@ -344,7 +344,7 @@ describe('error', () => {
   });
 
   it('error validation with missing required properties', () => {
-    const rule = isInstanceOf(Error, {
+    const rule = instanceOf(Error, {
       message: 'required message',
       stack: aString(),
     });

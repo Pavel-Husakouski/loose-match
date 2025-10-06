@@ -11,7 +11,7 @@ import {
   FunctionRule,
   Infer,
   InferIntersection,
-  isInstanceOf,
+  instanceOf,
   literal,
   nullable,
   nullish,
@@ -477,20 +477,20 @@ describe('anyOf: object id union as union type', () => {
   expect<typeof pattern>().isOfType<FunctionRule<{ id: '1' | '2' | '5' }>>().equals<false>();
 });
 
-describe('isInstanceOf: Error', () => {
-  const pattern = isInstanceOf(Error);
+describe('instanceOf: Error', () => {
+  const pattern = instanceOf(Error);
 
   expect(pattern).isOfType<FunctionRule<Error>>().equals<true>();
 });
 
-describe('isInstanceOf: Error with details', () => {
-  const pattern = isInstanceOf(Error, { details: aString() });
+describe('instanceOf: Error with details', () => {
+  const pattern = instanceOf(Error, { details: aString() });
 
   expect(pattern).isOfType<FunctionRule<Error & { details: string }>>().equals<true>();
 });
 
-describe('isInstanceOf: RegExp with source', () => {
-  const pattern = isInstanceOf(RegExp, { source: 'xxx' });
+describe('instanceOf: RegExp with source', () => {
+  const pattern = instanceOf(RegExp, { source: 'xxx' });
 
   expect(pattern).isOfType<FunctionRule<RegExp & { source: string }>>().equals<true>();
 });

@@ -1,4 +1,4 @@
-import { __toFunction, AssertionError, aString, Invalid, isInstanceOf, match, SchemaRule, Valid } from '../src';
+import { __toFunction, AssertionError, aString, Invalid, instanceOf, match, SchemaRule, Valid } from '../src';
 
 const fnAssertionException = ({ message, actual, schema }: any) => new AssertionError(message, actual, schema);
 
@@ -22,7 +22,7 @@ export function expect(actual: unknown) {
           throw new AssertionError(`Expected a function to assert throw, got ${typeof actual}`, {}, {});
         }
 
-        const schema = __toFunction(expected || isInstanceOf(Error));
+        const schema = __toFunction(expected || instanceOf(Error));
 
         try {
           actual();

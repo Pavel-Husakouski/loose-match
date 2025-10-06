@@ -1,4 +1,4 @@
-import { allOf, isInstanceOf, validate } from '../src';
+import { allOf, instanceOf, validate } from '../src';
 import { expect } from './@expect';
 
 describe('allOf', () => {
@@ -12,7 +12,7 @@ describe('allOf', () => {
 
   it('allOf, empty arguments list', () => {
     expect(() => allOf(...([] as any))).to.throw(
-      isInstanceOf(Error, { message: 'allOf requires at least two arguments' })
+      instanceOf(Error, { message: 'allOf requires at least two arguments' })
     );
   });
 });

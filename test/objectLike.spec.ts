@@ -1,4 +1,4 @@
-import { arrayOf, aString, isInstanceOf, nullable, objectLike, strictEqual, validate } from '../src';
+import { arrayOf, aString, instanceOf, nullable, objectLike, strictEqual, validate } from '../src';
 import { expect } from './@expect';
 
 describe('objectLike', () => {
@@ -35,7 +35,7 @@ describe('objectLike', () => {
   });
 
   it('constructor property Function', () => {
-    const schema = objectLike({ constructor: isInstanceOf(Function) });
+    const schema = objectLike({ constructor: instanceOf(Function) });
 
     expect(validate(schema, function () {})).to.match([true]);
   });
