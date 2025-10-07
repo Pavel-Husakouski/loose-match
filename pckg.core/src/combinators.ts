@@ -15,9 +15,9 @@ import {
   ObjectRule,
   PredicateRule,
   SchemaRule,
-} from './types';
-import { literal } from './literals';
-import { __assert } from './assert';
+} from './types.js';
+import { literal } from './literals.js';
+import { __assert } from './assert.js';
 
 /**
  * A rule - an object shape with specific properties
