@@ -11,7 +11,6 @@ import {
   FunctionRule,
   Infer,
   InferIntersection,
-  instanceOf,
   literal,
   nullable,
   nullish,
@@ -313,6 +312,7 @@ describe('nullable: objectShape', () => {
   );
 
   expect(pattern).isOfType<FunctionRule<{ a: string }>>().equals<false>();
+  expect(pattern).isOfType<FunctionRule<{ a: string } | null>>().equals<true>();
 });
 
 describe('record: exact values', () => {

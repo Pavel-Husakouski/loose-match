@@ -33,5 +33,10 @@
   "exclude": [
     "../node_modules",
     "core/test"
+  ],
+  "projectReferences": [
+    {
+      "path": "../pckg.core"
+    }
   ]
 }

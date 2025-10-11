@@ -7,6 +7,7 @@
     "pckg.core",
     "pckg.test.loose",
     "pckg.test.strict",
+    "pckg.test.esm",
     "pckg.common"
   ],
   "scripts": {
