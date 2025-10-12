@@ -9,26 +9,8 @@ export function expectType<A>(arg?: A): { is<X extends A>(): void } {
   };
 }
 
-/**
- * A valid result
- */
-export type Valid<T> = readonly [true];
-/**
- * An invalid result
- */
-export type Invalid<T> = readonly [false, string];
-/**
- * A validation result
- */
-export type ValidationResult<T = any> = Valid<T> | Invalid<T>;
-
-// /**
-//  * A predicate rule
-//  */
-// export type PredicateRule<T> = (a: T) => boolean | void | never;
-
 export interface ExpressionVisitor<X> {
-  primitive(value: Primitives): Built<X>;
+  primitive(value: LiteralTypes): Built<X>;
 
   aNumber(): Built<X>;
 
@@ -61,12 +43,12 @@ export type ExpressionRule<T> = {
 /**
  * The set of primitive types
  */
-export type Primitives = RegExp | boolean | string | number | bigint | symbol | null | undefined | Date;
+export type LiteralTypes = Fn.LiteralTypes;
 
 /**
  * A primitive rule
  */
-export type PrimitiveRule<T> = T extends Primitives ? T : never;
+export type LiteralRule<T> = T extends LiteralTypes ? T : never;
 
 /**
  * A record rule or and object schema
@@ -81,14 +63,14 @@ export type ArrayRule<T> = SchemaRule<T>[];
 /**
  * A schema rule
  */
-export type SchemaRule<T> = PrimitiveRule<T> | /* PredicateRule<T> |*/ ExpressionRule<T> | RecordRule<T>;
+export type SchemaRule<T> = LiteralRule<T> | ExpressionRule<T> | RecordRule<T>;
 
 /**
  * Infer the type of a schema rule
  */
-export type Infer<T> = T extends Primitives
+export type Infer<T> = T extends LiteralTypes
   ? T
-  : T extends PrimitiveRule<infer P>
+  : T extends LiteralRule<infer P>
     ? P
     : /*T extends PredicateRule<infer P>
       ? P
@@ -128,14 +110,14 @@ class __Exp {
 
 class __primitive extends __Exp {
   constructor(
-    readonly arg: Primitives,
+    readonly arg: LiteralTypes,
     readonly type = 'primitive' as const
   ) {
     super();
   }
 }
 
-export function primitive<T extends Primitives>(arg: T): ExpressionRule<Infer<T>> {
+export function primitive<T extends LiteralTypes>(arg: T): ExpressionRule<Infer<T>> {
   return new __primitive(arg);
 }
 
@@ -217,7 +199,7 @@ export function objectWith<T extends RecordRule<any>>(rule: T): ExpressionRule<I
   return new __objectWith(rule);
 }
 
-export function __isPrimitive(value: any): value is Primitives {
+export function __isPrimitive(value: any): value is LiteralTypes {
   return (
     value === null ||
     value === undefined ||
@@ -334,7 +316,7 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
 type FnRendered = Built<Fn.FunctionRule<any>>;
 
 const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule<any>> {
-  primitive<T extends Primitives>(value: T): FnRendered {
+  primitive<T extends LiteralTypes>(value: T): FnRendered {
     return Fn.literal(value);
   }
 
@@ -353,7 +335,7 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
       return expression.accept(this);
     });
 
-    return Fn.oneOf(...items);
+    return Fn.oneOf(...(items as any));
   }
 
   allOf(schema: SchemaRule<any>[]): FnRendered {
@@ -363,7 +345,7 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
       return expression.accept(this);
     });
 
-    return Fn.allOf(...items);
+    return Fn.allOf(...(items as any));
   }
 
   re(rule: RegExp): FnRendered {
@@ -400,7 +382,6 @@ const y = toFunction(d);
 const za = toFunction(primitive(8));
 
 expectType(za).is<Fn.FunctionRule<8>>();
-
 console.log(y(true));
 console.log(y(9));
 console.log(y('9'));
