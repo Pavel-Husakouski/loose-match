@@ -11,6 +11,7 @@ import {
   FunctionRule,
   Infer,
   InferIntersection,
+  instanceOf,
   literal,
   nullable,
   nullish,

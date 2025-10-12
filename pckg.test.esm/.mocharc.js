@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   delay: false,
   package: './package.json',
   require: ['test/bootstrap'],
