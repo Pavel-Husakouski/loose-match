@@ -148,13 +148,18 @@ export function array<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer
 /**
  * A rule - an array of items, every item must match the schema rule
  * @param schema The rule for each item
+ * @param options an auxiliary validation option object
  */
-export function arrayOf<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T>[]> {
+export function arrayOf<T extends SchemaRule<any>>(schema: T, options?: { length: number }): FunctionRule<Infer<T>[]> {
   const fnRule = __toFunction(schema);
 
   return function __arrayOf(items: unknown) {
     if (!Array.isArray(items)) {
       return __invalid(`expected array, got ${__typeOf(items)}`);
+    }
+
+    if (options?.length != null && items.length !== options.length) {
+      return __invalid(`expected array of length ${options.length}, got length ${items.length}`);
     }
 
     for (let i = 0; i < items.length; i++) {

@@ -13,13 +13,28 @@ export function anything(): FunctionRule<any> {
 
 /**
  * A rule - any string
+ * @param options an auxiliary validation option object
  */
-export function aString(): FunctionRule<string> {
+export function aString(options?: { length: number }): FunctionRule<string> {
   return function __aString(value: unknown): ValidationResult<string> {
     const type = __typeOf(value);
 
-    return type === '[object String]' ? __valid : __invalid('expected a string, got ' + type);
+    return type === '[object String]'
+      ? __stringValidator(value as string, options)
+      : __invalid('expected a string, got ' + type);
   };
+}
+
+function __stringValidator(value: string, options?: { length: number }) {
+  if (options?.length == null) {
+    return __valid;
+  }
+
+  if (value.length === options.length) {
+    return __valid;
+  }
+
+  return __invalid(`expected string of length ${options.length}, got length ${value.length}`);
 }
 
 /**

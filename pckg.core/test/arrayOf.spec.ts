@@ -11,6 +11,16 @@ describe('arrayOf', () => {
     expect(validate(schema, null)).to.match([false, `expected array, got [object Null]`]);
   });
 
+  it('arrayOf of length', () => {
+    const schema = arrayOf(aNumber(), { length: 3 });
+
+    expect(validate(schema, [1, 2, 3])).to.match([true]);
+    expect(validate(schema, [1, 2])).to.match([false, `expected array of length 3, got length 2`]);
+    expect(validate(schema, [1, 2, 3, 4])).to.match([false, `expected array of length 3, got length 4`]);
+    expect(validate(schema, [])).to.match([false, `expected array of length 3, got length 0`]);
+    expect(validate(schema, 'not an array')).to.match([false, `expected array, got [object String]`]);
+  });
+
   it('arrayOf with string literal', () => {
     const schema = arrayOf(literal('test'));
 

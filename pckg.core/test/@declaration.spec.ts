@@ -143,6 +143,12 @@ describe('Array schema: tuple (as const)', () => {
   expect<Infer<typeof pattern>>().isOfType<readonly [1, '2']>().equals<true>();
 });
 
+describe('arrayOf: length', () => {
+  const pattern = arrayOf(aString(), { length: 5 });
+
+  expect(pattern).isOfType<FunctionRule<string[]>>().equals<true>();
+});
+
 describe('arrayOf: allOf combinator', () => {
   const item = allOf(re(/^xxx/), re(/yyy$/));
   const pattern = arrayOf(item);
@@ -533,6 +539,12 @@ describe('validate: object and pattern', () => {
   };
 
   expect(validate(pattern, obj)).isOfType<ValidationResult<Infer<typeof pattern>>>().equals<true>();
+});
+
+describe('aString: with length option', () => {
+  const pattern = aString({ length: 5 });
+
+  expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
 });
 
 type SameType<B, A> = A extends B ? (B extends A ? true : false) : false;

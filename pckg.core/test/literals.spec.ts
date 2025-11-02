@@ -138,6 +138,14 @@ describe('literal', () => {
     expect(validate(schema, 'test')).to.match([true]);
   });
 
+  it('string with length', () => {
+    const schema = aString({ length: 4 });
+
+    expect(validate(schema, 'test')).to.match([true]);
+    expect(validate(schema, '')).to.match([false, `expected string of length 4, got length 0`]);
+    expect(validate(schema, null)).to.match([false, `expected a string, got [object Null]`]);
+  });
+
   it('string, failed', () => {
     const schema = aString();
 
