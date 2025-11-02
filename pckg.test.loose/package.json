@@ -3,7 +3,7 @@
     "test": "../node_modules/.bin/mocha"
   },
   "dependencies": {
-    "@beeff/loose-match": "^1.0.0-rc.4",
+    "@beeff/loose-match": "*",
     "@types/mocha": "^10.0.10",
     "mocha": "^11.7.2",
     "prettier": "^3.6.2",

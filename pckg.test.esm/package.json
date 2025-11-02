@@ -4,7 +4,7 @@
   },
   "type": "module",
   "dependencies": {
-    "@beeff/loose-match": "^1.0.0-rc.4",
+    "@beeff/loose-match": "*",
     "mocha": "^11.7.2",
     "prettier": "^3.6.2",
     "tslib": "^2.8.1"
