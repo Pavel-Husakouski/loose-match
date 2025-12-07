@@ -5,5 +5,4 @@ export default {
   ui: 'bdd',
   spec: 'test/**/*.spec.js',
   extension: ['js'],
-  'node-option': ['no-deprecation'],
 };

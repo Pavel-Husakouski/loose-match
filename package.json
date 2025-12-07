@@ -8,7 +8,7 @@
     "pckg.test.loose",
     "pckg.test.strict",
     "pckg.test.esm",
-    "pckg.common"
+    "pckg.deps"
   ],
   "scripts": {
     "build": "npm run build -w pckg.core",
