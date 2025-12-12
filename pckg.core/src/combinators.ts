@@ -142,7 +142,7 @@ export function tuple<const T extends SchemaRule<any>[]>(items: T): FunctionRule
  * A rule - an array with positionally fixed items, every item must match the corresponding rule
  */
 export function array<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>[]> {
-  return __arrayExact(items as any) as any;
+  return __arrayExact(items);
 }
 
 /**
@@ -385,7 +385,7 @@ export function instanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
       return isInstance;
     }
 
-    return __objectLike(value as any);
+    return __objectLike(value);
   }
 
   function __objectLike(value: unknown) {
@@ -400,7 +400,7 @@ export function instanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
     return __instanceOf;
   }
 
-  return __instanceOfWith as any;
+  return __instanceOfWith;
 }
 
 /**
@@ -434,7 +434,7 @@ export function __toFunction<T extends SchemaRule<any>>(schema: T): FunctionRule
   if (__isError(schema)) {
     const ctor = schema.constructor as any;
     const name = schema.name;
-    const message = schema.message as any;
+    const message = schema.message;
 
     return instanceOf(ctor, { /*name, too strict*/ message, ...(schema as any) });
   }
