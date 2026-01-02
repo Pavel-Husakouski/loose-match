@@ -10,19 +10,41 @@ export function expectType<A>(arg?: A): { is<X extends A>(): void } {
 }
 
 export interface ExpressionVisitor<X> {
-  primitive(value: LiteralTypes): Built<X>;
+  literal(value: LiteralTypes): Built<X>;
+
+  aBoolean(): Built<X>;
+
+  aBigInt(): Built<X>;
 
   aNumber(): Built<X>;
 
   aString(): Built<X>;
 
+  aDate(): Built<X>;
+
+  nullish(): Built<X>;
+
+  nullable(): Built<X>;
+
+  optiional(): Built<X>;
+
   oneOf(schemas: SchemaRule<any>[]): Built<X>;
 
   allOf(schemas: SchemaRule<any>[]): Built<X>;
 
-  objectWith(schema: RecordRule<any>): Built<X>;
+  anyOf(schemas: SchemaRule<any>[]): Built<X>;
+
+  objectShape(schema: ObjectRule<any>): Built<X>;
+
+  objectLike(schema: ObjectRule<any>): Built<X>;
 
   re(rule: RegExp): Built<X>;
+
+  tuple(items: SchemaRule<any>[]): Built<X>;
+
+  array(items: SchemaRule<any>[]): Built<X>;
+
+  arrayOf(item: SchemaRule<any>): Built<X>;
 }
 
 export type Built<X> = X;
@@ -48,12 +70,12 @@ export type LiteralTypes = Fn.LiteralTypes;
 /**
  * A primitive rule
  */
-export type LiteralRule<T> = T extends LiteralTypes ? T : never;
+export type PrimitiveRule<T> = T extends LiteralTypes ? T : never;
 
 /**
  * A record rule or and object schema
  */
-export type RecordRule<T> = { [key in keyof T]: SchemaRule<T[key]> };
+export type ObjectRule<T> = { [key in keyof T]: SchemaRule<T[key]> };
 
 /**
  * An array rule
@@ -63,20 +85,20 @@ export type ArrayRule<T> = SchemaRule<T>[];
 /**
  * A schema rule
  */
-export type SchemaRule<T> = LiteralRule<T> | ExpressionRule<T> | RecordRule<T>;
+export type SchemaRule<T> = PrimitiveRule<T> /*| PredicateRule<T>*/ | ExpressionRule<T> | ObjectRule<T>;
 
 /**
  * Infer the type of a schema rule
  */
 export type Infer<T> = T extends LiteralTypes
   ? T
-  : T extends LiteralRule<infer P>
+  : T extends PrimitiveRule<infer P>
     ? P
     : /*T extends PredicateRule<infer P>
       ? P
       :*/ T extends ExpressionRule<infer P>
       ? P
-      : T extends RecordRule<infer P>
+      : T extends ObjectRule<infer P>
         ? { [K in keyof P]: Infer<P[K]> }
         : // T extends [infer Head, ...infer Tail] ? [Infer<Head>, ...Infer<Tail>] :
           T extends ArrayRule<infer P>
@@ -108,17 +130,17 @@ class __Exp {
   }
 }
 
-class __primitive extends __Exp {
+class __literal extends __Exp {
   constructor(
     readonly arg: LiteralTypes,
-    readonly type = 'primitive' as const
+    readonly type = 'literal' as const
   ) {
     super();
   }
 }
 
-export function primitive<T extends LiteralTypes>(arg: T): ExpressionRule<Infer<T>> {
-  return new __primitive(arg);
+export function literal<T extends LiteralTypes>(arg: T): ExpressionRule<Infer<T>> {
+  return new __literal(arg);
 }
 
 class __oneOf extends __Exp {
@@ -188,14 +210,14 @@ export function re(rule: RegExp): ExpressionRule<string> {
 
 class __objectWith extends __Exp {
   constructor(
-    readonly arg: RecordRule<any>,
-    readonly type = 'objectWith' as const
+    readonly arg: ObjectRule<any>,
+    readonly type = 'objectShape' as const
   ) {
     super();
   }
 }
 
-export function objectWith<T extends RecordRule<any>>(rule: T): ExpressionRule<Infer<T>> {
+export function objectWith<T extends ObjectRule<any>>(rule: T): ExpressionRule<Infer<T>> {
   return new __objectWith(rule);
 }
 
@@ -217,7 +239,7 @@ function __isExpression(value: any): value is ExpressionRule<any> {
   return value instanceof __Exp;
 }
 
-export function __isRecord<T>(schema: unknown): schema is RecordRule<any> {
+export function __isRecord<T>(schema: unknown): schema is ObjectRule<any> {
   return typeof schema === 'object' && !Array.isArray(schema);
 }
 
@@ -229,7 +251,7 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
     return schema;
   }
   if (__isPrimitive(schema)) {
-    return primitive(schema);
+    return literal(schema);
   }
   // if (__isArray(schema)) {
   //   return __arrayIs(schema) as ExpressionRule<Infer<T>>;
@@ -243,7 +265,7 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
 
 const a = aString();
 const b = aNumber();
-const c = primitive(true);
+const c = literal(true);
 const mixed = allOf({ id: '5' }, { email: 'a@gmail.com' }, { age: 8 });
 
 expectType(a).is<ExpressionRule<string>>();
@@ -302,7 +324,7 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
     return `re(${rule.toString()})`;
   }
 
-  objectWith(schema: RecordRule<any>): Rendered {
+  objectShape(schema: ObjectRule<any>): Rendered {
     const entries = Object.entries(schema).map(([key, value]) => {
       const expression = __toExpression(value);
 
@@ -352,7 +374,7 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     return Fn.re(rule);
   }
 
-  objectWith(schema: RecordRule<any>): FnRendered {
+  objectShape(schema: ObjectRule<any>): FnRendered {
     const entries = Object.entries(schema).map(([key, value]) => {
       const expression = __toExpression(value);
 
@@ -379,7 +401,7 @@ function toFunction<T extends SchemaRule<any>>(expression: ExpressionRule<T>): F
 
 const y = toFunction(d);
 
-const za = toFunction(primitive(8));
+const za = toFunction(literal(8));
 
 expectType(za).is<Fn.FunctionRule<8>>();
 console.log(y(true));
