@@ -13,38 +13,38 @@ export interface ExpressionVisitor<X> {
   literal(value: LiteralTypes): Built<X>;
 
   aBoolean(): Built<X>;
-
-  aBigInt(): Built<X>;
-
+  //
+  // aBigInt(): Built<X>;
+  //
   aNumber(): Built<X>;
-
+  //
   aString(): Built<X>;
 
-  aDate(): Built<X>;
+  // aDate(): Built<X>;
 
-  nullish(): Built<X>;
+  // nullish(): Built<X>;
 
-  nullable(): Built<X>;
+  // nullable(): Built<X>;
 
-  optiional(): Built<X>;
+  // optional(): Built<X>;
 
   oneOf(schemas: SchemaRule<any>[]): Built<X>;
 
   allOf(schemas: SchemaRule<any>[]): Built<X>;
 
-  anyOf(schemas: SchemaRule<any>[]): Built<X>;
+  //anyOf(schemas: SchemaRule<any>[]): Built<X>;
 
   objectShape(schema: ObjectRule<any>): Built<X>;
 
-  objectLike(schema: ObjectRule<any>): Built<X>;
+  // objectLike(schema: ObjectRule<any>): Built<X>;
 
   re(rule: RegExp): Built<X>;
 
-  tuple(items: SchemaRule<any>[]): Built<X>;
-
-  array(items: SchemaRule<any>[]): Built<X>;
-
-  arrayOf(item: SchemaRule<any>): Built<X>;
+  // tuple(items: SchemaRule<any>[]): Built<X>;
+  //
+  // array(items: SchemaRule<any>[]): Built<X>;
+  //
+  // arrayOf(item: SchemaRule<any>): Built<X>;
 }
 
 export type Built<X> = X;
@@ -68,9 +68,9 @@ export type ExpressionRule<T> = {
 export type LiteralTypes = Fn.LiteralTypes;
 
 /**
- * A primitive rule
+ * A literal rule
  */
-export type PrimitiveRule<T> = T extends LiteralTypes ? T : never;
+export type LiteralRule<T> = T extends LiteralTypes ? T : never;
 
 /**
  * A record rule or and object schema
@@ -85,14 +85,14 @@ export type ArrayRule<T> = SchemaRule<T>[];
 /**
  * A schema rule
  */
-export type SchemaRule<T> = PrimitiveRule<T> /*| PredicateRule<T>*/ | ExpressionRule<T> | ObjectRule<T>;
+export type SchemaRule<T> = LiteralRule<T> /*| PredicateRule<T>*/ | ExpressionRule<T> | ObjectRule<T>;
 
 /**
  * Infer the type of a schema rule
  */
 export type Infer<T> = T extends LiteralTypes
   ? T
-  : T extends PrimitiveRule<infer P>
+  : T extends LiteralRule<infer P>
     ? P
     : /*T extends PredicateRule<infer P>
       ? P
@@ -141,6 +141,19 @@ class __literal extends __Exp {
 
 export function literal<T extends LiteralTypes>(arg: T): ExpressionRule<Infer<T>> {
   return new __literal(arg);
+}
+
+class __aBoolean extends __Exp {
+  constructor(
+    readonly arg: null,
+    readonly type = 'aBoolean' as const
+  ) {
+    super();
+  }
+}
+
+export function aBoolean(): ExpressionRule<boolean> {
+  return new __aBoolean(null);
 }
 
 class __oneOf extends __Exp {
@@ -208,7 +221,7 @@ export function re(rule: RegExp): ExpressionRule<string> {
   return new __re(rule);
 }
 
-class __objectWith extends __Exp {
+class __objectShape extends __Exp {
   constructor(
     readonly arg: ObjectRule<any>,
     readonly type = 'objectShape' as const
@@ -217,11 +230,26 @@ class __objectWith extends __Exp {
   }
 }
 
-export function objectWith<T extends ObjectRule<any>>(rule: T): ExpressionRule<Infer<T>> {
-  return new __objectWith(rule);
+export function objectShape<T extends ObjectRule<any>>(rule: T): ExpressionRule<Infer<T>> {
+  return new __objectShape(rule);
 }
 
-export function __isPrimitive(value: any): value is LiteralTypes {
+// class __objectLike extends __Exp {
+//   constructor(
+//     readonly arg: ObjectRule<any>,
+//     readonly type = 'objectLike' as const
+//   ) {
+//     super();
+//   }
+// }
+//
+// export function objectLike<T extends ObjectRule<any>>(rule: T): ExpressionRule<Infer<T>> {
+//   const expr = new __objectLike(rule);
+//
+//   return expr;
+// }
+
+export function __isLiteral(value: any): value is LiteralTypes {
   return (
     value === null ||
     value === undefined ||
@@ -239,7 +267,7 @@ function __isExpression(value: any): value is ExpressionRule<any> {
   return value instanceof __Exp;
 }
 
-export function __isRecord<T>(schema: unknown): schema is ObjectRule<any> {
+export function __isObject<T>(schema: unknown): schema is ObjectRule<any> {
   return typeof schema === 'object' && !Array.isArray(schema);
 }
 
@@ -250,14 +278,14 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
   if (__isExpression(schema)) {
     return schema;
   }
-  if (__isPrimitive(schema)) {
+  if (__isLiteral(schema)) {
     return literal(schema);
   }
   // if (__isArray(schema)) {
   //   return __arrayIs(schema) as ExpressionRule<Infer<T>>;
   // }
-  if (__isRecord(schema)) {
-    return objectWith(schema);
+  if (__isObject(schema)) {
+    return objectShape(schema);
   }
 
   throw new Error('hell knows');
@@ -270,12 +298,11 @@ const mixed = allOf({ id: '5' }, { email: 'a@gmail.com' }, { age: 8 });
 
 expectType(a).is<ExpressionRule<string>>();
 expectType(b).is<ExpressionRule<number>>();
-expectType(c).is<ExpressionRule<true>>();
 
 expectType(mixed).is<ExpressionRule<{ id: string; email: string; age: number }>>();
 expectType(mixed).is<ExpressionRule<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>>();
 
-const d = oneOf('9', b, c, re(/^hell/));
+const d = oneOf('9', b, re(/^hell/), aBoolean());
 
 const s = utils.inspect(d, { depth: null });
 
@@ -288,8 +315,12 @@ expectType(d).is<ExpressionRule<string | number | true>>();
 type Rendered = Built<string>;
 
 const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
-  primitive<T>(value: T): Rendered {
+  literal<T>(value: T): Rendered {
     return `exact(${JSON.stringify(value)})`;
+  }
+
+  aBoolean(): Rendered {
+    return 'aBoolean()';
   }
 
   aNumber(): Rendered {
@@ -331,15 +362,19 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
       return `${key}: ${expression.accept(this)}`;
     });
 
-    return `record({ ${entries.join(', ')} })`;
+    return `objectShape({ ${entries.join(', ')} })`;
   }
 })();
 
 type FnRendered = Built<Fn.FunctionRule<any>>;
 
 const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule<any>> {
-  primitive<T extends LiteralTypes>(value: T): FnRendered {
+  literal<T extends LiteralTypes>(value: T): FnRendered {
     return Fn.literal(value);
+  }
+
+  aBoolean(): FnRendered {
+    return Fn.aBoolean();
   }
 
   aNumber(): FnRendered {
