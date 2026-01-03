@@ -13,11 +13,11 @@ export interface ExpressionVisitor<X> {
   literal(value: LiteralTypes): Built<X>;
 
   aBoolean(): Built<X>;
-  //
-  // aBigInt(): Built<X>;
-  //
+
+  aBigInt(): Built<X>;
+
   aNumber(): Built<X>;
-  //
+
   aString(): Built<X>;
 
   // aDate(): Built<X>;
@@ -154,6 +154,19 @@ class __aBoolean extends __Exp {
 
 export function aBoolean(): ExpressionRule<boolean> {
   return new __aBoolean(null);
+}
+
+class __aBigInt extends __Exp {
+  constructor(
+    readonly arg: null,
+    readonly type = 'aBigInt' as const
+  ) {
+    super();
+  }
+}
+
+export function aBigInt(): ExpressionRule<bigint> {
+  return new __aBigInt(null);
 }
 
 class __oneOf extends __Exp {
@@ -302,7 +315,7 @@ expectType(b).is<ExpressionRule<number>>();
 expectType(mixed).is<ExpressionRule<{ id: string; email: string; age: number }>>();
 expectType(mixed).is<ExpressionRule<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>>();
 
-const d = oneOf('9', b, re(/^hell/), aBoolean());
+const d = oneOf('9', b, re(/^hell/), aBoolean(), aBigInt());
 
 const s = utils.inspect(d, { depth: null });
 
@@ -321,6 +334,10 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
 
   aBoolean(): Rendered {
     return 'aBoolean()';
+  }
+
+  aBigInt(): Built<string> {
+    return 'aBigInt()';
   }
 
   aNumber(): Rendered {
@@ -375,6 +392,10 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
 
   aBoolean(): FnRendered {
     return Fn.aBoolean();
+  }
+
+  aBigInt(): FnRendered {
+    return Fn.aBigInt();
   }
 
   aNumber(): FnRendered {
@@ -445,5 +466,6 @@ console.log(y('9'));
 console.log(y('hello'));
 console.log(y('zzz'));
 console.log(y(7));
+console.log(y(3n));
 
 console.log(toFunction(mixed)({ id: '5', email: '', age: 8 }));
