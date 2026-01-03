@@ -20,7 +20,7 @@ export interface ExpressionVisitor<X> {
 
   aString(): Built<X>;
 
-  // aDate(): Built<X>;
+  aDate(): Built<X>;
 
   // nullish(): Built<X>;
 
@@ -169,6 +169,19 @@ export function aBigInt(): ExpressionRule<bigint> {
   return new __aBigInt(null);
 }
 
+class __aDate extends __Exp {
+  constructor(
+    readonly arg: null,
+    readonly type = 'aDate' as const
+  ) {
+    super();
+  }
+}
+
+export function aDate(): ExpressionRule<Date> {
+  return new __aDate(null);
+}
+
 class __oneOf extends __Exp {
   constructor(
     readonly arg: SchemaRule<any>[],
@@ -315,7 +328,7 @@ expectType(b).is<ExpressionRule<number>>();
 expectType(mixed).is<ExpressionRule<{ id: string; email: string; age: number }>>();
 expectType(mixed).is<ExpressionRule<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>>();
 
-const d = oneOf('9', b, re(/^hell/), aBoolean(), aBigInt());
+const d = oneOf('9', b, re(/^hell/), aBoolean(), aBigInt(), aDate());
 
 const s = utils.inspect(d, { depth: null });
 
@@ -346,6 +359,10 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
 
   aString(): Rendered {
     return 'aString()';
+  }
+
+  aDate(): Rendered {
+    return 'aDate()';
   }
 
   oneOf(schema: SchemaRule<any>[]): Rendered {
@@ -404,6 +421,10 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
 
   aString(): FnRendered {
     return Fn.aString();
+  }
+
+  aDate(): FnRendered {
+    return Fn.aDate();
   }
 
   oneOf(schema: SchemaRule<any>[]): FnRendered {
@@ -467,5 +488,6 @@ console.log(y('hello'));
 console.log(y('zzz'));
 console.log(y(7));
 console.log(y(3n));
+console.log(y(new Date()));
 
 console.log(toFunction(mixed)({ id: '5', email: '', age: 8 }));
