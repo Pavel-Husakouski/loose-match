@@ -24,7 +24,7 @@ export interface ExpressionVisitor<X> {
 
   // nullish(): Built<X>;
 
-  // nullable(): Built<X>;
+  nullable(schema: SchemaRule<any>): Built<X>;
 
   // optional(): Built<X>;
 
@@ -182,6 +182,19 @@ export function aDate(): ExpressionRule<Date> {
   return new __aDate(null);
 }
 
+class __nullable extends __Exp {
+  constructor(
+    readonly arg: SchemaRule<any>,
+    readonly type = 'nullable' as const
+  ) {
+    super();
+  }
+}
+
+export function nullable<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | null> {
+  return new __nullable(rule);
+}
+
 class __oneOf extends __Exp {
   constructor(
     readonly arg: SchemaRule<any>[],
@@ -320,7 +333,7 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
 const a = aString();
 const b = aNumber();
 const c = literal(true);
-const mixed = allOf({ id: '5' }, { email: 'a@gmail.com' }, { age: 8 });
+const mixed = allOf({ id: '5' }, { email: 'a@gmail.com' }, nullable({ age: 8 }));
 
 expectType(a).is<ExpressionRule<string>>();
 expectType(b).is<ExpressionRule<number>>();
@@ -328,7 +341,7 @@ expectType(b).is<ExpressionRule<number>>();
 expectType(mixed).is<ExpressionRule<{ id: string; email: string; age: number }>>();
 expectType(mixed).is<ExpressionRule<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>>();
 
-const d = oneOf('9', b, re(/^hell/), aBoolean(), aBigInt(), aDate());
+const d = oneOf('9', b, re(/^hell/), aBoolean(), aBigInt(), nullable(aDate()));
 
 const s = utils.inspect(d, { depth: null });
 
@@ -363,6 +376,12 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
 
   aDate(): Rendered {
     return 'aDate()';
+  }
+
+  nullable(schema: SchemaRule<any>): Rendered {
+    const expression = __toExpression(schema);
+
+    return `nullable(${expression.accept(this)})`;
   }
 
   oneOf(schema: SchemaRule<any>[]): Rendered {
@@ -427,6 +446,12 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     return Fn.aDate();
   }
 
+  nullable(schema: SchemaRule<any>): FnRendered {
+    const expression = __toExpression(schema);
+
+    return Fn.nullable(expression.accept(this));
+  }
+
   oneOf(schema: SchemaRule<any>[]): FnRendered {
     const items = schema.map((item) => {
       const expression = __toExpression(item);
@@ -489,5 +514,6 @@ console.log(y('zzz'));
 console.log(y(7));
 console.log(y(3n));
 console.log(y(new Date()));
+console.log(y(null));
 
 console.log(toFunction(mixed)({ id: '5', email: '', age: 8 }));
