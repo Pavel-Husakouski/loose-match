@@ -26,6 +26,8 @@ export interface ExpressionVisitor<X> {
 
   nullable(schema: SchemaRule<any>): Built<X>;
 
+  nullish(schema: SchemaRule<any>): Built<X>;
+
   // optional(): Built<X>;
 
   oneOf(schemas: SchemaRule<any>[]): Built<X>;
@@ -195,6 +197,19 @@ export function nullable<T extends SchemaRule<any>>(rule: T): ExpressionRule<Inf
   return new __nullable(rule);
 }
 
+class __nullish extends __Exp {
+  constructor(
+    readonly arg: SchemaRule<any>,
+    readonly type = 'nullish' as const
+  ) {
+    super();
+  }
+}
+
+export function nullish<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | null | undefined> {
+  return new __nullish(rule);
+}
+
 class __oneOf extends __Exp {
   constructor(
     readonly arg: SchemaRule<any>[],
@@ -341,7 +356,7 @@ expectType(b).is<ExpressionRule<number>>();
 expectType(mixed).is<ExpressionRule<{ id: string; email: string; age: number }>>();
 expectType(mixed).is<ExpressionRule<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>>();
 
-const d = oneOf('9', b, re(/^hell/), aBoolean(), aBigInt(), nullable(aDate()));
+const d = oneOf('9', b, re(/^hell/), aBoolean(), nullish(aBigInt()), nullable(aDate()));
 
 const s = utils.inspect(d, { depth: null });
 
@@ -382,6 +397,12 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
     const expression = __toExpression(schema);
 
     return `nullable(${expression.accept(this)})`;
+  }
+
+  nullish(schema: SchemaRule<any>): Rendered {
+    const expression = __toExpression(schema);
+
+    return `nullish(${expression.accept(this)})`;
   }
 
   oneOf(schema: SchemaRule<any>[]): Rendered {
@@ -452,6 +473,12 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     return Fn.nullable(expression.accept(this));
   }
 
+  nullish(schema: SchemaRule<any>): FnRendered {
+    const expression = __toExpression(schema);
+
+    return Fn.nullish(expression.accept(this));
+  }
+
   oneOf(schema: SchemaRule<any>[]): FnRendered {
     const items = schema.map((item) => {
       const expression = __toExpression(item);
@@ -514,6 +541,7 @@ console.log(y('zzz'));
 console.log(y(7));
 console.log(y(3n));
 console.log(y(new Date()));
-console.log(y(null));
+console.log('nullable', y(null));
+console.log(y(undefined));
 
 console.log(toFunction(mixed)({ id: '5', email: '', age: 8 }));
