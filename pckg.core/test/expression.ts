@@ -42,10 +42,10 @@ export interface ExpressionVisitor<X> {
 
   re(rule: RegExp): Built<X>;
 
-  // tuple(items: SchemaRule<any>[]): Built<X>;
-  //
-  // array(items: SchemaRule<any>[]): Built<X>;
-  //
+  tuple(items: SchemaRule<any>[]): Built<X>;
+
+  array(items: SchemaRule<any>[]): Built<X>;
+
   arrayOf(item: SchemaRule<any>): Built<X>;
 }
 
@@ -316,6 +316,32 @@ export function objectShape<T extends ObjectRule<any>>(rule: T): ExpressionRule<
 //   return expr;
 // }
 
+class __tuple extends __Exp {
+  constructor(
+    readonly arg: SchemaRule<any>[],
+    readonly type = 'tuple' as const
+  ) {
+    super();
+  }
+}
+
+export function tuple<const T extends SchemaRule<any>[]>(items: T): ExpressionRule<Infer<T>> {
+  return new __tuple(items);
+}
+
+class __array extends __Exp {
+  constructor(
+    readonly arg: SchemaRule<any>[],
+    readonly type = 'array' as const
+  ) {
+    super();
+  }
+}
+
+export function array<T extends SchemaRule<any>[]>(items: T): ExpressionRule<Infer<ItemsOf<T>>[]> {
+  return new __array(items);
+}
+
 class __arrayOf extends __Exp {
   constructor(
     readonly arg: SchemaRule<any>,
@@ -382,7 +408,17 @@ expectType(b).is<ExpressionRule<number>>();
 expectType(mixed).is<ExpressionRule<{ id: string; email: string; age: number }>>();
 expectType(mixed).is<ExpressionRule<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>>();
 
-const d = oneOf('9', b, re(/^hell/), optional(aBoolean()), nullish(aBigInt()), nullable(aDate()), arrayOf(literal(7)));
+const d = oneOf(
+  tuple([aBoolean(), aNumber()]),
+  array([aString(), aString()]),
+  '9',
+  b,
+  re(/^hell/),
+  optional(aBoolean()),
+  nullish(aBigInt()),
+  nullable(aDate()),
+  arrayOf(literal(7))
+);
 
 const s = utils.inspect(d, { depth: null });
 
@@ -469,6 +505,26 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
     });
 
     return `objectShape({ ${entries.join(', ')} })`;
+  }
+
+  tuple(schema: SchemaRule<any>[]): Rendered {
+    const items = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return `tuple([${items.join(', ')}])`;
+  }
+
+  array(schema: SchemaRule<any>[]): Rendered {
+    const items = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return `array([${items.join(', ')}])`;
   }
 
   arrayOf(schema: SchemaRule<any>): Rendered {
@@ -559,6 +615,26 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     return Fn.objectShape(record);
   }
 
+  tuple(schema: SchemaRule<any>[]): FnRendered {
+    const items = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return Fn.tuple(items);
+  }
+
+  array(schema: SchemaRule<any>[]): FnRendered {
+    const items = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return Fn.array(items);
+  }
+
   arrayOf(schema: SchemaRule<any>): FnRendered {
     const expression = __toExpression(schema);
 
@@ -594,5 +670,7 @@ console.log(y(new Date()));
 console.log('nullable or nullish', y(null));
 console.log('optional or nullish', y(undefined));
 console.log('arrayOf', y([7, 7, 7]));
+console.log('tuple', y([true, 42]));
+console.log('array', y(['test', 'test']));
 
 console.log(toFunction(mixed)({ id: '5', email: '', age: 8 }));
