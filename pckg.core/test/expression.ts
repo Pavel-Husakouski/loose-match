@@ -46,7 +46,7 @@ export interface ExpressionVisitor<X> {
   //
   // array(items: SchemaRule<any>[]): Built<X>;
   //
-  // arrayOf(item: SchemaRule<any>): Built<X>;
+  arrayOf(item: SchemaRule<any>): Built<X>;
 }
 
 export type Built<X> = X;
@@ -316,6 +316,19 @@ export function objectShape<T extends ObjectRule<any>>(rule: T): ExpressionRule<
 //   return expr;
 // }
 
+class __arrayOf extends __Exp {
+  constructor(
+    readonly arg: SchemaRule<any>,
+    readonly type = 'arrayOf' as const
+  ) {
+    super();
+  }
+}
+
+export function arrayOf<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T>[]> {
+  return new __arrayOf(rule);
+}
+
 export function __isLiteral(value: any): value is LiteralTypes {
   return (
     value === null ||
@@ -369,7 +382,7 @@ expectType(b).is<ExpressionRule<number>>();
 expectType(mixed).is<ExpressionRule<{ id: string; email: string; age: number }>>();
 expectType(mixed).is<ExpressionRule<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>>();
 
-const d = oneOf('9', b, re(/^hell/), optional(aBoolean()), nullish(aBigInt()), nullable(aDate()));
+const d = oneOf('9', b, re(/^hell/), optional(aBoolean()), nullish(aBigInt()), nullable(aDate()), arrayOf(literal(7)));
 
 const s = utils.inspect(d, { depth: null });
 
@@ -457,6 +470,12 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
 
     return `objectShape({ ${entries.join(', ')} })`;
   }
+
+  arrayOf(schema: SchemaRule<any>): Rendered {
+    const expression = __toExpression(schema);
+
+    return `arrayOf(${expression.accept(this)})`;
+  }
 })();
 
 type FnRendered = Built<Fn.FunctionRule<any>>;
@@ -539,6 +558,12 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
 
     return Fn.objectShape(record);
   }
+
+  arrayOf(schema: SchemaRule<any>): FnRendered {
+    const expression = __toExpression(schema);
+
+    return Fn.arrayOf(expression.accept(this));
+  }
 })();
 
 function toString(expression: ExpressionRule<any>): string {
@@ -568,5 +593,6 @@ console.log(y(3n));
 console.log(y(new Date()));
 console.log('nullable or nullish', y(null));
 console.log('optional or nullish', y(undefined));
+console.log('arrayOf', y([7, 7, 7]));
 
 console.log(toFunction(mixed)({ id: '5', email: '', age: 8 }));
