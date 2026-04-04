@@ -1,5 +1,7 @@
 import { describe } from 'mocha';
+import { expect } from './@type-expect';
 import {
+  aBigInt,
   aBoolean,
   aDate,
   allOf,
@@ -29,6 +31,37 @@ import {
   validate,
   ValidationResult,
 } from '../src';
+
+describe('Hell', () => {
+  const d = oneOf(
+    tuple([aBoolean(), aNumber()]),
+    array([aString(), aNumber()]),
+    [aString(), aNumber()],
+    [1, 2, 3],
+    '9',
+    // b,
+    re(/^hell/),
+    optional(aBoolean()),
+    nullish(aBigInt()),
+    nullable(aDate()),
+    arrayOf(literal(7))
+  );
+
+  expect<Infer<typeof d>>()
+    .isOfType<
+      | [boolean, number]
+      | (string | number)[]
+      | [string, number]
+      | [1, 2, 3]
+      | '9'
+      | string
+      | boolean
+      | bigint
+      | Date
+      | number[]
+    >()
+    .equals<true>();
+});
 
 describe('Type inference: primitives', () => {
   expect<Infer<string>>().isOfType<string>().equals<true>();
@@ -546,19 +579,3 @@ describe('aString: with length option', () => {
 
   expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
 });
-
-type SameType<B, A> = A extends B ? (B extends A ? true : false) : false;
-
-function expect<A>(arg?: A): {
-  isOfType<B>(): { equals<Y extends SameType<A, B>>(): void };
-} {
-  return {
-    isOfType<B>(): { equals<Y extends SameType<A, B>>(): void } {
-      return {
-        equals<Y extends SameType<A, B>>() {
-          // do nothing
-        },
-      };
-    },
-  };
-}
