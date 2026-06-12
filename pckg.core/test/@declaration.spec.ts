@@ -149,6 +149,24 @@ describe('arrayOf: length', () => {
   expect(pattern).isOfType<FunctionRule<string[]>>().equals<true>();
 });
 
+describe('literal regexp', () => {
+  const pattern = literal(/xxx/);
+
+  expect(pattern).isOfType<FunctionRule<RegExp>>().equals<true>();
+});
+
+describe('arrayof regexp', () => {
+  const pattern = arrayOf(/xxx/);
+
+  expect(pattern).isOfType<FunctionRule<RegExp[]>>().equals<true>();
+});
+
+describe('regexp string', () => {
+  const pattern = re(/xxx/);
+
+  expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
+});
+
 describe('arrayOf: allOf combinator', () => {
   const item = allOf(re(/^xxx/), re(/yyy$/));
   const pattern = arrayOf(item);

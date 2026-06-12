@@ -29,10 +29,15 @@ export type Built<X> = X;
 
 type ExpressionType = keyof ExpressionVisitor<any>;
 
+export declare const __infer: unique symbol;
+
 /**
  * An expression rule - just like in the visitor pattern, but simpler - an acceptor
  */
 export type ExpressionRule<T> = {
+  /** Phantom type carrier — never present at runtime, binds T for Infer */
+  readonly [__infer]?: T;
+
   type: ExpressionType;
 
   arg?: any;
@@ -99,7 +104,9 @@ export type InferIntersection<T extends any[]> = T extends [infer First, ...infe
  */
 export type ItemsOf<T> = T extends (infer P)[] ? P : never;
 
-class __Exp {
+class __Exp<T> {
+  declare readonly [__infer]?: T;
+
   type: ExpressionType = null as any;
   arg: any;
 
@@ -108,20 +115,20 @@ class __Exp {
   }
 }
 
-class __primitive extends __Exp {
+class __primitive<T extends LiteralTypes> extends __Exp<T> {
   constructor(
-    readonly arg: LiteralTypes,
+    readonly arg: T,
     readonly type = 'primitive' as const
   ) {
     super();
   }
 }
 
-export function primitive<T extends LiteralTypes>(arg: T): ExpressionRule<Infer<T>> {
+export function primitive<T extends LiteralTypes>(arg: T): ExpressionRule<T> {
   return new __primitive(arg);
 }
 
-class __oneOf extends __Exp {
+class __oneOf<T> extends __Exp<T> {
   constructor(
     readonly arg: SchemaRule<any>[],
     readonly type = 'oneOf' as const
@@ -131,10 +138,10 @@ class __oneOf extends __Exp {
 }
 
 export function oneOf<T extends SchemaRule<any>[]>(...arg: T): ExpressionRule<Infer<ItemsOf<T>>> {
-  return new __oneOf(arg);
+  return new __oneOf<Infer<ItemsOf<T>>>(arg);
 }
 
-class __allOf extends __Exp {
+class __allOf<T> extends __Exp<T> {
   constructor(
     readonly arg: SchemaRule<any>[],
     readonly type = 'allOf' as const
@@ -144,10 +151,10 @@ class __allOf extends __Exp {
 }
 
 export function allOf<T extends SchemaRule<any>[]>(...rules: T): ExpressionRule<InferIntersection<T>> {
-  return new __allOf(rules);
+  return new __allOf<InferIntersection<T>>(rules);
 }
 
-class __aNumber extends __Exp {
+class __aNumber extends __Exp<number> {
   constructor(
     readonly arg: null,
     readonly type = 'aNumber' as const
@@ -160,7 +167,7 @@ export function aNumber(): ExpressionRule<number> {
   return new __aNumber(null);
 }
 
-class __aString extends __Exp {
+class __aString extends __Exp<string> {
   constructor(
     readonly arg: null,
     readonly type = 'aString' as const
@@ -173,7 +180,7 @@ export function aString(): ExpressionRule<string> {
   return new __aString(null);
 }
 
-class __re extends __Exp {
+class __re extends __Exp<string> {
   constructor(
     readonly arg: RegExp,
     readonly type = 're' as const
@@ -186,7 +193,7 @@ export function re(rule: RegExp): ExpressionRule<string> {
   return new __re(rule);
 }
 
-class __objectWith extends __Exp {
+class __objectWith<T> extends __Exp<T> {
   constructor(
     readonly arg: RecordRule<any>,
     readonly type = 'objectWith' as const
@@ -196,7 +203,7 @@ class __objectWith extends __Exp {
 }
 
 export function objectWith<T extends RecordRule<any>>(rule: T): ExpressionRule<Infer<T>> {
-  return new __objectWith(rule);
+  return new __objectWith<Infer<T>>(rule);
 }
 
 export function __isPrimitive(value: any): value is LiteralTypes {
@@ -229,13 +236,13 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
     return schema;
   }
   if (__isPrimitive(schema)) {
-    return primitive(schema);
+    return primitive(schema) as ExpressionRule<Infer<T>>;
   }
   // if (__isArray(schema)) {
   //   return __arrayIs(schema) as ExpressionRule<Infer<T>>;
   // }
   if (__isRecord(schema)) {
-    return objectWith(schema);
+    return objectWith(schema) as ExpressionRule<Infer<T>>;
   }
 
   throw new Error('hell knows');
@@ -373,7 +380,7 @@ console.log(toString(d));
 
 console.log(toString(mixed));
 
-function toFunction<T extends SchemaRule<any>>(expression: ExpressionRule<T>): Fn.FunctionRule<T> {
+function toFunction<T>(expression: ExpressionRule<T>): Fn.FunctionRule<T> {
   return expression.accept(FunctionRenderer);
 }
 

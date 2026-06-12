@@ -201,6 +201,18 @@ describe('literal', () => {
     expect(validate(schema, 'to fail')).to.match([false, `expected /test/, got String to fail`]);
   });
 
+  it('literal regexp', () => {
+    const schema = literal(/test/);
+
+    expect(validate(schema, /test/)).to.match([true]);
+  });
+
+  it('literal regexp, failed', () => {
+    const schema = literal(/test/);
+
+    expect(validate(schema, /test 1/)).to.match([false, 'expected RegExp /test/, got RegExp /test 1/']);
+  });
+
   it('re, failed', () => {
     const schema = re(/test/);
 

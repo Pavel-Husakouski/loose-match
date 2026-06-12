@@ -24,7 +24,7 @@ export type FunctionRule<T> = (a: T) => ValidationResult<T>;
 /**
  * The set of types that can be compared by value
  */
-export type LiteralTypes = boolean | string | number | bigint | symbol | null | undefined | Date;
+export type LiteralTypes = boolean | string | number | bigint | symbol | null | undefined | Date | RegExp;
 
 /**
  * A primitive rule
@@ -116,7 +116,8 @@ export function __isLiteral(value: any): value is LiteralTypes {
     typeof value === 'bigint' ||
     typeof value === 'boolean' ||
     typeof value === 'symbol' ||
-    value instanceof Date
+    value instanceof Date ||
+    value instanceof RegExp
   );
 }
 
