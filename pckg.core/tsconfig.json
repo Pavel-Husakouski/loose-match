@@ -14,9 +14,7 @@
     "module": "ESNext",
     "target": "es2020",
     "moduleResolution": "node",
-    "lib": [
-      "es6"
-    ],
+    "lib": ["es2017"],
     "sourceMap": true,
     "declaration": true,
     "noEmitHelpers": false,
@@ -24,13 +22,6 @@
     "stripInternal": true,
     "outDir": "lib"
   },
-  "files": [
-    "src/index.ts"
-  ],
-  "include": [
-    "test/**/*.ts"
-  ],
-  "exclude": [
-    "test"
-  ]
+  "files": ["src/index.ts"],
+  "include": ["test/**/*.ts"]
 }

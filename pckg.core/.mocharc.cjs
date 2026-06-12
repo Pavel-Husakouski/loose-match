@@ -1,9 +1,5 @@
 module.exports = {
-  delay: false,
-  package: './package.json',
-  require: ['test/bootstrap/index.ts'],
-  ui: 'bdd',
+  require: ['test/bootstrap'],
   spec: 'test/**/*.spec.ts',
-  extension: ['ts'],
   'node-option': ['import=tsx'],
 };
