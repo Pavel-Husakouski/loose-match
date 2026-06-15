@@ -1,14 +1,12 @@
+// @ts-ignore
 import * as utils from 'node:util';
 import * as Fn from '../src';
 import { expect, StrictSameType } from './@type-expect';
 
-export function expectType<A>(arg?: A): { is<X extends A>(): void } {
-  return {
-    is<X extends A>() {
-      // do nothing
-    },
-  };
-}
+const log = (...args: unknown[]): void => {
+  // @ts-ignore
+  console.log(...args);
+};
 
 export interface ExpressionVisitor<X> {
   literal(value: LiteralTypes): Built<X>;
@@ -35,11 +33,11 @@ export interface ExpressionVisitor<X> {
 
   allOf(schemas: SchemaRule<any>[]): Built<X>;
 
-  //anyOf(schemas: SchemaRule<any>[]): Built<X>;
+  anyOf(schemas: SchemaRule<any>[]): Built<X>;
 
   objectShape(schema: ObjectRule<any>): Built<X>;
 
-  // objectLike(schema: ObjectRule<any>): Built<X>;
+  objectLike(schema: ObjectRule<any>): Built<X>;
 
   re(rule: RegExp): Built<X>;
 
@@ -201,7 +199,7 @@ class __nullable<T> extends __Exp<T> {
   }
 }
 
-export function nullable<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | null> {
+export function nullable<const T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | null> {
   return new __nullable<Infer<T> | null>(rule);
 }
 
@@ -214,7 +212,7 @@ class __nullish<T> extends __Exp<T> {
   }
 }
 
-export function nullish<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | null | undefined> {
+export function nullish<const T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | null | undefined> {
   return new __nullish<Infer<T> | null | undefined>(rule);
 }
 
@@ -227,7 +225,7 @@ class __optional<T> extends __Exp<T> {
   }
 }
 
-export function optional<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | undefined> {
+export function optional<const T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | undefined> {
   return new __optional<Infer<T> | undefined>(rule);
 }
 
@@ -240,7 +238,7 @@ class __oneOf<T> extends __Exp<T> {
   }
 }
 
-export function oneOf<T extends SchemaRule<any>[]>(...arg: T): ExpressionRule<Infer<ItemsOf<T>>> {
+export function oneOf<const T extends SchemaRule<any>[]>(...arg: T): ExpressionRule<Infer<ItemsOf<T>>> {
   return new __oneOf<Infer<ItemsOf<T>>>(arg);
 }
 
@@ -253,8 +251,21 @@ class __allOf<T> extends __Exp<T> {
   }
 }
 
-export function allOf<T extends SchemaRule<any>[]>(...rules: T): ExpressionRule<InferIntersection<T>> {
+export function allOf<const T extends SchemaRule<any>[]>(...rules: T): ExpressionRule<InferIntersection<T>> {
   return new __allOf<InferIntersection<T>>(rules);
+}
+
+class __anyOf<T> extends __Exp<T> {
+  constructor(
+    readonly arg: SchemaRule<any>[],
+    readonly type = 'anyOf' as const
+  ) {
+    super();
+  }
+}
+
+export function anyOf<const T extends SchemaRule<any>[]>(...arg: T): ExpressionRule<Infer<ItemsOf<T>>> {
+  return new __anyOf<Infer<ItemsOf<T>>>(arg);
 }
 
 class __aNumber extends __Exp<number> {
@@ -309,20 +320,18 @@ export function objectShape<T extends ObjectRule<any>>(rule: T): ExpressionRule<
   return new __objectShape<Infer<T>>(rule);
 }
 
-// class __objectLike extends __Exp {
-//   constructor(
-//     readonly arg: ObjectRule<any>,
-//     readonly type = 'objectLike' as const
-//   ) {
-//     super();
-//   }
-// }
-//
-// export function objectLike<T extends ObjectRule<any>>(rule: T): ExpressionRule<Infer<T>> {
-//   const expr = new __objectLike(rule);
-//
-//   return expr;
-// }
+class __objectLike<T> extends __Exp<T> {
+  constructor(
+    readonly arg: ObjectRule<any>,
+    readonly type = 'objectLike' as const
+  ) {
+    super();
+  }
+}
+
+export function objectLike<T extends ObjectRule<any>>(rule: T): ExpressionRule<Infer<T>> {
+  return new __objectLike<Infer<T>>(rule);
+}
 
 class __tuple<T> extends __Exp<T> {
   constructor(
@@ -346,7 +355,7 @@ class __array<T> extends __Exp<T> {
   }
 }
 
-export function array<T extends SchemaRule<any>[]>(items: T): ExpressionRule<Infer<ItemsOf<T>>[]> {
+export function array<const T extends SchemaRule<any>[]>(items: T): ExpressionRule<Infer<ItemsOf<T>>[]> {
   return new __array<Infer<ItemsOf<T>>[]>(items);
 }
 
@@ -359,7 +368,7 @@ class __arrayOf<T> extends __Exp<T> {
   }
 }
 
-export function arrayOf<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T>[]> {
+export function arrayOf<const T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T>[]> {
   return new __arrayOf<Infer<T>[]>(rule);
 }
 
@@ -407,34 +416,44 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
 
 const a = aString();
 const b = aNumber();
-const c = literal(true);
 const mixed = allOf({ id: '5' }, { email: 'a@gmail.com' }, nullable({ age: 8 }));
 
-expectType(a).is<ExpressionRule<string>>();
-expectType(b).is<ExpressionRule<number>>();
+expect(a).isOfType<ExpressionRule<string>>().equals<true>();
+expect(a).isOfType<ExpressionRule<number>>().equals<false>();
 
-expectType(mixed).is<ExpressionRule<{ id: string; email: string; age: number }>>();
-expectType(mixed).is<ExpressionRule<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>>();
+expect(b).isOfType<ExpressionRule<number>>().equals<true>();
+expect(b).isOfType<ExpressionRule<string>>().equals<false>();
+
+expect(mixed).isOfType<ExpressionRule<{ id: '5'; email: 'a@gmail.com'; age: 8 }>>().equals<true>();
+expect(mixed).isOfType<ExpressionRule<{ id: string } & { email: string } & { age: number }>>().equals<false>();
+
+const nine = literal('9');
 
 const d = oneOf(
   tuple([aBoolean(), aNumber()]),
-  array([aString(), aString()]),
-  '9',
+  //array([aString(), aString()]),
+  nine,
   b,
-  re(/^hell/),
+  '8',
+  // arrayOf(re(/^hell/)),
   optional(aBoolean()),
   nullish(aBigInt()),
   nullable(aDate()),
   arrayOf(literal(7))
 );
 
+expect(d)
+  .isOfType<ExpressionRule<'9' | '8' | number | boolean | bigint | Date | [boolean, number] | 7[] | null | undefined>>()
+  .equals<true>();
+expect(d)
+  .isOfType<ExpressionRule<string | number | boolean | bigint | Date | [boolean, number] | 7[] | null | undefined>>()
+  .equals<false>();
+
 const s = utils.inspect(d, { depth: null });
 
-console.log(s);
+log(s);
 
-console.log(utils.inspect(mixed, { depth: null }));
-
-expectType(d).is<ExpressionRule<string | number | true>>();
+log(utils.inspect(mixed, { depth: null }));
 
 type Rendered = Built<string>;
 
@@ -501,6 +520,16 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
     return `allOf(${args.join(', ')})`;
   }
 
+  anyOf(schema: SchemaRule<any>[]): Rendered {
+    const args = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return `anyOf(${args.join(', ')})`;
+  }
+
   re(rule: RegExp): Rendered {
     return `re(${rule.toString()})`;
   }
@@ -513,6 +542,16 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
     });
 
     return `objectShape({ ${entries.join(', ')} })`;
+  }
+
+  objectLike(schema: ObjectRule<any>): Rendered {
+    const entries = Object.entries(schema).map(([key, value]) => {
+      const expression = __toExpression(value);
+
+      return `${key}: ${expression.accept(this)}`;
+    });
+
+    return `objectLike({ ${entries.join(', ')} })`;
   }
 
   tuple(schema: SchemaRule<any>[]): Rendered {
@@ -607,6 +646,16 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     return Fn.allOf(...(items as any));
   }
 
+  anyOf(schema: SchemaRule<any>[]): FnRendered {
+    const items = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return Fn.anyOf(...(items as any));
+  }
+
   re(rule: RegExp): FnRendered {
     return Fn.re(rule);
   }
@@ -621,6 +670,18 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     const record = Object.fromEntries(entries);
 
     return Fn.objectShape(record);
+  }
+
+  objectLike(schema: ObjectRule<any>): FnRendered {
+    const entries = Object.entries(schema).map(([key, value]) => {
+      const expression = __toExpression(value);
+
+      return [key, expression.accept(this)] as const;
+    });
+
+    const record = Object.fromEntries(entries);
+
+    return Fn.objectLike(record);
   }
 
   tuple(schema: SchemaRule<any>[]): FnRendered {
@@ -654,9 +715,9 @@ function toString(expression: ExpressionRule<any>): string {
   return expression.accept(ExpressionRenderer);
 }
 
-console.log(toString(d));
+log(toString(d));
 
-console.log(toString(mixed));
+log(toString(mixed));
 
 function toFunction<T>(expression: ExpressionRule<T>): Fn.FunctionRule<T> {
   return expression.accept(FunctionRenderer);
@@ -666,22 +727,78 @@ const y = toFunction(d);
 
 const za = toFunction(literal(8));
 
-expectType(za).is<Fn.FunctionRule<8>>();
-console.log(y(true));
-console.log(y(9));
-console.log(y('9'));
-console.log(y('hello'));
-console.log(y('zzz'));
-console.log(y(7));
-console.log(y(3n));
-console.log(y(new Date()));
-console.log('nullable or nullish', y(null));
-console.log('optional or nullish', y(undefined));
-console.log('arrayOf', y([7, 7, 7]));
-console.log('tuple', y([true, 42]));
-console.log('array', y(['test', 'test']));
+expect(za).isOfType<Fn.FunctionRule<8>>().equals<true>();
+log(y(true));
+log(y(9));
+log(y('9'));
+// @ts-ignore
+log(y('hello'));
+// @ts-ignore
+log(y('zzz'));
+log(y(7));
+log(y(3n));
+log(y(new Date()));
+log('nullable or nullish', y(null));
+log('optional or nullish', y(undefined));
+log('arrayOf', y([7, 7, 7]));
+log('tuple', y([true, 42]));
+// @ts-ignore
+log('oneOf miss (string[] — no matching rule in d)', y(['test', 'test']));
 
-console.log(toFunction(mixed)({ id: '5', email: '', age: 8 }));
+// @ts-ignore
+log(toFunction(mixed)({ id: '5', email: '', age: 8 }));
+
+// ── runtime example: anyOf + objectLike ───────────────────────────────
+// anyOf differs from oneOf: overlapping rules that match the same value
+// are accepted (oneOf would reject it as "multiple matches").
+const overlapping = anyOf(aNumber(), literal(7));
+
+log('anyOf', toString(overlapping));
+
+const matchOverlap = toFunction(overlapping);
+
+log('anyOf 7 (matches both rules)', matchOverlap(7));
+log('anyOf 42 (matches aNumber)', matchOverlap(42));
+// @ts-ignore
+log('anyOf miss', matchOverlap('nope'));
+
+// objectLike matches any non-null object-like value (Error, plain object, ...)
+const errorLike = objectLike({ message: aString() });
+
+log('objectLike', toString(errorLike));
+
+const matchErrorLike = toFunction(errorLike);
+
+log('objectLike Error', matchErrorLike(new Error('boom')));
+log('objectLike plain object', matchErrorLike({ message: 'hi' }));
+// @ts-ignore
+log('objectLike miss', matchErrorLike({ message: 123 }));
+
+// ── runtime example: re ───────────────────────────────────────────────
+// re matches a string value against a regular expression.
+const greeting = re(/^hell/);
+
+log('re', toString(greeting));
+
+const matchGreeting = toFunction(greeting);
+
+log('re match', matchGreeting('hello'));
+log('re miss', matchGreeting('world'));
+// @ts-ignore
+log('re wrong type', matchGreeting(123));
+
+// ── runtime example: array ────────────────────────────────────────────
+// array matches a fixed-length array, each position validated by its rule.
+const pair = array([aString(), aString()]);
+
+log('array', toString(pair));
+
+const matchPair = toFunction(pair);
+
+log('array match', matchPair(['a', 'b']));
+// @ts-ignore
+log('array wrong item', matchPair(['a', 1]));
+log('array wrong length', matchPair(['a', 'b', 'c']));
 
 // ── inference smoke tests ─────────────────────────────────────────────
 // The equals<false>() lines are the canaries: if the phantom stops binding,
@@ -705,16 +822,32 @@ expect(optional(aBoolean())).isOfType<ExpressionRule<boolean | undefined>>().equ
 expect(nullish(aBigInt())).isOfType<ExpressionRule<bigint | null | undefined>>().equals<true>();
 
 // 5. Combinators infer through their children
-expect(oneOf('9', aNumber())).isOfType<ExpressionRule<string | number>>().equals<true>();
-expect(arrayOf(literal(7))).isOfType<ExpressionRule<7[]>>().equals<true>();
-expect(objectShape({ id: aString() })).isOfType<ExpressionRule<{ id: string }>>().equals<true>();
+expect(oneOf('9', aNumber())).isOfType<ExpressionRule<'9' | number>>().equals<true>();
+expect(arrayOf(literal(7)))
+  .isOfType<ExpressionRule<7[]>>()
+  .equals<true>();
+expect(objectShape({ id: aString() }))
+  .isOfType<ExpressionRule<{ id: string }>>()
+  .equals<true>();
+expect(anyOf('9', aNumber()))
+  .isOfType<ExpressionRule<'9' | number>>()
+  .equals<true>();
+expect(anyOf('9', aNumber()))
+  .isOfType<ExpressionRule<string | number>>()
+  .equals<false>();
+expect(objectLike({ id: aString() }))
+  .isOfType<ExpressionRule<{ id: string }>>()
+  .equals<true>();
+expect(objectLike({ id: aString() }))
+  .isOfType<ExpressionRule<{ id: number }>>()
+  .equals<false>();
 
 // 6. any-collapse canary — SameType is blind to any, StrictSameType is not
 expect<StrictSameType<Infer<ExpressionRule<number>>, number>>().isOfType<true>().equals<true>();
 
 // 7. End-to-end: the interpreter receives the inferred parameter type
 const __smoke = toFunction(oneOf('9', aNumber()));
-expect<Parameters<typeof __smoke>[0]>().isOfType<string | number>().equals<true>();
+expect<Parameters<typeof __smoke>[0]>().isOfType<'9' | number>().equals<true>();
 // @ts-expect-error — a Date must be rejected; if this directive reports
 // "unused", toFunction has collapsed back to FunctionRule<any>
 __smoke(new Date());

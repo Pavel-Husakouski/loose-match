@@ -16,7 +16,7 @@
  *   expect<typeof x>().isOfType<string>().equals<false>();
  */
 
-export type SameType<B, A> = A extends B ? (B extends A ? true : false) : false;
+export type SameType<B, A> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 
 export type StrictSameType<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? true : false;
 
