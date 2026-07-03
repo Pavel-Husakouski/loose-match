@@ -1,17 +1,9 @@
-import * as utils from 'node:util';
 import * as Fn from '../src';
-import { expect, StrictSameType } from './@type-expect';
-
-export function expectType<A>(arg?: A): { is<X extends A>(): void } {
-  return {
-    is<X extends A>() {
-      // do nothing
-    },
-  };
-}
 
 export interface ExpressionVisitor<X> {
   literal(value: LiteralTypes): Built<X>;
+
+  anything(): Built<X>;
 
   aBoolean(): Built<X>;
 
@@ -19,7 +11,7 @@ export interface ExpressionVisitor<X> {
 
   aNumber(): Built<X>;
 
-  aString(): Built<X>;
+  aString(options?: { length: number }): Built<X>;
 
   aDate(): Built<X>;
 
@@ -35,19 +27,27 @@ export interface ExpressionVisitor<X> {
 
   allOf(schemas: SchemaRule<any>[]): Built<X>;
 
-  //anyOf(schemas: SchemaRule<any>[]): Built<X>;
+  anyOf(schemas: SchemaRule<any>[]): Built<X>;
 
   objectShape(schema: ObjectRule<any>): Built<X>;
 
-  // objectLike(schema: ObjectRule<any>): Built<X>;
+  objectLike(schema: ObjectRule<any>): Built<X>;
 
   re(rule: RegExp): Built<X>;
+
+  strictEqual(value: unknown): Built<X>;
+
+  instanceOf(ctor: abstract new (...args: any[]) => any, extraRule?: ObjectRule<any>): Built<X>;
+
+  isPrototypedBy(ctor: abstract new (...args: any[]) => any): Built<X>;
+
+  predicate(fn: Fn.PredicateRule<any>, message?: string): Built<X>;
 
   tuple(items: SchemaRule<any>[]): Built<X>;
 
   array(items: SchemaRule<any>[]): Built<X>;
 
-  arrayOf(item: SchemaRule<any>): Built<X>;
+  arrayOf(item: SchemaRule<any>, options?: { length: number }): Built<X>;
 }
 
 export type Built<X> = X;
@@ -65,7 +65,7 @@ export type ExpressionRule<T> = {
 
   type: ExpressionType;
 
-  arg?: any;
+  args?: any[];
 
   accept<X>(visitor: ExpressionVisitor<X>): Built<X>;
 };
@@ -133,29 +133,42 @@ class __Exp<T> {
   declare readonly [__infer]?: T;
 
   type: ExpressionType = null as any;
-  arg: any;
+  args: any[] = null as any;
 
   accept<X>(visitor: ExpressionVisitor<X>): Built<X> {
-    return visitor[this.type](this.arg);
+    return (visitor[this.type] as (...args: any[]) => Built<X>)(...this.args);
   }
 }
 
 class __literal<T extends LiteralTypes> extends __Exp<T> {
   constructor(
-    readonly arg: T,
+    readonly args: [T],
     readonly type = 'literal' as const
   ) {
     super();
   }
 }
 
-export function literal<T extends LiteralTypes>(arg: T): ExpressionRule<T> {
-  return new __literal(arg);
+export function literal<const T extends LiteralTypes>(arg: T): ExpressionRule<T> {
+  return new __literal([arg]);
+}
+
+class __anything extends __Exp<any> {
+  constructor(
+    readonly args: [] = [],
+    readonly type = 'anything' as const
+  ) {
+    super();
+  }
+}
+
+export function anything(): ExpressionRule<any> {
+  return new __anything();
 }
 
 class __aBoolean extends __Exp<boolean> {
   constructor(
-    readonly arg: null,
+    readonly args: [] = [],
     readonly type = 'aBoolean' as const
   ) {
     super();
@@ -163,12 +176,12 @@ class __aBoolean extends __Exp<boolean> {
 }
 
 export function aBoolean(): ExpressionRule<boolean> {
-  return new __aBoolean(null);
+  return new __aBoolean();
 }
 
 class __aBigInt extends __Exp<bigint> {
   constructor(
-    readonly arg: null,
+    readonly args: [] = [],
     readonly type = 'aBigInt' as const
   ) {
     super();
@@ -176,12 +189,12 @@ class __aBigInt extends __Exp<bigint> {
 }
 
 export function aBigInt(): ExpressionRule<bigint> {
-  return new __aBigInt(null);
+  return new __aBigInt();
 }
 
 class __aDate extends __Exp<Date> {
   constructor(
-    readonly arg: null,
+    readonly args: [] = [],
     readonly type = 'aDate' as const
   ) {
     super();
@@ -189,12 +202,12 @@ class __aDate extends __Exp<Date> {
 }
 
 export function aDate(): ExpressionRule<Date> {
-  return new __aDate(null);
+  return new __aDate();
 }
 
 class __nullable<T> extends __Exp<T> {
   constructor(
-    readonly arg: SchemaRule<any>,
+    readonly args: [SchemaRule<any>],
     readonly type = 'nullable' as const
   ) {
     super();
@@ -202,12 +215,14 @@ class __nullable<T> extends __Exp<T> {
 }
 
 export function nullable<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | null> {
-  return new __nullable<Infer<T> | null>(rule);
+  Fn.__assert(rule != null, 'nullable null or undefined? interesting...');
+
+  return new __nullable<Infer<T> | null>([rule]);
 }
 
 class __nullish<T> extends __Exp<T> {
   constructor(
-    readonly arg: SchemaRule<any>,
+    readonly args: [SchemaRule<any>],
     readonly type = 'nullish' as const
   ) {
     super();
@@ -215,12 +230,14 @@ class __nullish<T> extends __Exp<T> {
 }
 
 export function nullish<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | null | undefined> {
-  return new __nullish<Infer<T> | null | undefined>(rule);
+  Fn.__assert(rule != null, 'nullish null or undefined? interesting...');
+
+  return new __nullish<Infer<T> | null | undefined>([rule]);
 }
 
 class __optional<T> extends __Exp<T> {
   constructor(
-    readonly arg: SchemaRule<any>,
+    readonly args: [SchemaRule<any>],
     readonly type = 'optional' as const
   ) {
     super();
@@ -228,38 +245,59 @@ class __optional<T> extends __Exp<T> {
 }
 
 export function optional<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | undefined> {
-  return new __optional<Infer<T> | undefined>(rule);
+  Fn.__assert(rule !== undefined, 'optional undefined? interesting...');
+
+  return new __optional<Infer<T> | undefined>([rule]);
 }
 
 class __oneOf<T> extends __Exp<T> {
   constructor(
-    readonly arg: SchemaRule<any>[],
+    readonly args: [SchemaRule<any>[]],
     readonly type = 'oneOf' as const
   ) {
     super();
   }
 }
 
-export function oneOf<T extends SchemaRule<any>[]>(...arg: T): ExpressionRule<Infer<ItemsOf<T>>> {
-  return new __oneOf<Infer<ItemsOf<T>>>(arg);
+export function oneOf<T extends Fn.AtLeastTwoItems<SchemaRule<any>>>(...items: T): ExpressionRule<Infer<ItemsOf<T>>> {
+  Fn.__assert(items.length >= 2, 'oneOf requires at least two arguments');
+
+  return new __oneOf<Infer<ItemsOf<T>>>([items]);
 }
 
 class __allOf<T> extends __Exp<T> {
   constructor(
-    readonly arg: SchemaRule<any>[],
+    readonly args: [SchemaRule<any>[]],
     readonly type = 'allOf' as const
   ) {
     super();
   }
 }
 
-export function allOf<T extends SchemaRule<any>[]>(...rules: T): ExpressionRule<InferIntersection<T>> {
-  return new __allOf<InferIntersection<T>>(rules);
+export function allOf<T extends Fn.AtLeastTwoItems<SchemaRule<any>>>(...rules: T): ExpressionRule<InferIntersection<T>> {
+  Fn.__assert(rules.length >= 2, 'allOf requires at least two arguments');
+
+  return new __allOf<InferIntersection<T>>([rules]);
+}
+
+class __anyOf<T> extends __Exp<T> {
+  constructor(
+    readonly args: [SchemaRule<any>[]],
+    readonly type = 'anyOf' as const
+  ) {
+    super();
+  }
+}
+
+export function anyOf<T extends Fn.AtLeastTwoItems<SchemaRule<any>>>(...items: T): ExpressionRule<Infer<ItemsOf<T>>> {
+  Fn.__assert(items.length >= 2, 'anyOf requires at least two arguments');
+
+  return new __anyOf<Infer<ItemsOf<T>>>([items]);
 }
 
 class __aNumber extends __Exp<number> {
   constructor(
-    readonly arg: null,
+    readonly args: [] = [],
     readonly type = 'aNumber' as const
   ) {
     super();
@@ -267,25 +305,25 @@ class __aNumber extends __Exp<number> {
 }
 
 export function aNumber(): ExpressionRule<number> {
-  return new __aNumber(null);
+  return new __aNumber();
 }
 
 class __aString extends __Exp<string> {
   constructor(
-    readonly arg: null,
+    readonly args: [] | [{ length: number }],
     readonly type = 'aString' as const
   ) {
     super();
   }
 }
 
-export function aString(): ExpressionRule<string> {
-  return new __aString(null);
+export function aString(options?: { length: number }): ExpressionRule<string> {
+  return new __aString(options == null ? [] : [options]);
 }
 
 class __re extends __Exp<string> {
   constructor(
-    readonly arg: RegExp,
+    readonly args: [RegExp],
     readonly type = 're' as const
   ) {
     super();
@@ -293,12 +331,82 @@ class __re extends __Exp<string> {
 }
 
 export function re(rule: RegExp): ExpressionRule<string> {
-  return new __re(rule);
+  Fn.__assert(rule != null && rule instanceof RegExp, 'rule must be a RegExp');
+
+  return new __re([rule]);
+}
+
+class __strictEqual<T> extends __Exp<T> {
+  constructor(
+    readonly args: [unknown],
+    readonly type = 'strictEqual' as const
+  ) {
+    super();
+  }
+}
+
+export function strictEqual<const T>(value: T): ExpressionRule<T> {
+  return new __strictEqual<T>([value]);
+}
+
+class __instanceOf<T> extends __Exp<T> {
+  constructor(
+    readonly args:
+      | [abstract new (...args: any[]) => any]
+      | [abstract new (...args: any[]) => any, ObjectRule<any>],
+    readonly type = 'instanceOf' as const
+  ) {
+    super();
+  }
+}
+
+export function instanceOf<T>(ctor: abstract new (...args: any[]) => T): ExpressionRule<T>;
+export function instanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
+  ctor: abstract new (...args: any[]) => T,
+  extraRule?: S
+): ExpressionRule<T & Infer<S>>;
+export function instanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
+  ctor: abstract new (...args: any[]) => T,
+  extraRule?: S
+): ExpressionRule<T & Infer<S>> {
+  Fn.__assert(Fn.__typeOf(ctor) === '[object Function]', 'argument must be a constructor function');
+
+  return new __instanceOf<T & Infer<S>>(extraRule == null ? [ctor] : [ctor, extraRule]);
+}
+
+class __isPrototypedBy<T> extends __Exp<T> {
+  constructor(
+    readonly args: [abstract new (...args: any[]) => any],
+    readonly type = 'isPrototypedBy' as const
+  ) {
+    super();
+  }
+}
+
+export function isPrototypedBy<T>(ctor: abstract new (...args: any[]) => T): ExpressionRule<T> {
+  Fn.__assert(Fn.__typeOf(ctor) === '[object Function]', 'argument must be a constructor function');
+
+  return new __isPrototypedBy<T>([ctor]);
+}
+
+class __predicate<T> extends __Exp<T> {
+  constructor(
+    readonly args: [Fn.PredicateRule<any>] | [Fn.PredicateRule<any>, string],
+    readonly type = 'predicate' as const
+  ) {
+    super();
+  }
+}
+
+export function predicate<T>(fn: Fn.PredicateRule<T>, message?: string): ExpressionRule<T> {
+  Fn.__assert(typeof fn === 'function', 'predicate requires a function argument');
+
+  return new __predicate<T>(message == null ? [fn] : [fn, message]);
 }
 
 class __objectShape<T> extends __Exp<T> {
   constructor(
-    readonly arg: ObjectRule<any>,
+    readonly args: [ObjectRule<any>],
     readonly type = 'objectShape' as const
   ) {
     super();
@@ -306,27 +414,29 @@ class __objectShape<T> extends __Exp<T> {
 }
 
 export function objectShape<T extends ObjectRule<any>>(rule: T): ExpressionRule<Infer<T>> {
-  return new __objectShape<Infer<T>>(rule);
+  Fn.__assert(rule != null, 'object shape rule cannot be null or undefined');
+
+  return new __objectShape<Infer<T>>([rule]);
 }
 
-// class __objectLike extends __Exp {
-//   constructor(
-//     readonly arg: ObjectRule<any>,
-//     readonly type = 'objectLike' as const
-//   ) {
-//     super();
-//   }
-// }
-//
-// export function objectLike<T extends ObjectRule<any>>(rule: T): ExpressionRule<Infer<T>> {
-//   const expr = new __objectLike(rule);
-//
-//   return expr;
-// }
+class __objectLike<T> extends __Exp<T> {
+  constructor(
+    readonly args: [ObjectRule<any>],
+    readonly type = 'objectLike' as const
+  ) {
+    super();
+  }
+}
+
+export function objectLike<T extends ObjectRule<any>>(rule: T): ExpressionRule<Infer<T>> {
+  Fn.__assert(rule != null, 'object like rule cannot be null or undefined');
+
+  return new __objectLike<Infer<T>>([rule]);
+}
 
 class __tuple<T> extends __Exp<T> {
   constructor(
-    readonly arg: SchemaRule<any>[],
+    readonly args: [SchemaRule<any>[]],
     readonly type = 'tuple' as const
   ) {
     super();
@@ -334,12 +444,12 @@ class __tuple<T> extends __Exp<T> {
 }
 
 export function tuple<const T extends SchemaRule<any>[]>(items: T): ExpressionRule<Infer<T>> {
-  return new __tuple<Infer<T>>(items);
+  return new __tuple<Infer<T>>([items]);
 }
 
 class __array<T> extends __Exp<T> {
   constructor(
-    readonly arg: SchemaRule<any>[],
+    readonly args: [SchemaRule<any>[]],
     readonly type = 'array' as const
   ) {
     super();
@@ -347,20 +457,20 @@ class __array<T> extends __Exp<T> {
 }
 
 export function array<T extends SchemaRule<any>[]>(items: T): ExpressionRule<Infer<ItemsOf<T>>[]> {
-  return new __array<Infer<ItemsOf<T>>[]>(items);
+  return new __array<Infer<ItemsOf<T>>[]>([items]);
 }
 
 class __arrayOf<T> extends __Exp<T> {
   constructor(
-    readonly arg: SchemaRule<any>,
+    readonly args: [SchemaRule<any>] | [SchemaRule<any>, { length: number }],
     readonly type = 'arrayOf' as const
   ) {
     super();
   }
 }
 
-export function arrayOf<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T>[]> {
-  return new __arrayOf<Infer<T>[]>(rule);
+export function arrayOf<T extends SchemaRule<any>>(rule: T, options?: { length: number }): ExpressionRule<Infer<T>[]> {
+  return new __arrayOf<Infer<T>[]>(options == null ? [rule] : [rule, options]);
 }
 
 export function __isLiteral(value: any): value is LiteralTypes {
@@ -405,42 +515,15 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
   throw new Error('hell knows');
 }
 
-const a = aString();
-const b = aNumber();
-const c = literal(true);
-const mixed = allOf({ id: '5' }, { email: 'a@gmail.com' }, nullable({ age: 8 }));
-
-expectType(a).is<ExpressionRule<string>>();
-expectType(b).is<ExpressionRule<number>>();
-
-expectType(mixed).is<ExpressionRule<{ id: string; email: string; age: number }>>();
-expectType(mixed).is<ExpressionRule<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>>();
-
-const d = oneOf(
-  tuple([aBoolean(), aNumber()]),
-  array([aString(), aString()]),
-  '9',
-  b,
-  re(/^hell/),
-  optional(aBoolean()),
-  nullish(aBigInt()),
-  nullable(aDate()),
-  arrayOf(literal(7))
-);
-
-const s = utils.inspect(d, { depth: null });
-
-console.log(s);
-
-console.log(utils.inspect(mixed, { depth: null }));
-
-expectType(d).is<ExpressionRule<string | number | true>>();
-
 type Rendered = Built<string>;
 
 const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
   literal<T>(value: T): Rendered {
     return `exact(${JSON.stringify(value)})`;
+  }
+
+  anything(): Rendered {
+    return 'anything()';
   }
 
   aBoolean(): Rendered {
@@ -455,8 +538,8 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
     return 'aNumber()';
   }
 
-  aString(): Rendered {
-    return 'aString()';
+  aString(options?: { length: number }): Rendered {
+    return options == null ? 'aString()' : `aString(${JSON.stringify(options)})`;
   }
 
   aDate(): Rendered {
@@ -501,8 +584,46 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
     return `allOf(${args.join(', ')})`;
   }
 
+  anyOf(schema: SchemaRule<any>[]): Rendered {
+    const args = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return `anyOf(${args.join(', ')})`;
+  }
+
   re(rule: RegExp): Rendered {
     return `re(${rule.toString()})`;
+  }
+
+  strictEqual(value: unknown): Rendered {
+    return `strictEqual(${JSON.stringify(value)})`;
+  }
+
+  instanceOf(ctor: abstract new (...args: any[]) => any, extraRule?: ObjectRule<any>): Rendered {
+    if (!extraRule) {
+      return `instanceOf(${ctor.name})`;
+    }
+
+    const entries = Object.entries(extraRule).map(([key, value]) => {
+      const expression = __toExpression(value);
+
+      return `${key}: ${expression.accept(this)}`;
+    });
+
+    return `instanceOf(${ctor.name}, { ${entries.join(', ')} })`;
+  }
+
+  isPrototypedBy(ctor: abstract new (...args: any[]) => any): Rendered {
+    return `isPrototypedBy(${ctor.name})`;
+  }
+
+  predicate(fn: Fn.PredicateRule<any>, message?: string): Rendered {
+    const name = fn.name || '<anonymous>';
+
+    return message == null ? `predicate(${name})` : `predicate(${name}, ${JSON.stringify(message)})`;
   }
 
   objectShape(schema: ObjectRule<any>): Rendered {
@@ -513,6 +634,16 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
     });
 
     return `objectShape({ ${entries.join(', ')} })`;
+  }
+
+  objectLike(schema: ObjectRule<any>): Rendered {
+    const entries = Object.entries(schema).map(([key, value]) => {
+      const expression = __toExpression(value);
+
+      return `${key}: ${expression.accept(this)}`;
+    });
+
+    return `objectLike({ ${entries.join(', ')} })`;
   }
 
   tuple(schema: SchemaRule<any>[]): Rendered {
@@ -535,10 +666,12 @@ const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
     return `array([${items.join(', ')}])`;
   }
 
-  arrayOf(schema: SchemaRule<any>): Rendered {
+  arrayOf(schema: SchemaRule<any>, options?: { length: number }): Rendered {
     const expression = __toExpression(schema);
 
-    return `arrayOf(${expression.accept(this)})`;
+    return options == null
+      ? `arrayOf(${expression.accept(this)})`
+      : `arrayOf(${expression.accept(this)}, ${JSON.stringify(options)})`;
   }
 })();
 
@@ -547,6 +680,10 @@ type FnRendered = Built<Fn.FunctionRule<any>>;
 const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule<any>> {
   literal<T extends LiteralTypes>(value: T): FnRendered {
     return Fn.literal(value);
+  }
+
+  anything(): FnRendered {
+    return Fn.anything();
   }
 
   aBoolean(): FnRendered {
@@ -561,8 +698,8 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     return Fn.aNumber();
   }
 
-  aString(): FnRendered {
-    return Fn.aString();
+  aString(options?: { length: number }): FnRendered {
+    return Fn.aString(options);
   }
 
   aDate(): FnRendered {
@@ -607,8 +744,44 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     return Fn.allOf(...(items as any));
   }
 
+  anyOf(schema: SchemaRule<any>[]): FnRendered {
+    const items = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return Fn.anyOf(...(items as any));
+  }
+
   re(rule: RegExp): FnRendered {
     return Fn.re(rule);
+  }
+
+  strictEqual(value: unknown): FnRendered {
+    return Fn.strictEqual(value);
+  }
+
+  instanceOf(ctor: abstract new (...args: any[]) => any, extraRule?: ObjectRule<any>): FnRendered {
+    if (!extraRule) {
+      return Fn.instanceOf(ctor);
+    }
+
+    const entries = Object.entries(extraRule).map(([key, value]) => {
+      const expression = __toExpression(value);
+
+      return [key, expression.accept(this)] as const;
+    });
+
+    return Fn.instanceOf(ctor, Object.fromEntries(entries));
+  }
+
+  isPrototypedBy(ctor: abstract new (...args: any[]) => any): FnRendered {
+    return Fn.isPrototypedBy(ctor);
+  }
+
+  predicate(fn: Fn.PredicateRule<any>, message?: string): FnRendered {
+    return Fn.predicate(fn, message);
   }
 
   objectShape(schema: ObjectRule<any>): FnRendered {
@@ -621,6 +794,18 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     const record = Object.fromEntries(entries);
 
     return Fn.objectShape(record);
+  }
+
+  objectLike(schema: ObjectRule<any>): FnRendered {
+    const entries = Object.entries(schema).map(([key, value]) => {
+      const expression = __toExpression(value);
+
+      return [key, expression.accept(this)] as const;
+    });
+
+    const record = Object.fromEntries(entries);
+
+    return Fn.objectLike(record);
   }
 
   tuple(schema: SchemaRule<any>[]): FnRendered {
@@ -643,78 +828,17 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     return Fn.array(items);
   }
 
-  arrayOf(schema: SchemaRule<any>): FnRendered {
+  arrayOf(schema: SchemaRule<any>, options?: { length: number }): FnRendered {
     const expression = __toExpression(schema);
 
-    return Fn.arrayOf(expression.accept(this));
+    return Fn.arrayOf(expression.accept(this), options);
   }
 })();
 
-function toString(expression: ExpressionRule<any>): string {
+export function toString(expression: ExpressionRule<any>): string {
   return expression.accept(ExpressionRenderer);
 }
 
-console.log(toString(d));
-
-console.log(toString(mixed));
-
-function toFunction<T>(expression: ExpressionRule<T>): Fn.FunctionRule<T> {
+export function toFunction<T>(expression: ExpressionRule<T>): Fn.FunctionRule<T> {
   return expression.accept(FunctionRenderer);
 }
-
-const y = toFunction(d);
-
-const za = toFunction(literal(8));
-
-expectType(za).is<Fn.FunctionRule<8>>();
-console.log(y(true));
-console.log(y(9));
-console.log(y('9'));
-console.log(y('hello'));
-console.log(y('zzz'));
-console.log(y(7));
-console.log(y(3n));
-console.log(y(new Date()));
-console.log('nullable or nullish', y(null));
-console.log('optional or nullish', y(undefined));
-console.log('arrayOf', y([7, 7, 7]));
-console.log('tuple', y([true, 42]));
-console.log('array', y(['test', 'test']));
-
-console.log(toFunction(mixed)({ id: '5', email: '', age: 8 }));
-
-// ── inference smoke tests ─────────────────────────────────────────────
-// The equals<false>() lines are the canaries: if the phantom stops binding,
-// Infer collapses to unknown, every SameType flips, and they stop compiling.
-
-// 1. Infer recovers the exact type from a rule — not unknown
-expect<Infer<ExpressionRule<number>>>().isOfType<number>().equals<true>();
-expect<Infer<ExpressionRule<number>>>().isOfType<unknown>().equals<false>();
-
-// 2. Rules with different value types are distinguishable
-expect(aString()).isOfType<ExpressionRule<string>>().equals<true>();
-expect(aString()).isOfType<ExpressionRule<number>>().equals<false>();
-
-// 3. Literals are preserved, not widened
-expect(literal(8)).isOfType<ExpressionRule<8>>().equals<true>();
-expect(literal(8)).isOfType<ExpressionRule<number>>().equals<false>();
-
-// 4. Modifiers carry their unions through
-expect(nullable(aDate())).isOfType<ExpressionRule<Date | null>>().equals<true>();
-expect(optional(aBoolean())).isOfType<ExpressionRule<boolean | undefined>>().equals<true>();
-expect(nullish(aBigInt())).isOfType<ExpressionRule<bigint | null | undefined>>().equals<true>();
-
-// 5. Combinators infer through their children
-expect(oneOf('9', aNumber())).isOfType<ExpressionRule<string | number>>().equals<true>();
-expect(arrayOf(literal(7))).isOfType<ExpressionRule<7[]>>().equals<true>();
-expect(objectShape({ id: aString() })).isOfType<ExpressionRule<{ id: string }>>().equals<true>();
-
-// 6. any-collapse canary — SameType is blind to any, StrictSameType is not
-expect<StrictSameType<Infer<ExpressionRule<number>>, number>>().isOfType<true>().equals<true>();
-
-// 7. End-to-end: the interpreter receives the inferred parameter type
-const __smoke = toFunction(oneOf('9', aNumber()));
-expect<Parameters<typeof __smoke>[0]>().isOfType<string | number>().equals<true>();
-// @ts-expect-error — a Date must be rejected; if this directive reports
-// "unused", toFunction has collapsed back to FunctionRule<any>
-__smoke(new Date());

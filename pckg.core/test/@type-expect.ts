@@ -20,6 +20,19 @@ export type SameType<B, A> = A extends B ? (B extends A ? true : false) : false;
 
 export type StrictSameType<X, Y> = (<T>() => T extends X ? 1 : 2) extends <T>() => T extends Y ? 1 : 2 ? true : false;
 
+/**
+ * Assert that an explicitly supplied type X is assignable to the inferred type A:
+ *
+ *   expectType(pattern).is<ExpressionRule<string>>();
+ */
+export function expectType<A>(_arg?: A): { is<X extends A>(): void } {
+  return {
+    is<X extends A>() {
+      // compile-time only — no runtime behaviour
+    },
+  };
+}
+
 export function expect<A>(_arg?: A): {
   isOfType<B>(): { equals<Y extends SameType<A, B>>(): void };
 } {
