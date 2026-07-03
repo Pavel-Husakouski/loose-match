@@ -14,7 +14,7 @@
     "module": "ESNext",
     "target": "es2020",
     "moduleResolution": "node",
-    "lib": ["es2017"],
+    "lib": ["es2022"],
     "sourceMap": true,
     "declaration": true,
     "noEmitHelpers": false,

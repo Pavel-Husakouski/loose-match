@@ -141,7 +141,7 @@ export function tuple<const T extends SchemaRule<any>[]>(items: T): FunctionRule
 /**
  * A rule - an array with positionally fixed items, every item must match the corresponding rule
  */
-export function array<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>[]> {
+export function array<const T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>[]> {
   return __arrayExact(items);
 }
 
@@ -150,7 +150,10 @@ export function array<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer
  * @param schema The rule for each item
  * @param options an auxiliary validation option object
  */
-export function arrayOf<T extends SchemaRule<any>>(schema: T, options?: { length: number }): FunctionRule<Infer<T>[]> {
+export function arrayOf<const T extends SchemaRule<any>>(
+  schema: T,
+  options?: { length: number }
+): FunctionRule<Infer<T>[]> {
   const fnRule = __toFunction(schema);
 
   return function __arrayOf(items: unknown) {
@@ -179,7 +182,9 @@ export function arrayOf<T extends SchemaRule<any>>(schema: T, options?: { length
  * A combinator rule - an intersection of rules
  * @param rules The rules to be applied
  */
-export function allOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...rules: T): FunctionRule<InferIntersection<T>> {
+export function allOf<const T extends AtLeastTwoItems<SchemaRule<any>>>(
+  ...rules: T
+): FunctionRule<InferIntersection<T>> {
   __assert(rules.length >= 2, 'allOf requires at least two arguments');
 
   function __all<T>(items: SchemaRule<T>[]): FunctionRule<any> {
@@ -205,7 +210,7 @@ export function allOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...rules: T): 
  * A rule - either null or undefined or specified schema
  * @param schema The schema
  */
-export function nullish<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | null | undefined> {
+export function nullish<const T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | null | undefined> {
   __assert(schema != null, 'nullish null or undefined? interesting...');
 
   const rule = __toFunction(schema);
@@ -223,7 +228,7 @@ export function nullish<T extends SchemaRule<any>>(schema: T): FunctionRule<Infe
  * A combinator rule - a rule that accepts undefined or the specified schema
  * @param schema The schema
  */
-export function optional<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | undefined> {
+export function optional<const T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | undefined> {
   __assert(schema !== undefined, 'optional undefined? interesting...');
 
   const rule = __toFunction(schema);
@@ -241,7 +246,7 @@ export function optional<T extends SchemaRule<any>>(schema: T): FunctionRule<Inf
  * A combinator rule - a rule that accepts null or the specified schema
  * @param schema The schema
  */
-export function nullable<T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | null> {
+export function nullable<const T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | null> {
   __assert(schema != null, 'nullable null or undefined? interesting...');
 
   const rule = __toFunction(schema);
@@ -259,7 +264,7 @@ export function nullable<T extends SchemaRule<any>>(schema: T): FunctionRule<Inf
  * A combinator rule - a union of rules with exactly one match
  * @param items The rules to be applied
  */
-export function oneOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
+export function oneOf<const T extends AtLeastTwoItems<SchemaRule<any>>>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
   __assert(items.length >= 2, 'oneOf requires at least two arguments');
 
   function __oneOf<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>> {
@@ -297,7 +302,7 @@ export function oneOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...items: T): 
  * A combinator rule - a union of rules with any number of matches except zero
  * @param items The rules to be applied
  */
-export function anyOf<T extends AtLeastTwoItems<SchemaRule<any>>>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
+export function anyOf<const T extends AtLeastTwoItems<SchemaRule<any>>>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
   __assert(items.length >= 2, 'anyOf requires at least two arguments');
 
   function __anyOf<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>> {

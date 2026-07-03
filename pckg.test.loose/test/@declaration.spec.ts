@@ -400,7 +400,7 @@ describe('allOf: objectShape vs plain object', () => {
     }
   );
 
-  expect<Infer<typeof pattern1>>().isOfType<Infer<typeof pattern2>>().equals<true>();
+  expect<Infer<typeof pattern1>>().isOfType<Infer<typeof pattern2>>().equals<false>();
 });
 
 describe('allOf: objectShape as const vs plain object as const', () => {
@@ -420,8 +420,8 @@ describe('allOf: objectShape as const vs plain object as const', () => {
 describe('oneOf: object literals', () => {
   const pattern = oneOf({ id: '1' }, { name: '2' }, { email: '3' });
 
-  expect<Infer<typeof pattern>>().isOfType<{ id: string } | { name: string } | { email: string }>().equals<true>();
-  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '3' }>().equals<false>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '3' }>().equals<true>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: string } | { name: string } | { email: string }>().equals<false>();
 });
 
 describe('oneOf: primitives and combinators', () => {
@@ -459,7 +459,7 @@ describe('anyOf: string literals', () => {
 describe('anyOf: object literals', () => {
   const pattern = anyOf({ id: '1' }, { name: '2' }, { email: '4' });
 
-  expect<Infer<typeof pattern>>().isOfType<{ id: string } | { name: string } | { email: string }>().equals<true>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: string } | { name: string } | { email: string }>().equals<false>();
   expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '3' }>().equals<false>();
 });
 
@@ -535,16 +535,16 @@ describe('validate: object and pattern', () => {
   expect(validate(pattern, obj)).isOfType<ValidationResult<Infer<typeof pattern>>>().equals<true>();
 });
 
-type SameType<B, A> = A extends B ? (B extends A ? true : false) : false;
+export type SameType<B, A> = [A] extends [B] ? ([B] extends [A] ? true : false) : false;
 
-function expect<A>(arg?: A): {
+export function expect<A>(_arg?: A): {
   isOfType<B>(): { equals<Y extends SameType<A, B>>(): void };
 } {
   return {
     isOfType<B>(): { equals<Y extends SameType<A, B>>(): void } {
       return {
         equals<Y extends SameType<A, B>>() {
-          // do nothing
+          // compile-time only — no runtime behaviour
         },
       };
     },

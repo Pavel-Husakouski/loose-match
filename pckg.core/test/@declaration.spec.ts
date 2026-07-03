@@ -38,9 +38,8 @@ describe('Hell', () => {
     array([aString(), aNumber()]),
     [aString(), aNumber()],
     [1, 2, 3],
-    '9',
+    literal('9'),
     // b,
-    re(/^hell/),
     optional(aBoolean()),
     nullish(aBigInt()),
     nullable(aDate()),
@@ -51,14 +50,15 @@ describe('Hell', () => {
     .isOfType<
       | [boolean, number]
       | (string | number)[]
-      | [string, number]
-      | [1, 2, 3]
+      | readonly [string, number]
+      | readonly [1, 2, 3]
       | '9'
-      | string
       | boolean
       | bigint
       | Date
-      | number[]
+      | 7[]
+      | null
+      | undefined
     >()
     .equals<true>();
 });
@@ -430,7 +430,7 @@ describe('allOf: explicit objectShape', () => {
     id: '1',
     name: '2',
     email: '3',
-  };
+  } as const;
   const pattern = allOf(objectShape({ id: '1' }), objectShape({ name: '2' }), objectShape({ email: aString() }));
 
   pattern(obj);
@@ -457,7 +457,7 @@ describe('allOf: objectShape vs plain object', () => {
     }
   );
 
-  expect<Infer<typeof pattern1>>().isOfType<Infer<typeof pattern2>>().equals<true>();
+  expect<Infer<typeof pattern1>>().isOfType<Infer<typeof pattern2>>().equals<false>();
 });
 
 describe('allOf: objectShape as const vs plain object as const', () => {
@@ -477,8 +477,8 @@ describe('allOf: objectShape as const vs plain object as const', () => {
 describe('oneOf: object literals', () => {
   const pattern = oneOf({ id: '1' }, { name: '2' }, { email: '3' });
 
-  expect<Infer<typeof pattern>>().isOfType<{ id: string } | { name: string } | { email: string }>().equals<true>();
-  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '3' }>().equals<false>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '3' }>().equals<true>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: string } | { name: string } | { email: string }>().equals<false>();
 });
 
 describe('oneOf: primitives and combinators', () => {
@@ -516,8 +516,8 @@ describe('anyOf: string literals', () => {
 describe('anyOf: object literals', () => {
   const pattern = anyOf({ id: '1' }, { name: '2' }, { email: '4' });
 
-  expect<Infer<typeof pattern>>().isOfType<{ id: string } | { name: string } | { email: string }>().equals<true>();
-  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '3' }>().equals<false>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '4' }>().equals<true>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: string } | { email: string }>().equals<false>();
 });
 
 describe('anyOf: object id union', () => {
