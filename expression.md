@@ -112,18 +112,21 @@ implementations. Document this in the file header instead of porting them.
 
 Reference: `src/combinators.ts:424-446`.
 
-- [ ] Replace the local `__isLiteral`/`__isObject` copies with imports from `../src`.
+- [x] Replace the local `__isLiteral`/`__isObject` copies with imports from `../src`.
       In particular the local `__isObject` (`expression.ts:384-386`) matches `null`, `Date`,
-      `RegExp`, and `Error`; main's checks `[object Object]`.
-- [ ] Add the bare-array branch: an array schema becomes an `array(items)` node (main maps it
+      `RegExp`, and `Error`; main's checks `[object Object]`. — done: `__toExpression` now calls
+      `Fn.__isLiteral`/`Fn.__isArray`/`Fn.__isError`/`Fn.__isObject` directly; the local copies
+      are deleted (nothing else imported them).
+- [x] Add the bare-array branch: an array schema becomes an `array(items)` node (main maps it
       to `__arrayExact`, which is `array` semantics). Un-comment and fix `expression.ts:398-400`.
-- [ ] Add the `Error` branch: an `Error` instance becomes
+- [x] Add the `Error` branch: an `Error` instance becomes
       `instanceOf(ctor, { message, ...ownProps })`, matching `src/combinators.ts:434-440`
       (name intentionally excluded there — keep that quirk).
-- [ ] Bare functions, per Phase 1's decision (b): `__toExpression` must keep rejecting them —
+- [x] Bare functions, per Phase 1's decision (b): `__toExpression` must keep rejecting them —
       but explicitly, with a clear error message (not the generic fall-through), and the
       conformance spec asserts the rejection.
-- [ ] Keep the final `throw new Error('hell knows')` message identical to main (or change both).
+- [x] Keep the final `throw new Error('hell knows')` message identical to main (or change both).
+      — verified identical for genuinely unclassifiable schemas (e.g. `new Map()`).
 
 ## Phase 5 — tests and conformance guard
 

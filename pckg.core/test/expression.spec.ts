@@ -338,6 +338,82 @@ describe('expression', () => {
     });
   });
 
+  describe('__toExpression converter parity with Fn.__toFunction (Phase 4)', () => {
+    it('converts a bare array to array(...) semantics, matching main exactly', () => {
+      const schema = ['a', 'b'];
+      const rule = toFunction(__toExpression(schema));
+      const mainRule = Fn.__toFunction(schema);
+
+      expect(rule(['a', 'b'] as any)).to.match([true]);
+      expect(mainRule(['a', 'b'] as any)).to.match([true]);
+
+      // element mismatch is checked before the length check, so a short array fails on the
+      // first missing element rather than on its length
+      expect(rule(['a'] as any)).to.match([false, '[1] expected String b, got undefined']);
+      expect(mainRule(['a'] as any)).to.match([false, '[1] expected String b, got undefined']);
+
+      expect(rule(['a', 'c'] as any)).to.match([false, '[1] expected String b, got String c']);
+      expect(mainRule(['a', 'c'] as any)).to.match([false, '[1] expected String b, got String c']);
+
+      match(toString(__toExpression(schema))).with('array([exact("a"), exact("b")])');
+    });
+
+    it('converts a bare array embedded in an object schema (nested, not top-level)', () => {
+      const rule = toFunction(objectShape({ list: ['a', 'b'] as any }));
+
+      expect(rule({ list: ['a', 'b'] })).to.match([true]);
+      expect(rule({ list: ['a'] })).to.match([false, '[list] [1] expected String b, got undefined']);
+    });
+
+    it('converts a bare Error to instanceOf(ctor, { message, ...ownProps }), matching main exactly', () => {
+      const schema: any = Object.assign(new TypeError('boom'), { code: 'E1' });
+      const rule = toFunction(__toExpression(schema));
+      const mainRule = Fn.__toFunction(schema);
+
+      const passing = Object.assign(new TypeError('boom'), { code: 'E1' });
+      const wrongMessage = Object.assign(new TypeError('nope'), { code: 'E1' });
+      const wrongCtor = Object.assign(new RangeError('boom'), { code: 'E1' });
+      const missingProp = new TypeError('boom');
+
+      expect(rule(passing)).to.match([true]);
+      expect(mainRule(passing)).to.match([true]);
+
+      expect(rule(wrongCtor)).to.match([false, 'expected instanceof TypeError got instanceof RangeError']);
+      expect(mainRule(wrongCtor)).to.match([false, 'expected instanceof TypeError got instanceof RangeError']);
+
+      expect(rule(wrongMessage)).to.match([false, '[message] expected String boom, got String nope']);
+      expect(mainRule(wrongMessage)).to.match([false, '[message] expected String boom, got String nope']);
+
+      expect(rule(missingProp as any)).to.match([false, '[code] expected String E1, got undefined']);
+      expect(mainRule(missingProp as any)).to.match([false, '[code] expected String E1, got undefined']);
+
+      match(toString(__toExpression(schema))).with(
+        'instanceOf(TypeError, { message: exact("boom"), code: exact("E1") })'
+      );
+    });
+
+    it('rejects bare functions explicitly instead of falling through to "hell knows"', () => {
+      const bareFn = (x: number): Fn.ValidationResult => (x > 0 ? [true] : [false, 'must be positive']);
+
+      expect(() => __toExpression(bareFn as any)).to.throw(
+        fnInstanceOf(Error, { message: 'bare functions are not supported by expressions' })
+      );
+
+      // main, by contrast, passes a tuple-returning bare function through as-is (Phase 1 decision (b))
+      const mainRule = Fn.__toFunction(bareFn as any);
+
+      expect(mainRule(5)).to.match([true]);
+      expect(mainRule(-1)).to.match([false, 'must be positive']);
+    });
+
+    it('keeps the final fallback error identical to main for genuinely unclassifiable schemas', () => {
+      const exotic = new Map();
+
+      expect(() => __toExpression(exotic as any)).to.throw(fnInstanceOf(Error, { message: 'hell knows' }));
+      expect(() => Fn.__toFunction(exotic as any)).to.throw(fnInstanceOf(Error, { message: 'hell knows' }));
+    });
+  });
+
   // The equals<false>() lines are the canaries: if the phantom stops binding,
   // Infer collapses to unknown, every SameType flips, and they stop compiling.
   describe('inference canaries', () => {
@@ -409,7 +485,10 @@ describe('expression', () => {
     it('InferIntersection wraps each member in Infer<U>, matching src/types.ts (Phase 3)', () => {
       // both members are already-resolved ExpressionRules — Infer<U> must not lose precision
       typeExpect<
-        StrictSameType<InferIntersection<[ExpressionRule<{ id: string }>, ExpressionRule<{ age: 8 }>]>, { id: string } & { age: 8 }>
+        StrictSameType<
+          InferIntersection<[ExpressionRule<{ id: string }>, ExpressionRule<{ age: 8 }>]>,
+          { id: string } & { age: 8 }
+        >
       >()
         .isOfType<true>()
         .equals<true>();

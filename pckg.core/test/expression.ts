@@ -470,26 +470,8 @@ export function arrayOf<T extends SchemaRule<any>>(rule: T, options?: { length: 
   return new __arrayOf<Infer<T>[]>(options == null ? [rule] : [rule, options]);
 }
 
-export function __isLiteral(value: any): value is LiteralTypes {
-  return (
-    value === null ||
-    value === undefined ||
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'bigint' ||
-    typeof value === 'boolean' ||
-    typeof value === 'symbol' ||
-    value instanceof Date ||
-    value instanceof RegExp
-  );
-}
-
 function __isExpression(value: any): value is ExpressionRule<any> {
   return value instanceof __Exp;
-}
-
-export function __isObject(schema: unknown): schema is ObjectRule<any> {
-  return typeof schema === 'object' && !Array.isArray(schema);
 }
 
 /**
@@ -499,13 +481,22 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
   if (__isExpression(schema)) {
     return schema;
   }
-  if (__isLiteral(schema)) {
+  if (typeof schema === 'function') {
+    throw new Error('bare functions are not supported by expressions');
+  }
+  if (Fn.__isLiteral(schema)) {
     return literal(schema) as ExpressionRule<Infer<T>>;
   }
-  // if (__isArray(schema)) {
-  //   return __arrayIs(schema) as ExpressionRule<Infer<T>>;
-  // }
-  if (__isObject(schema)) {
+  if (Fn.__isArray(schema)) {
+    return array(schema.map((item) => __toExpression(item)) as any) as ExpressionRule<Infer<T>>;
+  }
+  if (Fn.__isError(schema)) {
+    const ctor = schema.constructor as any;
+    const message = schema.message;
+
+    return instanceOf(ctor, { /*name, too strict*/ message, ...(schema as any) }) as ExpressionRule<Infer<T>>;
+  }
+  if (Fn.__isObject(schema)) {
     return objectShape(schema) as ExpressionRule<Infer<T>>;
   }
 
