@@ -94,14 +94,18 @@ implementations. Document this in the file header instead of porting them.
 
 ## Phase 3 — unify the type layer
 
-- [ ] Delete the local `LiteralRule` alias; import and use `PrimitiveRule` (same definition,
+- [x] Delete the local `LiteralRule` alias; import and use `PrimitiveRule` (same definition,
       `src/types.ts:32`) or re-export it under one agreed name in both places.
-- [ ] Import `ItemsOf`, `AtLeastTwoItems`, `LiteralTypes` from `../src` instead of redefining /
-      aliasing them.
-- [ ] Fix the local `InferIntersection` (`expression.ts:119-125`) to wrap each member in
+      `LiteralRule<T>` is now `Fn.PrimitiveRule<T>`; the dead `T extends LiteralRule<infer P>`
+      branch in `Infer` (review issue #10, could never fire) is gone with it.
+- [x] Import `ItemsOf`, `AtLeastTwoItems`, `LiteralTypes` from `../src` instead of redefining /
+      aliasing them. `ItemsOf<T>` now forwards to `Fn.ItemsOf<T>`; `oneOf`/`allOf`/`anyOf`
+      already used `Fn.AtLeastTwoItems` directly; `LiteralTypes` stays a re-export of
+      `Fn.LiteralTypes` under the same public name (no redefinition of the union).
+- [x] Fix the local `InferIntersection` (`expression.ts:119-125`) to wrap each member in
       `Infer<U> & …` exactly as `src/types.ts:68-74` does. It must stay a local type (it
       resolves against the expression `SchemaRule`), but the structure must match.
-- [ ] Keep `Infer` structurally parallel to `src/types.ts:52-63`; per Phase 1's decision (b),
+- [x] Keep `Infer` structurally parallel to `src/types.ts:52-63`; per Phase 1's decision (b),
       no predicate/function branch is added — `ExpressionRule` remains the only rule branch.
 
 ## Phase 4 — converter and helper parity (`__toExpression` vs `__toFunction`)

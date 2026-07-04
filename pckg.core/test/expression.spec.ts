@@ -1,35 +1,45 @@
 import {
+  __toExpression,
   aBigInt,
   aBoolean,
   aDate,
+  allOf,
   aNumber,
   anyOf,
   anything,
+  array,
   arrayOf,
   aString,
-  allOf,
-  array,
+  Built,
   ExpressionRule,
+  ExpressionVisitor,
   Infer,
+  InferIntersection,
   instanceOf,
   isPrototypedBy,
+  ItemsOf,
   literal,
+  LiteralRule,
   nullable,
   nullish,
   objectLike,
+  ObjectRule,
   objectShape,
   oneOf,
   optional,
   predicate,
   re,
+  SchemaRule,
   strictEqual,
   toFunction,
-  toString,
   tuple,
 } from './expression';
+import * as Fn from '../src';
+import { FunctionRule, instanceOf as fnInstanceOf, match } from '../src';
 import { expect } from './@expect';
 import { expect as typeExpect, expectType, StrictSameType } from './@type-expect';
-import { FunctionRule, instanceOf as fnInstanceOf, match } from '../src';
+
+type Rendered = Built<string>;
 
 describe('expression', () => {
   describe('node protocol', () => {
@@ -97,7 +107,10 @@ describe('expression', () => {
 
     it('converts list argument nodes', () => {
       expect(toFunction(oneOf(literal('9'), aNumber()))(8)).to.match([true]);
-      expect(toFunction(oneOf(literal('9'), aNumber()))(true as any)).to.match([false, 'expected one of 2 rules, got 0 matches']);
+      expect(toFunction(oneOf(literal('9'), aNumber()))(true as any)).to.match([
+        false,
+        'expected one of 2 rules, got 0 matches',
+      ]);
       expect(toFunction(allOf({ id: '5' }, { age: 8 }))({ id: '5', age: 8 })).to.match([true]);
       expect(toFunction(tuple([aBoolean(), aNumber()]))([true, 42])).to.match([true]);
       expect(toFunction(array([aString(), aString()]))(['a', 'b'])).to.match([true]);
@@ -126,7 +139,10 @@ describe('expression', () => {
       const plain = toFunction(instanceOf(TypeError));
 
       expect(plain(new TypeError('boom'))).to.match([true]);
-      expect(plain(new RangeError('boom'))).to.match([false, 'expected instanceof TypeError got instanceof RangeError']);
+      expect(plain(new RangeError('boom'))).to.match([
+        false,
+        'expected instanceof TypeError got instanceof RangeError',
+      ]);
 
       const withShape = toFunction(instanceOf(TypeError, { message: re(/^boom/) }));
 
@@ -153,11 +169,17 @@ describe('expression', () => {
 
     it('oneOf, allOf and anyOf require at least two rules', () => {
       // @ts-expect-error — a single rule is rejected at the type level
-      expect(() => oneOf(aString())).to.throw(fnInstanceOf(Error, { message: 'oneOf requires at least two arguments' }));
+      expect(() => oneOf(aString())).to.throw(
+        fnInstanceOf(Error, { message: 'oneOf requires at least two arguments' })
+      );
       // @ts-expect-error — a single rule is rejected at the type level
-      expect(() => allOf(aString())).to.throw(fnInstanceOf(Error, { message: 'allOf requires at least two arguments' }));
+      expect(() => allOf(aString())).to.throw(
+        fnInstanceOf(Error, { message: 'allOf requires at least two arguments' })
+      );
       // @ts-expect-error — a single rule is rejected at the type level
-      expect(() => anyOf(aString())).to.throw(fnInstanceOf(Error, { message: 'anyOf requires at least two arguments' }));
+      expect(() => anyOf(aString())).to.throw(
+        fnInstanceOf(Error, { message: 'anyOf requires at least two arguments' })
+      );
     });
 
     it('factories validate their arguments', () => {
@@ -286,7 +308,10 @@ describe('expression', () => {
       const rule = toFunction(mixed);
 
       expect(rule({ id: '5', email: 'a@gmail.com', age: 8 })).to.match([true]);
-      expect(rule({ id: '5', email: '', age: 8 })).to.match([false, '[email] expected String a@gmail.com, got String ']);
+      expect(rule({ id: '5', email: '', age: 8 })).to.match([
+        false,
+        '[email] expected String a@gmail.com, got String ',
+      ]);
     });
 
     it('infers union, intersection and literal types', () => {
@@ -295,9 +320,21 @@ describe('expression', () => {
       expectType(literal(true)).is<ExpressionRule<true>>();
       expectType(anything()).is<ExpressionRule<any>>();
       expectType(union).is<ExpressionRule<string | number | true>>();
-      expectType(mixed).is<ExpressionRule<{ id: string; email: string; age: number }>>();
-      expectType(mixed).is<ExpressionRule<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>>();
       expectType(toFunction(literal(8))).is<FunctionRule<8>>();
+    });
+
+    it('allOf (InferIntersection) pins its exact type — Phase 3 regression guard', () => {
+      // `nullable`'s own generic parameter isn't `const`, so `nullable({ age: 8 })` widens to
+      // `{ age: number }`; intersecting that with the other two members eliminates the
+      // `| null` branch entirely (`{ id: string } & { email: string } & null` is `never`, so the
+      // union drops it) — matches main's identical `Infer<U>` intersection semantics, this is
+      // not an expression-layer bug.
+      typeExpect<StrictSameType<Infer<typeof mixed>, { id: string } & { email: string } & { age: number }>>()
+        .isOfType<true>()
+        .equals<true>();
+      // any-collapse canary: if InferIntersection stopped wrapping members in Infer<U> and
+      // fell back to `any`, this would still compile — the line above is what actually pins it.
+      typeExpect<StrictSameType<Infer<typeof mixed>, never>>().isOfType<false>().equals<true>();
     });
   });
 
@@ -312,7 +349,9 @@ describe('expression', () => {
     it('rules with different value types are distinguishable', () => {
       typeExpect(aString()).isOfType<ExpressionRule<string>>().equals<true>();
       typeExpect(aString()).isOfType<ExpressionRule<number>>().equals<false>();
-      typeExpect(predicate((x: number) => x > 0)).isOfType<ExpressionRule<number>>().equals<true>();
+      typeExpect(predicate((x: number) => x > 0))
+        .isOfType<ExpressionRule<number>>()
+        .equals<true>();
     });
 
     it('literals are preserved, not widened', () => {
@@ -331,9 +370,15 @@ describe('expression', () => {
     it('combinators infer through their children', () => {
       typeExpect(oneOf('9', aNumber())).isOfType<ExpressionRule<string | number>>().equals<true>();
       typeExpect(anyOf('9', aNumber())).isOfType<ExpressionRule<string | number>>().equals<true>();
-      typeExpect(arrayOf(literal(7))).isOfType<ExpressionRule<7[]>>().equals<true>();
-      typeExpect(objectShape({ id: aString() })).isOfType<ExpressionRule<{ id: string }>>().equals<true>();
-      typeExpect(objectLike({ id: aString() })).isOfType<ExpressionRule<{ id: string }>>().equals<true>();
+      typeExpect(arrayOf(literal(7)))
+        .isOfType<ExpressionRule<7[]>>()
+        .equals<true>();
+      typeExpect(objectShape({ id: aString() }))
+        .isOfType<ExpressionRule<{ id: string }>>()
+        .equals<true>();
+      typeExpect(objectLike({ id: aString() }))
+        .isOfType<ExpressionRule<{ id: string }>>()
+        .equals<true>();
       typeExpect(instanceOf(TypeError)).isOfType<ExpressionRule<TypeError>>().equals<true>();
       typeExpect(isPrototypedBy(TypeError)).isOfType<ExpressionRule<TypeError>>().equals<true>();
       typeExpect(instanceOf(TypeError, { message: aString() }))
@@ -343,6 +388,36 @@ describe('expression', () => {
 
     it('any-collapse canary — SameType is blind to any, StrictSameType is not', () => {
       typeExpect<StrictSameType<Infer<ExpressionRule<number>>, number>>().isOfType<true>().equals<true>();
+    });
+
+    it('LiteralRule stays aliased to Fn.PrimitiveRule (Phase 3)', () => {
+      typeExpect<StrictSameType<LiteralRule<8>, Fn.PrimitiveRule<8>>>().isOfType<true>().equals<true>();
+      typeExpect<StrictSameType<LiteralRule<{ id: string }>, Fn.PrimitiveRule<{ id: string }>>>()
+        .isOfType<true>()
+        .equals<true>();
+      // an object shape is not one of the LiteralTypes — both must collapse to never
+      typeExpect<StrictSameType<LiteralRule<{ id: string }>, never>>().isOfType<true>().equals<true>();
+    });
+
+    it('ItemsOf stays aliased to Fn.ItemsOf (Phase 3)', () => {
+      typeExpect<StrictSameType<ItemsOf<[string, number]>, Fn.ItemsOf<[string, number]>>>()
+        .isOfType<true>()
+        .equals<true>();
+      typeExpect<StrictSameType<ItemsOf<[string, number]>, string | number>>().isOfType<true>().equals<true>();
+    });
+
+    it('InferIntersection wraps each member in Infer<U>, matching src/types.ts (Phase 3)', () => {
+      // both members are already-resolved ExpressionRules — Infer<U> must not lose precision
+      typeExpect<
+        StrictSameType<InferIntersection<[ExpressionRule<{ id: string }>, ExpressionRule<{ age: 8 }>]>, { id: string } & { age: 8 }>
+      >()
+        .isOfType<true>()
+        .equals<true>();
+
+      // bare object schemas (not yet wrapped in ExpressionRule) go through the same Infer<U> path
+      typeExpect<StrictSameType<InferIntersection<[{ id: '5' }, { age: 8 }]>, { id: '5' } & { age: 8 }>>()
+        .isOfType<true>()
+        .equals<true>();
     });
 
     it('end-to-end: the interpreter receives the inferred parameter type', () => {
@@ -355,3 +430,165 @@ describe('expression', () => {
     });
   });
 });
+
+const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
+  literal<T>(value: T): Rendered {
+    return `exact(${JSON.stringify(value)})`;
+  }
+
+  anything(): Rendered {
+    return 'anything()';
+  }
+
+  aBoolean(): Rendered {
+    return 'aBoolean()';
+  }
+
+  aBigInt(): Built<string> {
+    return 'aBigInt()';
+  }
+
+  aNumber(): Rendered {
+    return 'aNumber()';
+  }
+
+  aString(options?: { length: number }): Rendered {
+    return options == null ? 'aString()' : `aString(${JSON.stringify(options)})`;
+  }
+
+  aDate(): Rendered {
+    return 'aDate()';
+  }
+
+  nullable(schema: SchemaRule<any>): Rendered {
+    const expression = __toExpression(schema);
+
+    return `nullable(${expression.accept(this)})`;
+  }
+
+  nullish(schema: SchemaRule<any>): Rendered {
+    const expression = __toExpression(schema);
+
+    return `nullish(${expression.accept(this)})`;
+  }
+
+  optional(schema: SchemaRule<any>): Rendered {
+    const expression = __toExpression(schema);
+
+    return `optional(${expression.accept(this)})`;
+  }
+
+  oneOf(schema: SchemaRule<any>[]): Rendered {
+    const args = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return `oneOf(${args.join(', ')})`;
+  }
+
+  allOf(schema: SchemaRule<any>[]): Rendered {
+    const args = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return `allOf(${args.join(', ')})`;
+  }
+
+  anyOf(schema: SchemaRule<any>[]): Rendered {
+    const args = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return `anyOf(${args.join(', ')})`;
+  }
+
+  re(rule: RegExp): Rendered {
+    return `re(${rule.toString()})`;
+  }
+
+  strictEqual(value: unknown): Rendered {
+    return `strictEqual(${JSON.stringify(value)})`;
+  }
+
+  instanceOf(ctor: abstract new (...args: any[]) => any, extraRule?: ObjectRule<any>): Rendered {
+    if (!extraRule) {
+      return `instanceOf(${ctor.name})`;
+    }
+
+    const entries = Object.entries(extraRule).map(([key, value]) => {
+      const expression = __toExpression(value);
+
+      return `${key}: ${expression.accept(this)}`;
+    });
+
+    return `instanceOf(${ctor.name}, { ${entries.join(', ')} })`;
+  }
+
+  isPrototypedBy(ctor: abstract new (...args: any[]) => any): Rendered {
+    return `isPrototypedBy(${ctor.name})`;
+  }
+
+  predicate(fn: Fn.PredicateRule<any>, message?: string): Rendered {
+    const name = fn.name || '<anonymous>';
+
+    return message == null ? `predicate(${name})` : `predicate(${name}, ${JSON.stringify(message)})`;
+  }
+
+  objectShape(schema: ObjectRule<any>): Rendered {
+    const entries = Object.entries(schema).map(([key, value]) => {
+      const expression = __toExpression(value);
+
+      return `${key}: ${expression.accept(this)}`;
+    });
+
+    return `objectShape({ ${entries.join(', ')} })`;
+  }
+
+  objectLike(schema: ObjectRule<any>): Rendered {
+    const entries = Object.entries(schema).map(([key, value]) => {
+      const expression = __toExpression(value);
+
+      return `${key}: ${expression.accept(this)}`;
+    });
+
+    return `objectLike({ ${entries.join(', ')} })`;
+  }
+
+  tuple(schema: SchemaRule<any>[]): Rendered {
+    const items = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return `tuple([${items.join(', ')}])`;
+  }
+
+  array(schema: SchemaRule<any>[]): Rendered {
+    const items = schema.map((item) => {
+      const expression = __toExpression(item);
+
+      return expression.accept(this);
+    });
+
+    return `array([${items.join(', ')}])`;
+  }
+
+  arrayOf(schema: SchemaRule<any>, options?: { length: number }): Rendered {
+    const expression = __toExpression(schema);
+
+    return options == null
+      ? `arrayOf(${expression.accept(this)})`
+      : `arrayOf(${expression.accept(this)}, ${JSON.stringify(options)})`;
+  }
+})();
+
+function toString(expression: ExpressionRule<any>): string {
+  return expression.accept(ExpressionRenderer);
+}

@@ -15,8 +15,6 @@ export interface ExpressionVisitor<X> {
 
   aDate(): Built<X>;
 
-  // nullish(): Built<X>;
-
   nullable(schema: SchemaRule<any>): Built<X>;
 
   nullish(schema: SchemaRule<any>): Built<X>;
@@ -78,7 +76,7 @@ export type LiteralTypes = Fn.LiteralTypes;
 /**
  * A literal rule
  */
-export type LiteralRule<T> = T extends LiteralTypes ? T : never;
+export type LiteralRule<T> = Fn.PrimitiveRule<T>;
 
 /**
  * A record rule or and object schema
@@ -93,25 +91,20 @@ export type ArrayRule<T> = SchemaRule<T>[];
 /**
  * A schema rule
  */
-export type SchemaRule<T> = LiteralRule<T> /*| PredicateRule<T>*/ | ExpressionRule<T> | ObjectRule<T>;
+export type SchemaRule<T> = LiteralRule<T> | ExpressionRule<T> | ObjectRule<T>;
 
 /**
  * Infer the type of a schema rule
  */
 export type Infer<T> = T extends LiteralTypes
   ? T
-  : T extends LiteralRule<infer P>
+  : T extends ExpressionRule<infer P>
     ? P
-    : /*T extends PredicateRule<infer P>
-      ? P
-      :*/ T extends ExpressionRule<infer P>
-      ? P
-      : T extends ObjectRule<infer P>
-        ? { [K in keyof P]: Infer<P[K]> }
-        : // T extends [infer Head, ...infer Tail] ? [Infer<Head>, ...Infer<Tail>] :
-          T extends ArrayRule<infer P>
-          ? Infer<P>[]
-          : never;
+    : T extends ObjectRule<infer P>
+      ? { [K in keyof P]: Infer<P[K]> }
+      : T extends ArrayRule<infer P>
+        ? Infer<P>[]
+        : never;
 
 /**
  * A intersection of schema rule types
@@ -119,17 +112,17 @@ export type Infer<T> = T extends LiteralTypes
 export type InferIntersection<T extends any[]> = T extends [infer First, ...infer Rest]
   ? First extends SchemaRule<infer U>
     ? Rest extends any[]
-      ? U & InferIntersection<Rest>
-      : U
+      ? Infer<U> & InferIntersection<Rest>
+      : Infer<U>
     : never
   : unknown;
 
 /**
  * Infer the item type of an array
  */
-export type ItemsOf<T> = T extends (infer P)[] ? P : never;
+export type ItemsOf<T> = Fn.ItemsOf<T>;
 
-class __Exp<T> {
+abstract class __Exp<T> {
   declare readonly [__infer]?: T;
 
   type: ExpressionType = null as any;
@@ -162,6 +155,10 @@ class __anything extends __Exp<any> {
   }
 }
 
+/**
+ * A rule that matches any value
+ * Warning: using this rule disables the type inference of the value. Avoid using it with the rules `anyOf`, `oneOf` and `allOf`.
+ * */
 export function anything(): ExpressionRule<any> {
   return new __anything();
 }
@@ -274,7 +271,9 @@ class __allOf<T> extends __Exp<T> {
   }
 }
 
-export function allOf<T extends Fn.AtLeastTwoItems<SchemaRule<any>>>(...rules: T): ExpressionRule<InferIntersection<T>> {
+export function allOf<T extends Fn.AtLeastTwoItems<SchemaRule<any>>>(
+  ...rules: T
+): ExpressionRule<InferIntersection<T>> {
   Fn.__assert(rules.length >= 2, 'allOf requires at least two arguments');
 
   return new __allOf<InferIntersection<T>>([rules]);
@@ -351,9 +350,7 @@ export function strictEqual<const T>(value: T): ExpressionRule<T> {
 
 class __instanceOf<T> extends __Exp<T> {
   constructor(
-    readonly args:
-      | [abstract new (...args: any[]) => any]
-      | [abstract new (...args: any[]) => any, ObjectRule<any>],
+    readonly args: [abstract new (...args: any[]) => any] | [abstract new (...args: any[]) => any, ObjectRule<any>],
     readonly type = 'instanceOf' as const
   ) {
     super();
@@ -491,7 +488,7 @@ function __isExpression(value: any): value is ExpressionRule<any> {
   return value instanceof __Exp;
 }
 
-export function __isObject<T>(schema: unknown): schema is ObjectRule<any> {
+export function __isObject(schema: unknown): schema is ObjectRule<any> {
   return typeof schema === 'object' && !Array.isArray(schema);
 }
 
@@ -514,166 +511,6 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
 
   throw new Error('hell knows');
 }
-
-type Rendered = Built<string>;
-
-const ExpressionRenderer = new (class implements ExpressionVisitor<string> {
-  literal<T>(value: T): Rendered {
-    return `exact(${JSON.stringify(value)})`;
-  }
-
-  anything(): Rendered {
-    return 'anything()';
-  }
-
-  aBoolean(): Rendered {
-    return 'aBoolean()';
-  }
-
-  aBigInt(): Built<string> {
-    return 'aBigInt()';
-  }
-
-  aNumber(): Rendered {
-    return 'aNumber()';
-  }
-
-  aString(options?: { length: number }): Rendered {
-    return options == null ? 'aString()' : `aString(${JSON.stringify(options)})`;
-  }
-
-  aDate(): Rendered {
-    return 'aDate()';
-  }
-
-  nullable(schema: SchemaRule<any>): Rendered {
-    const expression = __toExpression(schema);
-
-    return `nullable(${expression.accept(this)})`;
-  }
-
-  nullish(schema: SchemaRule<any>): Rendered {
-    const expression = __toExpression(schema);
-
-    return `nullish(${expression.accept(this)})`;
-  }
-
-  optional(schema: SchemaRule<any>): Rendered {
-    const expression = __toExpression(schema);
-
-    return `optional(${expression.accept(this)})`;
-  }
-
-  oneOf(schema: SchemaRule<any>[]): Rendered {
-    const args = schema.map((item) => {
-      const expression = __toExpression(item);
-
-      return expression.accept(this);
-    });
-
-    return `oneOf(${args.join(', ')})`;
-  }
-
-  allOf(schema: SchemaRule<any>[]): Rendered {
-    const args = schema.map((item) => {
-      const expression = __toExpression(item);
-
-      return expression.accept(this);
-    });
-
-    return `allOf(${args.join(', ')})`;
-  }
-
-  anyOf(schema: SchemaRule<any>[]): Rendered {
-    const args = schema.map((item) => {
-      const expression = __toExpression(item);
-
-      return expression.accept(this);
-    });
-
-    return `anyOf(${args.join(', ')})`;
-  }
-
-  re(rule: RegExp): Rendered {
-    return `re(${rule.toString()})`;
-  }
-
-  strictEqual(value: unknown): Rendered {
-    return `strictEqual(${JSON.stringify(value)})`;
-  }
-
-  instanceOf(ctor: abstract new (...args: any[]) => any, extraRule?: ObjectRule<any>): Rendered {
-    if (!extraRule) {
-      return `instanceOf(${ctor.name})`;
-    }
-
-    const entries = Object.entries(extraRule).map(([key, value]) => {
-      const expression = __toExpression(value);
-
-      return `${key}: ${expression.accept(this)}`;
-    });
-
-    return `instanceOf(${ctor.name}, { ${entries.join(', ')} })`;
-  }
-
-  isPrototypedBy(ctor: abstract new (...args: any[]) => any): Rendered {
-    return `isPrototypedBy(${ctor.name})`;
-  }
-
-  predicate(fn: Fn.PredicateRule<any>, message?: string): Rendered {
-    const name = fn.name || '<anonymous>';
-
-    return message == null ? `predicate(${name})` : `predicate(${name}, ${JSON.stringify(message)})`;
-  }
-
-  objectShape(schema: ObjectRule<any>): Rendered {
-    const entries = Object.entries(schema).map(([key, value]) => {
-      const expression = __toExpression(value);
-
-      return `${key}: ${expression.accept(this)}`;
-    });
-
-    return `objectShape({ ${entries.join(', ')} })`;
-  }
-
-  objectLike(schema: ObjectRule<any>): Rendered {
-    const entries = Object.entries(schema).map(([key, value]) => {
-      const expression = __toExpression(value);
-
-      return `${key}: ${expression.accept(this)}`;
-    });
-
-    return `objectLike({ ${entries.join(', ')} })`;
-  }
-
-  tuple(schema: SchemaRule<any>[]): Rendered {
-    const items = schema.map((item) => {
-      const expression = __toExpression(item);
-
-      return expression.accept(this);
-    });
-
-    return `tuple([${items.join(', ')}])`;
-  }
-
-  array(schema: SchemaRule<any>[]): Rendered {
-    const items = schema.map((item) => {
-      const expression = __toExpression(item);
-
-      return expression.accept(this);
-    });
-
-    return `array([${items.join(', ')}])`;
-  }
-
-  arrayOf(schema: SchemaRule<any>, options?: { length: number }): Rendered {
-    const expression = __toExpression(schema);
-
-    return options == null
-      ? `arrayOf(${expression.accept(this)})`
-      : `arrayOf(${expression.accept(this)}, ${JSON.stringify(options)})`;
-  }
-})();
 
 type FnRendered = Built<Fn.FunctionRule<any>>;
 
@@ -834,10 +671,6 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     return Fn.arrayOf(expression.accept(this), options);
   }
 })();
-
-export function toString(expression: ExpressionRule<any>): string {
-  return expression.accept(ExpressionRenderer);
-}
 
 export function toFunction<T>(expression: ExpressionRule<T>): Fn.FunctionRule<T> {
   return expression.accept(FunctionRenderer);

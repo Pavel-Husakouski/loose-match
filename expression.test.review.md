@@ -54,6 +54,10 @@ The strict, bidirectional helper (`typeExpect(...).isOfType<>().equals<true|fals
 exists in the same file and is used ten lines later for near-identical assertions; the weak
 helper adds a second, less safe idiom whose call sites duplicate the canaries.
 
+`expectType`'s own doc comment (`@type-expect.ts:23-27`) oversells what it asserts — it reads
+as a type equality check when it's really one-directional and blind to `any`-collapse. Worth a
+caveat there, since it's the tool other people will reach for first.
+
 ### 4. Mixed assertion styles
 
 Rendering tests call raw `match(...).with(...)` from `../src` (`:62,136,150,198,248`) while every
