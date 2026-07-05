@@ -55,13 +55,11 @@ export type Infer<T> = T extends LiteralTypes
     ? P
     : T extends FunctionRule<infer P>
       ? P
-      : T extends ObjectRule<infer P>
-        ? { [K in keyof P]: Infer<P[K]> }
-        : // T extends [infer Head, ...infer Tail] ? [Infer<Head>, ...Infer<Tail>] :
-          T extends ArrayRule<infer P>
-          ? Infer<P>[]
+      : T extends readonly any[]
+        ? { [K in keyof T]: Infer<T[K]> }
+        : T extends ObjectRule<infer P>
+          ? { [K in keyof P]: Infer<P[K]> }
           : never;
-
 /**
  * A intersection of schema rule types
  */

@@ -123,10 +123,10 @@ describe('Type inference: union and intersection', () => {
     .isOfType<string | number | string[]>()
     .equals<true>();
   expect<InferIntersection<[{ id: string }, { email: string }]>>()
-    .isOfType<{ id: string; email: string }>()
+    .isOfType<{ id: string } & { email: string }>()
     .equals<true>();
   expect<InferIntersection<[{ id: string }, { email: FunctionRule<string> }]>>()
-    .isOfType<{ id: string; email: string }>()
+    .isOfType<{ id: string } & { email: string }>()
     .equals<true>();
 });
 
@@ -212,13 +212,13 @@ describe('arrayOf: anyOf with mixed types', () => {
   const pattern = arrayOf(item);
 
   expect<typeof pattern>().isOfType<FunctionRule<(number | '2' | Date)[]>>().equals<true>();
-  expect<typeof pattern>().isOfType<FunctionRule<(number | string | Date)[]>>().equals<true>();
+  expect<typeof pattern>().isOfType<FunctionRule<(number | string | Date)[]>>().equals<false>();
 });
 
 describe('arrayOf: anyOf with primitives and boolean', () => {
   const pattern = arrayOf(anyOf(1, 2, 's', aBoolean(), 5));
 
-  expect(pattern).isOfType<FunctionRule<(string | number | boolean)[]>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<(1 | 2 | 's' | boolean | 5)[]>>().equals<true>();
 });
 
 describe('tuple: mixed types', () => {
@@ -231,7 +231,7 @@ describe('tuple: union type', () => {
   const pattern = tuple([aNumber(), '2', 8, new Date()]);
 
   expect(pattern).isOfType<FunctionRule<[number, '2', 8, Date]>>().equals<true>();
-  expect(pattern).isOfType<FunctionRule<(number | string | Date)[]>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<(number | string | Date)[]>>().equals<false>();
 });
 
 describe('tuple: literal numbers', () => {
@@ -250,7 +250,7 @@ describe('array: empty', () => {
 describe('array: mixed values', () => {
   const pattern = array([1, 2, 3, 5, 's']);
 
-  expect(pattern).isOfType<FunctionRule<(string | number)[]>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<(1 | 2 | 3 | 5 | 's')[]>>().equals<true>();
 });
 
 describe('anyOf: primitives and Date', () => {
@@ -262,14 +262,14 @@ describe('anyOf: primitives and Date', () => {
 describe('arrayOf: anyOf with primitives and Date', () => {
   const pattern = arrayOf(anyOf('1', 5, new Date()));
 
-  expect(pattern).isOfType<FunctionRule<(string | Date | number)[]>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<('1' | 5 | Date)[]>>().equals<true>();
 });
 
 describe('objectLike: with length property', () => {
   const pattern = objectLike({ length: 5 });
 
   expect(pattern).isOfType<FunctionRule<{ length: number }>>().equals<true>();
-  expect(pattern).isOfType<FunctionRule<Array<any>>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<Array<any>>>().equals<false>();
 });
 
 describe('objectLike: type check', () => {
@@ -352,13 +352,16 @@ describe('optional: string literal', () => {
 describe('nullable: string literal', () => {
   const pattern = nullable('1' as const);
 
-  expect(pattern).isOfType<FunctionRule<'1'>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<'1' | null>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<'1'>>().equals<false>();
+  expect(pattern).isOfType<FunctionRule<null>>().equals<false>();
 });
 
 describe('nullable: aString', () => {
   const pattern = nullable(aString());
 
-  expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<string | null>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<string>>().equals<false>();
 });
 
 describe('nullable: objectShape', () => {
@@ -368,7 +371,7 @@ describe('nullable: objectShape', () => {
     })
   );
 
-  expect(pattern).isOfType<FunctionRule<{ a: string }>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<{ a: string } | null>>().equals<true>();
 });
 
 describe('record: exact values', () => {
@@ -437,13 +440,24 @@ describe('allOf: explicit objectShape', () => {
 
   expect(pattern)
     .isOfType<
+      FunctionRule<
+        {
+          id: string;
+        } & {
+          name: string;
+        } & { email: string }
+      >
+    >()
+    .equals<true>();
+  expect(pattern)
+    .isOfType<
       FunctionRule<{
         id: string;
         name: string;
         email: string;
       }>
     >()
-    .equals<true>();
+    .equals<false>();
 });
 
 describe('allOf: objectShape vs plain object', () => {
@@ -477,8 +491,10 @@ describe('allOf: objectShape as const vs plain object as const', () => {
 describe('oneOf: object literals', () => {
   const pattern = oneOf({ id: '1' }, { name: '2' }, { email: '3' });
 
-  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '3' }>().equals<true>();
-  expect<Infer<typeof pattern>>().isOfType<{ id: string } | { name: string } | { email: string }>().equals<false>();
+  expect<Infer<typeof pattern>>()
+    .isOfType<{ readonly id: '1' } | { readonly name: '2' } | { readonly email: '3' }>()
+    .equals<true>();
+  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '3' }>().equals<false>();
 });
 
 describe('oneOf: primitives and combinators', () => {
@@ -498,39 +514,46 @@ describe('anyOf: primitives, number, Date', () => {
 describe('anyOf: object with regexp', () => {
   const pattern = anyOf({ id: re(/x/) }, { id: re(/y/) }, { id: re(/z/) });
 
-  expect(pattern).isOfType<FunctionRule<{ id: string }>>().equals<true>();
+  expect(pattern)
+    .isOfType<FunctionRule<{ readonly id: string } | { readonly id: string } | { readonly id: string }>>()
+    .equals<true>();
+  expect(pattern).isOfType<FunctionRule<{ readonly id: string }>>().equals<false>();
 });
 
 describe('anyOf: string, object, array', () => {
   const pattern = anyOf(aString(), { id: re(/x/) }, arrayOf(aString()));
 
-  expect(pattern).isOfType<FunctionRule<string | { id: string } | string[]>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<string | { readonly id: string } | string[]>>().equals<true>();
 });
 
 describe('anyOf: string literals', () => {
   const pattern = anyOf('1', '2', '3');
 
-  expect(pattern).isOfType<FunctionRule<string>>().equals<true>();
+  expect(pattern).isOfType<FunctionRule<'1' | '2' | '3'>>().equals<true>();
 });
 
 describe('anyOf: object literals', () => {
   const pattern = anyOf({ id: '1' }, { name: '2' }, { email: '4' });
 
-  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: '2' } | { email: '4' }>().equals<true>();
-  expect<Infer<typeof pattern>>().isOfType<{ id: '1' } | { name: string } | { email: string }>().equals<false>();
+  expect<Infer<typeof pattern>>()
+    .isOfType<{ readonly id: '1' } | { readonly name: '2' } | { readonly email: '4' }>()
+    .equals<true>();
 });
 
 describe('anyOf: object id union', () => {
   const pattern = anyOf({ id: '1' } as const, { id: '2' } as const, { id: '4' } as const);
 
-  expect(pattern).isOfType<FunctionRule<{ id: '1' | '2' | '4' }>>().equals<true>();
-  expect(pattern).isOfType<FunctionRule<{ id: '1' } | { id: '2' } | { id: '4' }>>().equals<true>();
+  expect(pattern)
+    .isOfType<FunctionRule<{ readonly id: '1' } | { readonly id: '2' } | { readonly id: '4' }>>()
+    .equals<true>();
 });
 
 describe('anyOf: object id union as union type', () => {
-  const pattern = anyOf({ id: '1' as const }, { id: '2' as const }, { id: '4' as const });
+  const pattern = anyOf({ id: '1' }, { id: '2' }, { id: '4' });
 
-  expect<typeof pattern>().isOfType<FunctionRule<{ id: '1' | '2' | '4' }>>().equals<true>();
+  expect<typeof pattern>()
+    .isOfType<FunctionRule<{ readonly id: '1' } | { readonly id: '2' } | { readonly id: '4' }>>()
+    .equals<true>();
   expect<typeof pattern>().isOfType<FunctionRule<{ id: '1' | '2' | '5' }>>().equals<false>();
 });
 
