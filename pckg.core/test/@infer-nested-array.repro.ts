@@ -1,4 +1,4 @@
-import { aNumber, aString, Infer } from '@beeff/loose-match';
+import { aNumber, aString, Infer } from '@beeff/loose-match/lib/expressions';
 
 const pattern = {
   messages: [aNumber(), aString()],

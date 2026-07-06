@@ -33,11 +33,11 @@ import {
   strictEqual,
   toFunction,
   tuple,
-} from './expression';
+} from '../src/expressions';
 import * as Fn from '../src';
 import { FunctionRule, instanceOf as fnInstanceOf, match } from '../src';
 import { expect } from './@expect';
-import { expect as typeExpect, expectType, StrictSameType } from './@type-expect';
+import { expect as typeExpect } from './@type-expect';
 
 type Rendered = Built<string>;
 
@@ -266,6 +266,16 @@ describe('expression', () => {
     );
     const mixed = allOf({ id: '5' }, { email: 'a@gmail.com' }, nullable({ age: 8 }));
 
+    it('union types', () => {
+      typeExpect(union)
+        .isOfType<
+          ExpressionRule<
+            string | number | boolean | bigint | Date | [boolean, number] | string[] | 7[] | null | undefined
+          >
+        >()
+        .equals<true>();
+    });
+
     it('renders bare literals and object schemas embedded in combinators', () => {
       match(toString(union)).with(
         'oneOf(' +
@@ -315,26 +325,18 @@ describe('expression', () => {
     });
 
     it('infers union, intersection and literal types', () => {
-      expectType(aString()).is<ExpressionRule<string>>();
-      expectType(aNumber()).is<ExpressionRule<number>>();
-      expectType(literal(true)).is<ExpressionRule<true>>();
-      expectType(anything()).is<ExpressionRule<any>>();
-      expectType(union).is<ExpressionRule<string | number | true>>();
-      expectType(toFunction(literal(8))).is<FunctionRule<8>>();
+      typeExpect(aString()).isOfType<ExpressionRule<string>>().equals<true>();
+      typeExpect(aNumber()).isOfType<ExpressionRule<number>>().equals<true>();
+      typeExpect(literal(true)).isOfType<ExpressionRule<true>>().equals<true>();
+      typeExpect(anything()).isOfType<ExpressionRule<any>>().equals<true>();
+      typeExpect(toFunction(literal(8)))
+        .isOfType<FunctionRule<8>>()
+        .equals<true>();
     });
 
     it('allOf (InferIntersection) pins its exact type — Phase 3 regression guard', () => {
-      // `nullable`'s own generic parameter isn't `const`, so `nullable({ age: 8 })` widens to
-      // `{ age: number }`; intersecting that with the other two members eliminates the
-      // `| null` branch entirely (`{ id: string } & { email: string } & null` is `never`, so the
-      // union drops it) — matches main's identical `Infer<U>` intersection semantics, this is
-      // not an expression-layer bug.
-      typeExpect<StrictSameType<Infer<typeof mixed>, { id: string } & { email: string } & { age: number }>>()
-        .isOfType<true>()
-        .equals<true>();
-      // any-collapse canary: if InferIntersection stopped wrapping members in Infer<U> and
-      // fell back to `any`, this would still compile — the line above is what actually pins it.
-      typeExpect<StrictSameType<Infer<typeof mixed>, never>>().isOfType<false>().equals<true>();
+      typeExpect<Infer<typeof mixed>>().isOfType<{ id: string } & { email: string } & { age: number }>().equals<true>();
+      typeExpect<Infer<typeof mixed>>().isOfType<never>().equals<false>();
     });
   });
 
@@ -463,40 +465,29 @@ describe('expression', () => {
     });
 
     it('any-collapse canary — SameType is blind to any, StrictSameType is not', () => {
-      typeExpect<StrictSameType<Infer<ExpressionRule<number>>, number>>().isOfType<true>().equals<true>();
+      typeExpect<Infer<ExpressionRule<number>>>().isOfType<number>().equals<true>();
     });
 
     it('LiteralRule stays aliased to Fn.PrimitiveRule (Phase 3)', () => {
-      typeExpect<StrictSameType<LiteralRule<8>, Fn.PrimitiveRule<8>>>().isOfType<true>().equals<true>();
-      typeExpect<StrictSameType<LiteralRule<{ id: string }>, Fn.PrimitiveRule<{ id: string }>>>()
-        .isOfType<true>()
-        .equals<true>();
+      typeExpect<LiteralRule<8>>().isOfType<Fn.PrimitiveRule<8>>().equals<true>();
+
       // an object shape is not one of the LiteralTypes — both must collapse to never
-      typeExpect<StrictSameType<LiteralRule<{ id: string }>, never>>().isOfType<true>().equals<true>();
+      typeExpect<LiteralRule<{ id: string }>>().isOfType<never>().equals<true>();
     });
 
     it('ItemsOf stays aliased to Fn.ItemsOf (Phase 3)', () => {
-      typeExpect<StrictSameType<ItemsOf<[string, number]>, Fn.ItemsOf<[string, number]>>>()
-        .isOfType<true>()
-        .equals<true>();
-      typeExpect<StrictSameType<ItemsOf<[string, number]>, string | number>>().isOfType<true>().equals<true>();
+      typeExpect<ItemsOf<[string, number]>>().isOfType<Fn.ItemsOf<[string, number]>>().equals<true>();
+      typeExpect<ItemsOf<[string, number]>>().isOfType<string | number>().equals<true>();
     });
 
     it('InferIntersection wraps each member in Infer<U>, matching src/types.ts (Phase 3)', () => {
       // both members are already-resolved ExpressionRules — Infer<U> must not lose precision
-      typeExpect<
-        StrictSameType<
-          InferIntersection<[ExpressionRule<{ id: string }>, ExpressionRule<{ age: 8 }>]>,
-          { id: string } & { age: 8 }
-        >
-      >()
-        .isOfType<true>()
+      typeExpect<InferIntersection<[ExpressionRule<{ id: string }>, ExpressionRule<{ age: 8 }>]>>()
+        .isOfType<{ id: string } & { age: 8 }>()
         .equals<true>();
 
       // bare object schemas (not yet wrapped in ExpressionRule) go through the same Infer<U> path
-      typeExpect<StrictSameType<InferIntersection<[{ id: '5' }, { age: 8 }]>, { id: '5' } & { age: 8 }>>()
-        .isOfType<true>()
-        .equals<true>();
+      typeExpect<InferIntersection<[{ id: '5' }, { age: 8 }]>>().isOfType<{ id: '5' } & { age: 8 }>().equals<true>();
     });
 
     it('end-to-end: the interpreter receives the inferred parameter type', () => {

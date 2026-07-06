@@ -1,4 +1,5 @@
-import * as Fn from '../src';
+import * as Fn from './index';
+import { FunctionRule, PredicateRule } from './index';
 
 export interface ExpressionVisitor<X> {
   literal(value: LiteralTypes): Built<X>;
@@ -102,9 +103,7 @@ export type Infer<T> = T extends LiteralTypes
     ? P
     : T extends ObjectRule<infer P>
       ? { [K in keyof P]: Infer<P[K]> }
-      : T extends ArrayRule<infer P>
-        ? Infer<P>[]
-        : never;
+      : never;
 
 /**
  * A intersection of schema rule types
@@ -440,7 +439,7 @@ class __tuple<T> extends __Exp<T> {
   }
 }
 
-export function tuple<const T extends SchemaRule<any>[]>(items: T): ExpressionRule<Infer<T>> {
+export function tuple<T extends SchemaRule<any>[]>(items: T): ExpressionRule<Infer<T>> {
   return new __tuple<Infer<T>>([items]);
 }
 
