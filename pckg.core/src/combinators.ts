@@ -12,8 +12,12 @@ import {
   Infer,
   InferIntersection,
   ItemsOf,
+  Narrow,
+  NarrowEach,
+  NarrowProps,
   ObjectRule,
   PredicateRule,
+  SchemaInput,
   SchemaRule,
 } from './types.js';
 import { literal } from './literals.js';
@@ -23,10 +27,10 @@ import { __assert } from './assert.js';
  * A rule - an object shape with specific properties
  * Note: object is considered as [object Object]
  */
-export function objectShape<T extends ObjectRule<any>>(rule: T): FunctionRule<Infer<T>> {
+export function objectShape<T>(rule: NarrowProps<T> & object): FunctionRule<Infer<T>> {
   __assert(rule != null, 'object shape rule cannot be null or undefined');
 
-  return __objectShape(rule);
+  return __objectShape(rule as ObjectRule<any>) as FunctionRule<Infer<T>>;
 }
 
 function __objectShape<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: T): FunctionRule<Infer<T>> {
@@ -43,7 +47,7 @@ function __objectShape<T extends ObjectRule<any> = ObjectRule<any>>(schemaRule: 
  * A rule - a shape of the non-null object-like value.
  * Note: object-like is considered as any non-null object, including errors, arrays, functions, dates, etc.
  */
-export function objectLike<T extends ObjectRule<any>>(rule: T): FunctionRule<Infer<T>> {
+export function objectLike<T>(rule: NarrowProps<T> & object): FunctionRule<Infer<T>> {
   __assert(rule != null, 'object like rule cannot be null or undefined');
 
   return function __objectLike(value: Infer<T>) {
@@ -51,7 +55,7 @@ export function objectLike<T extends ObjectRule<any>>(rule: T): FunctionRule<Inf
       return __invalid(`expected non null value, got ${__stringify(value)}`);
     }
 
-    return __props(value, rule);
+    return __props(value, rule as ObjectRule<any>);
   };
 }
 
@@ -134,15 +138,15 @@ function __arrayExact<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<T
 /**
  * A rule - a tuple with positionally fixed items, every item must match the corresponding rule
  */
-export function tuple<const T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<T>> {
-  return __tupleExact(items);
+export function tuple<T>(items: Narrow<T> & SchemaRule<any>[]): FunctionRule<Infer<T>> {
+  return __tupleExact(items) as FunctionRule<Infer<T>>;
 }
 
 /**
  * A rule - an array with positionally fixed items, every item must match the corresponding rule
  */
-export function array<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>[]> {
-  return __arrayExact(items);
+export function array<T>(items: Narrow<T> & SchemaRule<any>[]): FunctionRule<Infer<ItemsOf<T>>[]> {
+  return __arrayExact(items) as FunctionRule<Infer<ItemsOf<T>>[]>;
 }
 
 /**
@@ -150,10 +154,7 @@ export function array<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer
  * @param schema The rule for each item
  * @param options an auxiliary validation option object
  */
-export function arrayOf<const T extends SchemaRule<any>>(
-  schema: T,
-  options?: { length: number }
-): FunctionRule<Infer<T>[]> {
+export function arrayOf<T>(schema: Narrow<T>, options?: { length: number }): FunctionRule<Infer<T>[]> {
   const fnRule = __toFunction(schema);
 
   return function __arrayOf(items: unknown) {
@@ -182,8 +183,8 @@ export function arrayOf<const T extends SchemaRule<any>>(
  * A combinator rule - an intersection of rules
  * @param rules The rules to be applied
  */
-export function allOf<const T extends AtLeastTwoItems<SchemaRule<any>>>(
-  ...rules: T
+export function allOf<T, C extends AtLeastTwoItems<SchemaInput>>(
+  ...rules: NarrowEach<T> & C
 ): FunctionRule<InferIntersection<T>> {
   __assert(rules.length >= 2, 'allOf requires at least two arguments');
 
@@ -203,14 +204,14 @@ export function allOf<const T extends AtLeastTwoItems<SchemaRule<any>>>(
     };
   }
 
-  return __all(rules);
+  return __all(rules as SchemaRule<any>[]) as FunctionRule<InferIntersection<T>>;
 }
 
 /**
  * A rule - either null or undefined or specified schema
  * @param schema The schema
  */
-export function nullish<const T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | null | undefined> {
+export function nullish<T>(schema: Narrow<T>): FunctionRule<Infer<T> | null | undefined> {
   __assert(schema != null, 'nullish null or undefined? interesting...');
 
   const rule = __toFunction(schema);
@@ -228,7 +229,7 @@ export function nullish<const T extends SchemaRule<any>>(schema: T): FunctionRul
  * A combinator rule - a rule that accepts undefined or the specified schema
  * @param schema The schema
  */
-export function optional<const T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | undefined> {
+export function optional<T>(schema: Narrow<T>): FunctionRule<Infer<T> | undefined> {
   __assert(schema !== undefined, 'optional undefined? interesting...');
 
   const rule = __toFunction(schema);
@@ -246,7 +247,7 @@ export function optional<const T extends SchemaRule<any>>(schema: T): FunctionRu
  * A combinator rule - a rule that accepts null or the specified schema
  * @param schema The schema
  */
-export function nullable<const T extends SchemaRule<any>>(schema: T): FunctionRule<Infer<T> | null> {
+export function nullable<T>(schema: Narrow<T>): FunctionRule<Infer<T> | null> {
   __assert(schema != null, 'nullable null or undefined? interesting...');
 
   const rule = __toFunction(schema);
@@ -264,7 +265,9 @@ export function nullable<const T extends SchemaRule<any>>(schema: T): FunctionRu
  * A combinator rule - a union of rules with exactly one match
  * @param items The rules to be applied
  */
-export function oneOf<const T extends AtLeastTwoItems<SchemaRule<any>>>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
+export function oneOf<T, C extends AtLeastTwoItems<SchemaInput>>(
+  ...items: NarrowEach<T> & C
+): FunctionRule<Infer<ItemsOf<T>>> {
   __assert(items.length >= 2, 'oneOf requires at least two arguments');
 
   function __oneOf<T extends SchemaRule<any>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>> {
@@ -295,14 +298,16 @@ export function oneOf<const T extends AtLeastTwoItems<SchemaRule<any>>>(...items
     };
   }
 
-  return __oneOf(items);
+  return __oneOf(items) as FunctionRule<Infer<ItemsOf<T>>>;
 }
 
 /**
  * A combinator rule - a union of rules with any number of matches except zero
  * @param items The rules to be applied
  */
-export function anyOf<const T extends AtLeastTwoItems<SchemaRule<any>>>(...items: T): FunctionRule<Infer<ItemsOf<T>>> {
+export function anyOf<T, C extends AtLeastTwoItems<SchemaInput>>(
+  ...items: NarrowEach<T> & C
+): FunctionRule<Infer<ItemsOf<T>>> {
   __assert(items.length >= 2, 'anyOf requires at least two arguments');
 
   function __anyOf<T extends SchemaRule<T>[]>(items: T): FunctionRule<Infer<ItemsOf<T>>> {
@@ -321,7 +326,7 @@ export function anyOf<const T extends AtLeastTwoItems<SchemaRule<any>>>(...items
     };
   }
 
-  return __anyOf(items);
+  return __anyOf(items as SchemaRule<any>[]) as FunctionRule<Infer<ItemsOf<T>>>;
 }
 
 /**
@@ -413,7 +418,7 @@ export function instanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
  * @param value The value
  * @returns The rule
  */
-export function strictEqual<const T>(value: T): FunctionRule<T> {
+export function strictEqual<T>(value: Narrow<T> | T): FunctionRule<T> {
   return function __strictEqual(o: unknown) {
     if (value === o) {
       return __valid;

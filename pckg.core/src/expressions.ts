@@ -75,6 +75,12 @@ export type ExpressionRule<T> = {
 export type LiteralTypes = Fn.LiteralTypes;
 
 /**
+ * Blocks literal widening by the shape of the inference target, without stamping
+ * `readonly` the way a `const` type parameter would.
+ */
+export type Narrow<A> = Fn.Narrow<A>;
+
+/**
  * A literal rule
  */
 export type LiteralRule<T> = Fn.PrimitiveRule<T>;

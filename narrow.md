@@ -43,6 +43,19 @@ export function tuple<T>(items: Narrow<T> & SchemaRule<any>[]): FunctionRule<Inf
 constraint moves into the parameter as an intersection (`Narrow<T> & SchemaRule<any>[]`).
 Keeping `T extends SchemaRule<any>[]` silently re-widens literals back to `number`.
 
+**Trap (found 2026-07-07):** the intersection carrier must not be `any`. `SchemaRule<any>`
+*is* `any` (`PrimitiveRule<any>` = `any extends LiteralTypes ? any : never` → `any`), so
+`Narrow<T> & SchemaRule<any>` collapses to `any` and kills inference entirely — T gets no
+candidate, becomes `unknown`, and `Infer<unknown>` = `never` (`arrayOf(literal(7))` inferred
+`FunctionRule<never[]>`). For single-schema combinators use **bare `Narrow<T>`** — the
+constraint added nothing anyway since `SchemaRule<any>` accepts everything. The array form
+`Narrow<T> & SchemaRule<any>[]` is fine: `any[]` ≠ `any`.
+
+Also note the top-level `A extends Function ? A : ...` branch in `Narrow` (this repo's
+addition over ts-toolbelt) is required for bare function-rule arguments like `literal(7)`.
+And beware probe methodology: `const x: 'reveal' = fn(...)` poisons inference via the
+contextual return type — always split into `const x = fn(...); const y: 'reveal' = x;`.
+
 ### Verified results (all pass, tsc 5.9.3)
 
 | case | inferred |
@@ -76,16 +89,19 @@ third, inconsistent behavior. This plan unifies all of them on the `Narrow` sema
 
 ## Phase 0 — introduce `Narrow`
 
-- [ ] Add `Narrowable`, `NarrowRaw`, `Narrow` to `pckg.core/src/types.ts`; export `Narrow`
+- [x] Add `Narrowable`, `NarrowRaw`, `Narrow` to `pckg.core/src/types.ts`; export `Narrow`
       (mark `NarrowRaw` `@internal`).
-- [ ] Re-export `Narrow` from `pckg.core/src/expressions.ts` alongside the other shared
+- [x] Re-export `Narrow` from `pckg.core/src/expressions.ts` alongside the other shared
       type aliases (`ObjectRule`, `SchemaRule`, …).
 
 ## Phase 1 — `tuple` in `combinators.ts`
 
-- [ ] `export function tuple<T>(items: Narrow<T> & SchemaRule<any>[]): FunctionRule<Infer<T>>`
+- [x] `export function tuple<T>(items: Narrow<T> & SchemaRule<any>[]): FunctionRule<Infer<T>>`
       — drop `const`, keep the body (`__tupleExact(items)` accepts the intersection as
       `SchemaRule<any>[]`; verified the implementation side compiles).
+- [x] `array` given the same signature (was widening; the pre-existing
+      `array([1, 2, 3, 5, 's'])` literal expectation now passes; the stale widened
+      expectation at `@declaration.spec.ts` "Array schema: array const" updated).
 - [ ] Compile-time assertions in `pckg.core/test/tuple.spec.ts` using the existing
       `expect().isOfType<>().equals<true>()` helper (`test/@type-expect.ts`):
       inline literal → no readonly; as-const input → readonly preserved; mixed function
@@ -97,13 +113,57 @@ For each of `arrayOf`, `allOf`, `nullish`, `optional`, `nullable`, `oneOf`, `any
 replace `<const T extends X>` with `<T>` + parameter intersection `Narrow<T> & X`
 (for rest-parameter rules: `...items: Narrow<T> & AtLeastTwoItems<SchemaRule<any>>`).
 
-- [ ] `arrayOf`, `nullable`, `nullish`, `optional` (single-schema parameter).
-- [ ] `oneOf`, `anyOf`, `allOf` (rest parameter — verify the intersection distributes over
-      the tuple correctly before committing; add a repro first).
-- [ ] `strictEqual` — decide separately: it compares by reference, so `const` readonly here
-      only affects the *rendered* type, and `Narrow` on a bare `T` (not a schema) is the
-      plain ts-toolbelt use. Apply the same treatment for consistency.
-- [ ] Type assertions per combinator in the corresponding spec files.
+- [x] `arrayOf`, `nullable`, `nullish`, `optional` (single-schema parameter) — bare
+      `Narrow<T>`, **no** `& SchemaRule<any>` (see trap above). Verified: `arrayOf(literal(7))`
+      → `FunctionRule<7[]>`, `{ id: 1 }` keeps literals, `as const` keeps readonly,
+      `@declaration.spec.ts` fully green incl. the Hell union.
+- [x] `oneOf`, `anyOf`, `allOf` — done, but **not** via `Narrow<T> & rest-tuple` (that
+      widens everything: per-element `& any` poisons, and even `& [unknown, ...]` defeats
+      the reverse-mapped inversion). The working shape (found empirically 2026-07-07) needs
+      **two** type parameters:
+
+      ```ts
+      oneOf<T, C extends AtLeastTwoItems<SchemaInput>>(...items: NarrowEach<T> & C)
+      ```
+
+      where `NarrowEach<T> = { [K in keyof T]: Narrow<T[K]> }` (T unconstrained — any
+      constraint on T re-widens object/array elements) and
+      `SchemaInput = Narrowable | object | null | undefined`. The roles split: `NarrowEach`
+      reverse-maps structure (objects/tuples keep literals, no readonly, as-const
+      preserved); `C`'s Narrowable-bearing constraint is what keeps **bare** primitive
+      literal args (`anyOf('1', '2', '3')`) from widening — the checker only preserves an
+      argument-level literal when its contextual type is a type variable whose constraint
+      contains that primitive kind. Neither parameter alone does both. `C` also carries the
+      min-two-items arity. `InferIntersection` relaxed to unconstrained `T`.
+- [x] `strictEqual<T>(value: Narrow<T> | T): FunctionRule<T>` — the `| T` fallback is
+      required: bare `Narrow<T>` *rejects* exotic objects that don't survive the mapped
+      round-trip (`strictEqual(globalThis)` errored); the union keeps narrowing for
+      literals/objects while letting anything else match plain `T`.
+- [x] `objectLike<T>(rule: Narrow<T> & object)` — was `T extends ObjectRule<any>`, which
+      widened (`{ length: 5 }` → `{ length: number }`) while the runtime builds
+      `literal(5)` and matches exactly 5. `& object` keeps rejecting primitive arguments
+      without poisoning inference. `NarrowRaw` must NOT be `@internal`: `stripInternal`
+      would drop it from `lib/types.d.ts` while public `Narrow` references it, breaking
+      the emitted declarations.
+- [x] `objectShape<T>(rule: NarrowProps<T> & object)` — same for `objectLike`, where
+      `NarrowProps<T> = { [K in keyof T]: Narrow<T[K]> | T[K] }`. Plain `Narrow<T> & object`
+      broke `error.spec`: schemas holding `Error` *values* fail the Narrow round-trip
+      (`cause?: unknown` reconstructs as `{}` — `keyof unknown` is `never`, so the mapped
+      branch collapses it). Attempted global fixes all poison inference: a top-level
+      `unknown extends A ? A : never` branch, a per-key `unknown extends A[K]` guard inside
+      the mapped type, and `A extends {} ? never : A` each re-widen everything (naked-`A`
+      inference sites / broken reverse-mapped invertibility). The per-property `| T[K]`
+      fallback keeps literal inference for well-behaved props and lets exotic values
+      type-check; an Error-bearing schema degrades to `FunctionRule<never>` (compiles; at
+      HEAD it was already degenerate — `Infer<Error>` = `never` via the same
+      `cause: unknown` in `ObjectRule`). `null`/`undefined` properties also pass through
+      the `| T[K]` fallback (`NarrowRaw` itself maps them to `{}`; adding them to its leaf
+      branch was verified safe if ever needed). The allOf expectations flipped:
+      `objectShape({ id: '1' })` now infers `{ id: '1' }` and *equals* the plain-object
+      schema (`allOf: objectShape vs plain object` asserts `true`).
+- [x] Type assertions updated in `@declaration.spec.ts`: readonly expectations flipped to
+      mutable for non-as-const args (Hell union, oneOf/anyOf object literals); as-const
+      cases still assert readonly. All green; 206 runtime tests pass; emitted `.d.ts` clean.
 
 ## Phase 3 — parity in `expressions.ts`
 

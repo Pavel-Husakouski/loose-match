@@ -63,7 +63,7 @@ export type Infer<T> = T extends LiteralTypes
 /**
  * A intersection of schema rule types
  */
-export type InferIntersection<T extends any[]> = T extends [infer First, ...infer Rest]
+export type InferIntersection<T> = T extends [infer First, ...infer Rest]
   ? First extends SchemaRule<infer U>
     ? Rest extends any[]
       ? Infer<U> & InferIntersection<Rest>
@@ -77,6 +77,50 @@ export type InferIntersection<T extends any[]> = T extends [infer First, ...infe
 export type ItemsOf<T> = T extends (infer P)[] ? P : never;
 
 export type AtLeastTwoItems<T extends any> = [T, T, ...T[]];
+
+/**
+ * The set of types eligible for literal narrowing (see {@link Narrow})
+ */
+type Narrowable = string | number | bigint | boolean;
+
+/**
+ * The recursive worker behind {@link Narrow}; not intended for direct use.
+ * Note: referenced by the public `Narrow` type, so it must survive `stripInternal`.
+ */
+export type NarrowRaw<A> =
+  | (A extends [] ? [] : never)
+  | (A extends Narrowable ? A : never)
+  | { [K in keyof A]: A[K] extends Function ? A[K] : NarrowRaw<A[K]> };
+
+/**
+ * Blocks literal widening by the shape of the inference target, without stamping
+ * `readonly` the way a `const` type parameter would.
+ */
+export type Narrow<A> = A extends Function ? A : A extends [] ? A : NarrowRaw<A>;
+
+/**
+ * Distributes {@link Narrow} over the elements of a variadic argument tuple.
+ * The type parameter must stay unconstrained — any constraint re-widens literals
+ * inside object and array arguments.
+ */
+export type NarrowEach<T> = { [K in keyof T]: Narrow<T[K]> };
+
+/**
+ * Anything acceptable as a schema argument. Used as the constraint of the auxiliary
+ * type parameter in variadic combinators: a constraint containing the {@link Narrowable}
+ * primitives keeps bare literal arguments (`anyOf('1', '2')`) from widening, which the
+ * unconstrained {@link NarrowEach} parameter alone cannot do.
+ */
+export type SchemaInput = Narrowable | object | null | undefined;
+
+/**
+ * A per-property {@link Narrow} with a plain fallback. Properties that survive the
+ * Narrow round-trip get literal inference; exotic values that cannot round-trip the
+ * mapped type (e.g. Error instances, whose `cause?: unknown` reconstructs as `{}`)
+ * still type-check via the bare property type, at the cost of widened inference for
+ * the whole argument.
+ */
+export type NarrowProps<T> = { [K in keyof T]: Narrow<T[K]> | T[K] };
 
 /**
  * @internal
