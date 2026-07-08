@@ -14,26 +14,17 @@
     "module": "ESNext",
     "target": "es2020",
     "moduleResolution": "node",
-    "lib": [
-      "es6"
-    ],
+    "lib": ["es6"],
     "sourceMap": true,
     "declaration": true,
+    "noEmit": true,
     "noEmitHelpers": false,
     "importHelpers": false,
     "stripInternal": true,
     "outDir": "../lib"
   },
-  "files": [
-    "src/index.ts"
-  ],
-  "include": [
-    "core/test/**/*.ts"
-  ],
-  "exclude": [
-    "../node_modules",
-    "core/test"
-  ],
+  "include": ["test/**/*.ts"],
+  "exclude": ["../node_modules"],
   "projectReferences": [
     {
       "path": "../pckg.core"

@@ -1,5 +1,7 @@
 # Plan: keep `const T`, strip `readonly` inside `Infer` (Option B — the sledgehammer)
 
+**Status: Rejected** — superseded by `narrow.md`
+
 Goal: `tuple([{ id: 1 }])` infers `FunctionRule<[{ id: 1 }]>` instead of
 `FunctionRule<[{ readonly id: 1 }]>`, with the smallest possible diff — only the `Infer`
 type changes, every combinator signature stays as it is today.

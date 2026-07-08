@@ -1,5 +1,4 @@
 import * as Fn from './index';
-import { FunctionRule, PredicateRule } from './index';
 
 export interface ExpressionVisitor<X> {
   literal(value: LiteralTypes): Built<X>;
@@ -89,11 +88,6 @@ export type LiteralRule<T> = Fn.PrimitiveRule<T>;
  * A record rule or and object schema
  */
 export type ObjectRule<T> = { [key in keyof T]: SchemaRule<T[key]> };
-
-/**
- * An array rule
- */
-export type ArrayRule<T> = SchemaRule<T>[];
 
 /**
  * A schema rule
