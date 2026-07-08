@@ -318,6 +318,8 @@ describe('expression', () => {
       const rule = toFunction(mixed);
 
       expect(rule({ id: '5', email: 'a@gmail.com', age: 8 })).to.match([true]);
+      // @ts-expect-error — the parameter is now narrowed to the literal 'a@gmail.com';
+      // the call deliberately feeds a mismatching value to check the runtime rejection
       expect(rule({ id: '5', email: '', age: 8 })).to.match([
         false,
         '[email] expected String a@gmail.com, got String ',
@@ -335,7 +337,9 @@ describe('expression', () => {
     });
 
     it('allOf (InferIntersection) pins its exact type — Phase 3 regression guard', () => {
-      typeExpect<Infer<typeof mixed>>().isOfType<{ id: string } & { email: string } & { age: number }>().equals<true>();
+      typeExpect<Infer<typeof mixed>>()
+        .isOfType<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>()
+        .equals<true>();
       typeExpect<Infer<typeof mixed>>().isOfType<never>().equals<false>();
     });
   });
@@ -446,8 +450,8 @@ describe('expression', () => {
     });
 
     it('combinators infer through their children', () => {
-      typeExpect(oneOf('9', aNumber())).isOfType<ExpressionRule<string | number>>().equals<true>();
-      typeExpect(anyOf('9', aNumber())).isOfType<ExpressionRule<string | number>>().equals<true>();
+      typeExpect(oneOf('9', aNumber())).isOfType<ExpressionRule<'9' | number>>().equals<true>();
+      typeExpect(anyOf('9', aNumber())).isOfType<ExpressionRule<'9' | number>>().equals<true>();
       typeExpect(arrayOf(literal(7)))
         .isOfType<ExpressionRule<7[]>>()
         .equals<true>();
@@ -493,7 +497,7 @@ describe('expression', () => {
     it('end-to-end: the interpreter receives the inferred parameter type', () => {
       const smoke = toFunction(oneOf('9', aNumber()));
 
-      typeExpect<Parameters<typeof smoke>[0]>().isOfType<string | number>().equals<true>();
+      typeExpect<Parameters<typeof smoke>[0]>().isOfType<'9' | number>().equals<true>();
       // @ts-expect-error — a Date must be rejected; if this directive reports
       // "unused", toFunction has collapsed back to FunctionRule<any>
       expect(smoke(new Date())).to.match([false, 'expected one of 2 rules, got 0 matches']);

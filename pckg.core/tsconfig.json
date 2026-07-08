@@ -17,6 +17,7 @@
     "lib": ["es2022"],
     "sourceMap": true,
     "declaration": true,
+    "noEmit": true,
     "noEmitHelpers": false,
     "importHelpers": false,
     "stripInternal": true,

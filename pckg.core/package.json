@@ -9,7 +9,8 @@
     "clean": "rm -rf lib",
     "build": "npm run clean && npm run compile",
     "compile": "../node_modules/.bin/tsc --project ./tsconfig.build.json",
-    "test": "../node_modules/.bin/mocha"
+    "build:test": "tsc --project ./tsconfig.json",
+    "test": "npm run build:test && ../node_modules/.bin/mocha"
   },
   "keywords": [],
   "repository": {

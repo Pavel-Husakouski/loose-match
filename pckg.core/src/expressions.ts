@@ -108,7 +108,7 @@ export type Infer<T> = T extends LiteralTypes
 /**
  * A intersection of schema rule types
  */
-export type InferIntersection<T extends any[]> = T extends [infer First, ...infer Rest]
+export type InferIntersection<T> = T extends [infer First, ...infer Rest]
   ? First extends SchemaRule<infer U>
     ? Rest extends any[]
       ? Infer<U> & InferIntersection<Rest>
@@ -210,10 +210,10 @@ class __nullable<T> extends __Exp<T> {
   }
 }
 
-export function nullable<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | null> {
+export function nullable<T>(rule: Narrow<T>): ExpressionRule<Infer<T> | null> {
   Fn.__assert(rule != null, 'nullable null or undefined? interesting...');
 
-  return new __nullable<Infer<T> | null>([rule]);
+  return new __nullable<Infer<T> | null>([rule as SchemaRule<any>]);
 }
 
 class __nullish<T> extends __Exp<T> {
@@ -225,10 +225,10 @@ class __nullish<T> extends __Exp<T> {
   }
 }
 
-export function nullish<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | null | undefined> {
+export function nullish<T>(rule: Narrow<T>): ExpressionRule<Infer<T> | null | undefined> {
   Fn.__assert(rule != null, 'nullish null or undefined? interesting...');
 
-  return new __nullish<Infer<T> | null | undefined>([rule]);
+  return new __nullish<Infer<T> | null | undefined>([rule as SchemaRule<any>]);
 }
 
 class __optional<T> extends __Exp<T> {
@@ -240,10 +240,10 @@ class __optional<T> extends __Exp<T> {
   }
 }
 
-export function optional<T extends SchemaRule<any>>(rule: T): ExpressionRule<Infer<T> | undefined> {
+export function optional<T>(rule: Narrow<T>): ExpressionRule<Infer<T> | undefined> {
   Fn.__assert(rule !== undefined, 'optional undefined? interesting...');
 
-  return new __optional<Infer<T> | undefined>([rule]);
+  return new __optional<Infer<T> | undefined>([rule as SchemaRule<any>]);
 }
 
 class __oneOf<T> extends __Exp<T> {
@@ -255,10 +255,12 @@ class __oneOf<T> extends __Exp<T> {
   }
 }
 
-export function oneOf<T extends Fn.AtLeastTwoItems<SchemaRule<any>>>(...items: T): ExpressionRule<Infer<ItemsOf<T>>> {
+export function oneOf<T, C extends Fn.AtLeastTwoItems<Fn.SchemaInput>>(
+  ...items: Fn.NarrowProps<T> & C
+): ExpressionRule<Infer<ItemsOf<T>>> {
   Fn.__assert(items.length >= 2, 'oneOf requires at least two arguments');
 
-  return new __oneOf<Infer<ItemsOf<T>>>([items]);
+  return new __oneOf<Infer<ItemsOf<T>>>([items as SchemaRule<any>[]]);
 }
 
 class __allOf<T> extends __Exp<T> {
@@ -270,12 +272,12 @@ class __allOf<T> extends __Exp<T> {
   }
 }
 
-export function allOf<T extends Fn.AtLeastTwoItems<SchemaRule<any>>>(
-  ...rules: T
+export function allOf<T, C extends Fn.AtLeastTwoItems<Fn.SchemaInput>>(
+  ...rules: Fn.NarrowProps<T> & C
 ): ExpressionRule<InferIntersection<T>> {
   Fn.__assert(rules.length >= 2, 'allOf requires at least two arguments');
 
-  return new __allOf<InferIntersection<T>>([rules]);
+  return new __allOf<InferIntersection<T>>([rules as SchemaRule<any>[]]);
 }
 
 class __anyOf<T> extends __Exp<T> {
@@ -287,10 +289,12 @@ class __anyOf<T> extends __Exp<T> {
   }
 }
 
-export function anyOf<T extends Fn.AtLeastTwoItems<SchemaRule<any>>>(...items: T): ExpressionRule<Infer<ItemsOf<T>>> {
+export function anyOf<T, C extends Fn.AtLeastTwoItems<Fn.SchemaInput>>(
+  ...items: Fn.NarrowProps<T> & C
+): ExpressionRule<Infer<ItemsOf<T>>> {
   Fn.__assert(items.length >= 2, 'anyOf requires at least two arguments');
 
-  return new __anyOf<Infer<ItemsOf<T>>>([items]);
+  return new __anyOf<Infer<ItemsOf<T>>>([items as SchemaRule<any>[]]);
 }
 
 class __aNumber extends __Exp<number> {
@@ -343,7 +347,7 @@ class __strictEqual<T> extends __Exp<T> {
   }
 }
 
-export function strictEqual<const T>(value: T): ExpressionRule<T> {
+export function strictEqual<T>(value: Narrow<T> | T): ExpressionRule<T> {
   return new __strictEqual<T>([value]);
 }
 
@@ -409,10 +413,10 @@ class __objectShape<T> extends __Exp<T> {
   }
 }
 
-export function objectShape<T extends ObjectRule<any>>(rule: T): ExpressionRule<Infer<T>> {
+export function objectShape<T>(rule: Fn.NarrowProps<T> & object): ExpressionRule<Infer<T>> {
   Fn.__assert(rule != null, 'object shape rule cannot be null or undefined');
 
-  return new __objectShape<Infer<T>>([rule]);
+  return new __objectShape<Infer<T>>([rule as ObjectRule<any>]);
 }
 
 class __objectLike<T> extends __Exp<T> {
@@ -424,10 +428,10 @@ class __objectLike<T> extends __Exp<T> {
   }
 }
 
-export function objectLike<T extends ObjectRule<any>>(rule: T): ExpressionRule<Infer<T>> {
+export function objectLike<T>(rule: Fn.NarrowProps<T> & object): ExpressionRule<Infer<T>> {
   Fn.__assert(rule != null, 'object like rule cannot be null or undefined');
 
-  return new __objectLike<Infer<T>>([rule]);
+  return new __objectLike<Infer<T>>([rule as ObjectRule<any>]);
 }
 
 class __tuple<T> extends __Exp<T> {
@@ -439,7 +443,7 @@ class __tuple<T> extends __Exp<T> {
   }
 }
 
-export function tuple<T extends SchemaRule<any>[]>(items: T): ExpressionRule<Infer<T>> {
+export function tuple<T>(items: Narrow<T> & SchemaRule<any>[]): ExpressionRule<Infer<T>> {
   return new __tuple<Infer<T>>([items]);
 }
 
@@ -452,7 +456,7 @@ class __array<T> extends __Exp<T> {
   }
 }
 
-export function array<T extends SchemaRule<any>[]>(items: T): ExpressionRule<Infer<ItemsOf<T>>[]> {
+export function array<T>(items: Narrow<T> & SchemaRule<any>[]): ExpressionRule<Infer<ItemsOf<T>>[]> {
   return new __array<Infer<ItemsOf<T>>[]>([items]);
 }
 
@@ -465,7 +469,7 @@ class __arrayOf<T> extends __Exp<T> {
   }
 }
 
-export function arrayOf<T extends SchemaRule<any>>(rule: T, options?: { length: number }): ExpressionRule<Infer<T>[]> {
+export function arrayOf<T>(rule: Narrow<T>, options?: { length: number }): ExpressionRule<Infer<T>[]> {
   return new __arrayOf<Infer<T>[]>(options == null ? [rule] : [rule, options]);
 }
 

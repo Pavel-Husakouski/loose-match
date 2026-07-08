@@ -1,5 +1,8 @@
 {
   // inherit from the base tsconfig.json
   "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false
+  },
   "exclude": ["test/**/*.ts"]
 }
