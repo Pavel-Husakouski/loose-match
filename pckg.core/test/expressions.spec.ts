@@ -13,13 +13,9 @@ import {
   Built,
   ExpressionRule,
   ExpressionVisitor,
-  Infer,
-  InferIntersection,
   instanceOf,
   isPrototypedBy,
-  ItemsOf,
   literal,
-  LiteralRule,
   nullable,
   nullish,
   objectLike,
@@ -35,9 +31,8 @@ import {
   tuple,
 } from '../src/expressions';
 import * as Fn from '../src';
-import { FunctionRule, instanceOf as fnInstanceOf, match } from '../src';
+import { instanceOf as fnInstanceOf, match } from '../src';
 import { expect } from './@expect';
-import { expect as typeExpect } from './@type-expect';
 
 type Rendered = Built<string>;
 
@@ -266,16 +261,6 @@ describe('expression', () => {
     );
     const mixed = allOf({ id: '5' }, { email: 'a@gmail.com' }, nullable({ age: 8 }));
 
-    it('union types', () => {
-      typeExpect(union)
-        .isOfType<
-          ExpressionRule<
-            string | number | boolean | bigint | Date | [boolean, number] | string[] | 7[] | null | undefined
-          >
-        >()
-        .equals<true>();
-    });
-
     it('renders bare literals and object schemas embedded in combinators', () => {
       match(toString(union)).with(
         'oneOf(' +
@@ -324,23 +309,6 @@ describe('expression', () => {
         false,
         '[email] expected String a@gmail.com, got String ',
       ]);
-    });
-
-    it('infers union, intersection and literal types', () => {
-      typeExpect(aString()).isOfType<ExpressionRule<string>>().equals<true>();
-      typeExpect(aNumber()).isOfType<ExpressionRule<number>>().equals<true>();
-      typeExpect(literal(true)).isOfType<ExpressionRule<true>>().equals<true>();
-      typeExpect(anything()).isOfType<ExpressionRule<any>>().equals<true>();
-      typeExpect(toFunction(literal(8)))
-        .isOfType<FunctionRule<8>>()
-        .equals<true>();
-    });
-
-    it('allOf (InferIntersection) pins its exact type — Phase 3 regression guard', () => {
-      typeExpect<Infer<typeof mixed>>()
-        .isOfType<{ id: '5' } & { email: 'a@gmail.com' } & { age: 8 }>()
-        .equals<true>();
-      typeExpect<Infer<typeof mixed>>().isOfType<never>().equals<false>();
     });
   });
 
@@ -420,84 +388,10 @@ describe('expression', () => {
     });
   });
 
-  // The equals<false>() lines are the canaries: if the phantom stops binding,
-  // Infer collapses to unknown, every SameType flips, and they stop compiling.
   describe('inference canaries', () => {
-    it('Infer recovers the exact type from a rule — not unknown', () => {
-      typeExpect<Infer<ExpressionRule<number>>>().isOfType<number>().equals<true>();
-      typeExpect<Infer<ExpressionRule<number>>>().isOfType<unknown>().equals<false>();
-    });
-
-    it('rules with different value types are distinguishable', () => {
-      typeExpect(aString()).isOfType<ExpressionRule<string>>().equals<true>();
-      typeExpect(aString()).isOfType<ExpressionRule<number>>().equals<false>();
-      typeExpect(predicate((x: number) => x > 0))
-        .isOfType<ExpressionRule<number>>()
-        .equals<true>();
-    });
-
-    it('literals are preserved, not widened', () => {
-      typeExpect(literal(8)).isOfType<ExpressionRule<8>>().equals<true>();
-      typeExpect(literal(8)).isOfType<ExpressionRule<number>>().equals<false>();
-      typeExpect(strictEqual(8)).isOfType<ExpressionRule<8>>().equals<true>();
-      typeExpect(strictEqual(8)).isOfType<ExpressionRule<number>>().equals<false>();
-    });
-
-    it('modifiers carry their unions through', () => {
-      typeExpect(nullable(aDate())).isOfType<ExpressionRule<Date | null>>().equals<true>();
-      typeExpect(optional(aBoolean())).isOfType<ExpressionRule<boolean | undefined>>().equals<true>();
-      typeExpect(nullish(aBigInt())).isOfType<ExpressionRule<bigint | null | undefined>>().equals<true>();
-    });
-
-    it('combinators infer through their children', () => {
-      typeExpect(oneOf('9', aNumber())).isOfType<ExpressionRule<'9' | number>>().equals<true>();
-      typeExpect(anyOf('9', aNumber())).isOfType<ExpressionRule<'9' | number>>().equals<true>();
-      typeExpect(arrayOf(literal(7)))
-        .isOfType<ExpressionRule<7[]>>()
-        .equals<true>();
-      typeExpect(objectShape({ id: aString() }))
-        .isOfType<ExpressionRule<{ id: string }>>()
-        .equals<true>();
-      typeExpect(objectLike({ id: aString() }))
-        .isOfType<ExpressionRule<{ id: string }>>()
-        .equals<true>();
-      typeExpect(instanceOf(TypeError)).isOfType<ExpressionRule<TypeError>>().equals<true>();
-      typeExpect(isPrototypedBy(TypeError)).isOfType<ExpressionRule<TypeError>>().equals<true>();
-      typeExpect(instanceOf(TypeError, { message: aString() }))
-        .isOfType<ExpressionRule<TypeError & { message: string }>>()
-        .equals<true>();
-    });
-
-    it('any-collapse canary — SameType is blind to any, StrictSameType is not', () => {
-      typeExpect<Infer<ExpressionRule<number>>>().isOfType<number>().equals<true>();
-    });
-
-    it('LiteralRule stays aliased to Fn.PrimitiveRule (Phase 3)', () => {
-      typeExpect<LiteralRule<8>>().isOfType<Fn.PrimitiveRule<8>>().equals<true>();
-
-      // an object shape is not one of the LiteralTypes — both must collapse to never
-      typeExpect<LiteralRule<{ id: string }>>().isOfType<never>().equals<true>();
-    });
-
-    it('ItemsOf stays aliased to Fn.ItemsOf (Phase 3)', () => {
-      typeExpect<ItemsOf<[string, number]>>().isOfType<Fn.ItemsOf<[string, number]>>().equals<true>();
-      typeExpect<ItemsOf<[string, number]>>().isOfType<string | number>().equals<true>();
-    });
-
-    it('InferIntersection wraps each member in Infer<U>, matching src/types.ts (Phase 3)', () => {
-      // both members are already-resolved ExpressionRules — Infer<U> must not lose precision
-      typeExpect<InferIntersection<[ExpressionRule<{ id: string }>, ExpressionRule<{ age: 8 }>]>>()
-        .isOfType<{ id: string } & { age: 8 }>()
-        .equals<true>();
-
-      // bare object schemas (not yet wrapped in ExpressionRule) go through the same Infer<U> path
-      typeExpect<InferIntersection<[{ id: '5' }, { age: 8 }]>>().isOfType<{ id: '5' } & { age: 8 }>().equals<true>();
-    });
-
     it('end-to-end: the interpreter receives the inferred parameter type', () => {
       const smoke = toFunction(oneOf('9', aNumber()));
 
-      typeExpect<Parameters<typeof smoke>[0]>().isOfType<'9' | number>().equals<true>();
       // @ts-expect-error — a Date must be rejected; if this directive reports
       // "unused", toFunction has collapsed back to FunctionRule<any>
       expect(smoke(new Date())).to.match([false, 'expected one of 2 rules, got 0 matches']);

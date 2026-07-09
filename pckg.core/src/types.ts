@@ -27,9 +27,9 @@ export type FunctionRule<T> = (a: T) => ValidationResult<T>;
 export type LiteralTypes = boolean | string | number | bigint | symbol | null | undefined | Date | RegExp;
 
 /**
- * A primitive rule
+ * A literal rule
  */
-export type PrimitiveRule<T> = T extends LiteralTypes ? T : never;
+export type LiteralRule<T> = T extends LiteralTypes ? T : never;
 
 /**
  * An object schema
@@ -44,7 +44,7 @@ export type ArrayRule<T> = SchemaRule<T>[];
 /**
  * A schema rule
  */
-export type SchemaRule<T> = PrimitiveRule<T> | PredicateRule<T> | FunctionRule<T> | ObjectRule<T>;
+export type SchemaRule<T> = LiteralRule<T> | FunctionRule<T> | ObjectRule<T>;
 
 /**
  * Infer the type of a schema rule
@@ -52,7 +52,7 @@ export type SchemaRule<T> = PrimitiveRule<T> | PredicateRule<T> | FunctionRule<T
 export type Infer<T> = T extends LiteralTypes
   ? T
   : T extends PredicateRule<infer P>
-    ? P
+    ? never
     : T extends FunctionRule<infer P>
       ? P
       : T extends readonly any[]

@@ -1,4 +1,20 @@
 import * as Fn from './index';
+import { FunctionRule, LiteralRule } from './types';
+import {
+  __assert,
+  __isArray,
+  __isError,
+  __isLiteral,
+  __isObject,
+  __typeOf,
+  AtLeastTwoItems,
+  ItemsOf,
+  LiteralTypes,
+  Narrow,
+  NarrowProps,
+  PredicateRule,
+  SchemaInput,
+} from './index';
 
 export interface ExpressionVisitor<X> {
   literal(value: LiteralTypes): Built<X>;
@@ -39,7 +55,7 @@ export interface ExpressionVisitor<X> {
 
   isPrototypedBy(ctor: abstract new (...args: any[]) => any): Built<X>;
 
-  predicate(fn: Fn.PredicateRule<any>, message?: string): Built<X>;
+  predicate(fn: PredicateRule<any>, message?: string): Built<X>;
 
   tuple(items: SchemaRule<any>[]): Built<X>;
 
@@ -69,22 +85,6 @@ export type ExpressionRule<T> = {
 };
 
 /**
- * The set of primitive types
- */
-export type LiteralTypes = Fn.LiteralTypes;
-
-/**
- * Blocks literal widening by the shape of the inference target, without stamping
- * `readonly` the way a `const` type parameter would.
- */
-export type Narrow<A> = Fn.Narrow<A>;
-
-/**
- * A literal rule
- */
-export type LiteralRule<T> = Fn.PrimitiveRule<T>;
-
-/**
  * A record rule or and object schema
  */
 export type ObjectRule<T> = { [key in keyof T]: SchemaRule<T[key]> };
@@ -99,11 +99,13 @@ export type SchemaRule<T> = LiteralRule<T> | ExpressionRule<T> | ObjectRule<T>;
  */
 export type Infer<T> = T extends LiteralTypes
   ? T
-  : T extends ExpressionRule<infer P>
-    ? P
-    : T extends ObjectRule<infer P>
-      ? { [K in keyof P]: Infer<P[K]> }
-      : never;
+  : T extends PredicateRule<infer P>
+    ? never
+    : T extends ExpressionRule<infer P>
+      ? P
+      : T extends ObjectRule<infer P>
+        ? { [K in keyof P]: Infer<P[K]> }
+        : never;
 
 /**
  * A intersection of schema rule types
@@ -115,11 +117,6 @@ export type InferIntersection<T> = T extends [infer First, ...infer Rest]
       : Infer<U>
     : never
   : unknown;
-
-/**
- * Infer the item type of an array
- */
-export type ItemsOf<T> = Fn.ItemsOf<T>;
 
 abstract class __Exp<T> {
   declare readonly [__infer]?: T;
@@ -211,7 +208,7 @@ class __nullable<T> extends __Exp<T> {
 }
 
 export function nullable<T>(rule: Narrow<T>): ExpressionRule<Infer<T> | null> {
-  Fn.__assert(rule != null, 'nullable null or undefined? interesting...');
+  __assert(rule != null, 'nullable null or undefined? interesting...');
 
   return new __nullable<Infer<T> | null>([rule as SchemaRule<any>]);
 }
@@ -226,7 +223,7 @@ class __nullish<T> extends __Exp<T> {
 }
 
 export function nullish<T>(rule: Narrow<T>): ExpressionRule<Infer<T> | null | undefined> {
-  Fn.__assert(rule != null, 'nullish null or undefined? interesting...');
+  __assert(rule != null, 'nullish null or undefined? interesting...');
 
   return new __nullish<Infer<T> | null | undefined>([rule as SchemaRule<any>]);
 }
@@ -241,7 +238,7 @@ class __optional<T> extends __Exp<T> {
 }
 
 export function optional<T>(rule: Narrow<T>): ExpressionRule<Infer<T> | undefined> {
-  Fn.__assert(rule !== undefined, 'optional undefined? interesting...');
+  __assert(rule !== undefined, 'optional undefined? interesting...');
 
   return new __optional<Infer<T> | undefined>([rule as SchemaRule<any>]);
 }
@@ -255,10 +252,10 @@ class __oneOf<T> extends __Exp<T> {
   }
 }
 
-export function oneOf<T, C extends Fn.AtLeastTwoItems<Fn.SchemaInput>>(
-  ...items: Fn.NarrowProps<T> & C
+export function oneOf<T, C extends AtLeastTwoItems<SchemaInput>>(
+  ...items: NarrowProps<T> & C
 ): ExpressionRule<Infer<ItemsOf<T>>> {
-  Fn.__assert(items.length >= 2, 'oneOf requires at least two arguments');
+  __assert(items.length >= 2, 'oneOf requires at least two arguments');
 
   return new __oneOf<Infer<ItemsOf<T>>>([items as SchemaRule<any>[]]);
 }
@@ -272,10 +269,10 @@ class __allOf<T> extends __Exp<T> {
   }
 }
 
-export function allOf<T, C extends Fn.AtLeastTwoItems<Fn.SchemaInput>>(
-  ...rules: Fn.NarrowProps<T> & C
+export function allOf<T, C extends AtLeastTwoItems<SchemaInput>>(
+  ...rules: NarrowProps<T> & C
 ): ExpressionRule<InferIntersection<T>> {
-  Fn.__assert(rules.length >= 2, 'allOf requires at least two arguments');
+  __assert(rules.length >= 2, 'allOf requires at least two arguments');
 
   return new __allOf<InferIntersection<T>>([rules as SchemaRule<any>[]]);
 }
@@ -289,10 +286,10 @@ class __anyOf<T> extends __Exp<T> {
   }
 }
 
-export function anyOf<T, C extends Fn.AtLeastTwoItems<Fn.SchemaInput>>(
-  ...items: Fn.NarrowProps<T> & C
+export function anyOf<T, C extends AtLeastTwoItems<SchemaInput>>(
+  ...items: NarrowProps<T> & C
 ): ExpressionRule<Infer<ItemsOf<T>>> {
-  Fn.__assert(items.length >= 2, 'anyOf requires at least two arguments');
+  __assert(items.length >= 2, 'anyOf requires at least two arguments');
 
   return new __anyOf<Infer<ItemsOf<T>>>([items as SchemaRule<any>[]]);
 }
@@ -333,7 +330,7 @@ class __re extends __Exp<string> {
 }
 
 export function re(rule: RegExp): ExpressionRule<string> {
-  Fn.__assert(rule != null && rule instanceof RegExp, 'rule must be a RegExp');
+  __assert(rule != null && __typeOf(rule) === '[object RegExp]', 'rule must be a RegExp');
 
   return new __re([rule]);
 }
@@ -369,7 +366,7 @@ export function instanceOf<T, S extends ObjectRule<any> = ObjectRule<any>>(
   ctor: abstract new (...args: any[]) => T,
   extraRule?: S
 ): ExpressionRule<T & Infer<S>> {
-  Fn.__assert(Fn.__typeOf(ctor) === '[object Function]', 'argument must be a constructor function');
+  __assert(__typeOf(ctor) === '[object Function]', 'argument must be a constructor function');
 
   return new __instanceOf<T & Infer<S>>(extraRule == null ? [ctor] : [ctor, extraRule]);
 }
@@ -384,22 +381,22 @@ class __isPrototypedBy<T> extends __Exp<T> {
 }
 
 export function isPrototypedBy<T>(ctor: abstract new (...args: any[]) => T): ExpressionRule<T> {
-  Fn.__assert(Fn.__typeOf(ctor) === '[object Function]', 'argument must be a constructor function');
+  __assert(__typeOf(ctor) === '[object Function]', 'argument must be a constructor function');
 
   return new __isPrototypedBy<T>([ctor]);
 }
 
 class __predicate<T> extends __Exp<T> {
   constructor(
-    readonly args: [Fn.PredicateRule<any>] | [Fn.PredicateRule<any>, string],
+    readonly args: [PredicateRule<any>] | [PredicateRule<any>, string],
     readonly type = 'predicate' as const
   ) {
     super();
   }
 }
 
-export function predicate<T>(fn: Fn.PredicateRule<T>, message?: string): ExpressionRule<T> {
-  Fn.__assert(typeof fn === 'function', 'predicate requires a function argument');
+export function predicate<T>(fn: PredicateRule<T>, message?: string): ExpressionRule<T> {
+  __assert(typeof fn === 'function', 'predicate requires a function argument');
 
   return new __predicate<T>(message == null ? [fn] : [fn, message]);
 }
@@ -413,8 +410,8 @@ class __objectShape<T> extends __Exp<T> {
   }
 }
 
-export function objectShape<T>(rule: Fn.NarrowProps<T> & object): ExpressionRule<Infer<T>> {
-  Fn.__assert(rule != null, 'object shape rule cannot be null or undefined');
+export function objectShape<T>(rule: NarrowProps<T> & object): ExpressionRule<Infer<T>> {
+  __assert(rule != null, 'object shape rule cannot be null or undefined');
 
   return new __objectShape<Infer<T>>([rule as ObjectRule<any>]);
 }
@@ -428,8 +425,8 @@ class __objectLike<T> extends __Exp<T> {
   }
 }
 
-export function objectLike<T>(rule: Fn.NarrowProps<T> & object): ExpressionRule<Infer<T>> {
-  Fn.__assert(rule != null, 'object like rule cannot be null or undefined');
+export function objectLike<T>(rule: NarrowProps<T> & object): ExpressionRule<Infer<T>> {
+  __assert(rule != null, 'object like rule cannot be null or undefined');
 
   return new __objectLike<Infer<T>>([rule as ObjectRule<any>]);
 }
@@ -487,28 +484,28 @@ export function __toExpression<T extends SchemaRule<any>>(schema: T): Expression
   if (typeof schema === 'function') {
     throw new Error('bare functions are not supported by expressions');
   }
-  if (Fn.__isLiteral(schema)) {
+  if (__isLiteral(schema)) {
     return literal(schema) as ExpressionRule<Infer<T>>;
   }
-  if (Fn.__isArray(schema)) {
+  if (__isArray(schema)) {
     return array(schema.map((item) => __toExpression(item)) as any) as ExpressionRule<Infer<T>>;
   }
-  if (Fn.__isError(schema)) {
+  if (__isError(schema)) {
     const ctor = schema.constructor as any;
     const message = schema.message;
 
     return instanceOf(ctor, { /*name, too strict*/ message, ...(schema as any) }) as ExpressionRule<Infer<T>>;
   }
-  if (Fn.__isObject(schema)) {
+  if (__isObject(schema)) {
     return objectShape(schema) as ExpressionRule<Infer<T>>;
   }
 
   throw new Error('hell knows');
 }
 
-type FnRendered = Built<Fn.FunctionRule<any>>;
+type FnRendered = Built<FunctionRule<any>>;
 
-const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule<any>> {
+const FunctionRenderer = new (class implements ExpressionVisitor<FunctionRule<any>> {
   literal<T extends LiteralTypes>(value: T): FnRendered {
     return Fn.literal(value);
   }
@@ -611,7 +608,7 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
     return Fn.isPrototypedBy(ctor);
   }
 
-  predicate(fn: Fn.PredicateRule<any>, message?: string): FnRendered {
+  predicate(fn: PredicateRule<any>, message?: string): FnRendered {
     return Fn.predicate(fn, message);
   }
 
@@ -666,6 +663,6 @@ const FunctionRenderer = new (class implements ExpressionVisitor<Fn.FunctionRule
   }
 })();
 
-export function toFunction<T>(expression: ExpressionRule<T>): Fn.FunctionRule<T> {
+export function toFunction<T>(expression: ExpressionRule<T>): FunctionRule<T> {
   return expression.accept(FunctionRenderer);
 }
