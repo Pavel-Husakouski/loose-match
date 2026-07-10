@@ -1,20 +1,22 @@
-import * as Fn from './index';
-import { FunctionRule, LiteralRule } from './types';
+import * as Fn from './combinators.js';
+import * as Lit from './literals.js';
+import { __assert } from './assert.js';
 import {
-  __assert,
   __isArray,
   __isError,
   __isLiteral,
   __isObject,
   __typeOf,
   AtLeastTwoItems,
+  FunctionRule,
   ItemsOf,
+  LiteralRule,
   LiteralTypes,
   Narrow,
   NarrowProps,
   PredicateRule,
   SchemaInput,
-} from './index';
+} from './types.js';
 
 export interface ExpressionVisitor<X> {
   literal(value: LiteralTypes): Built<X>;
@@ -507,31 +509,31 @@ type FnRendered = Built<FunctionRule<any>>;
 
 const FunctionRenderer = new (class implements ExpressionVisitor<FunctionRule<any>> {
   literal<T extends LiteralTypes>(value: T): FnRendered {
-    return Fn.literal(value);
+    return Lit.literal(value);
   }
 
   anything(): FnRendered {
-    return Fn.anything();
+    return Lit.anything();
   }
 
   aBoolean(): FnRendered {
-    return Fn.aBoolean();
+    return Lit.aBoolean();
   }
 
   aBigInt(): FnRendered {
-    return Fn.aBigInt();
+    return Lit.aBigInt();
   }
 
   aNumber(): FnRendered {
-    return Fn.aNumber();
+    return Lit.aNumber();
   }
 
   aString(options?: { length: number }): FnRendered {
-    return Fn.aString(options);
+    return Lit.aString(options);
   }
 
   aDate(): FnRendered {
-    return Fn.aDate();
+    return Lit.aDate();
   }
 
   nullable(schema: SchemaRule<any>): FnRendered {
@@ -583,7 +585,7 @@ const FunctionRenderer = new (class implements ExpressionVisitor<FunctionRule<an
   }
 
   re(rule: RegExp): FnRendered {
-    return Fn.re(rule);
+    return Lit.re(rule);
   }
 
   strictEqual(value: unknown): FnRendered {
