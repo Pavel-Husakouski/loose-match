@@ -166,7 +166,7 @@ export function __isLiteral(value: any): value is LiteralTypes {
 /**
  * @internal
  */
-export function __isArray<T>(schema: unknown): schema is ArrayRule<any> {
+export function __isArray(schema: unknown): schema is ArrayRule<any> {
   return Array.isArray(schema);
 }
 
@@ -180,14 +180,14 @@ export function __typeOf(v: any): __TypeOf {
 /**
  * @internal
  */
-export function __isObject<T>(value: unknown): value is ObjectRule<any> {
+export function __isObject(value: unknown): value is ObjectRule<any> {
   return __typeOf(value) === '[object Object]';
 }
 
 /**
  * @internal
  */
-export function __isError<T>(schema: unknown): schema is ObjectRule<Error> {
+export function __isError(schema: unknown): schema is ObjectRule<Error> {
   return __typeOf(schema) === '[object Error]';
 }
 
